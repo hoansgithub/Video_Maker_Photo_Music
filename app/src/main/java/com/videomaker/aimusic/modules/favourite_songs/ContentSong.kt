@@ -61,8 +61,7 @@ fun ContentSong(
 
     LazyColumn(
         modifier = Modifier
-            .fillMaxSize()
-            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom)),
+            .fillMaxSize(),
         contentPadding = PaddingValues(
             top = dimens.spaceLg,
             bottom = dimens.space3Xl + dimens.space2Xl

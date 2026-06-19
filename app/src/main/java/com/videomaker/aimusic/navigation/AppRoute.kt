@@ -126,7 +126,9 @@ sealed interface AppRoute : NavKey {
     @Serializable
     data class Editor(
         val projectId: String? = null,
-        val initialData: com.videomaker.aimusic.domain.model.EditorInitialData? = null
+        val initialData: com.videomaker.aimusic.domain.model.EditorInitialData? = null,
+        // Thumbnail of a saved project, so the editor's Loading state can show the first image.
+        val thumbnailUri: String? = null
     ) : AppRoute
 
     @Serializable

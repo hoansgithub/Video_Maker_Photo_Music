@@ -5,7 +5,7 @@ import com.videomaker.aimusic.media.audio.HookStartTimePolicy
 
 internal fun resolveDefaultMusicTrimStartMs(song: MusicSong?): Long {
     return HookStartTimePolicy.resolve(
-        hookStartTimeMs = song?.hookStartTimeMs ?: 0L,
+        hookStartTimeMs = song?.hookStartTimes?.firstOrNull() ?: 0L,
         durationMs = song?.durationMs?.toLong()
     )
 }

@@ -633,4 +633,21 @@
     <string name="banner_trending_now">ŞİMDİ TREND</string>
     <string name="banner_new_arrivals">YENİ GELENLER</string>
 
+    <!-- Editor / music-search strings (mapped from English) -->
+    <string name="error_dialog_try_again">Tekrar dene</string>
+    <string name="error_dialog_back_home">Ana sayfaya dön</string>
+    <string name="song_search_title">Müzik</string>
+    <string name="song_search_sheet_hint">Tarzını bul</string>
+    <string name="song_search_searching">Aranıyor...</string>
+    <string name="song_search_results_found">%1$d sonuç bulundu</string>
+    <string name="editor_loading_tip_1">En güzel anların toplanıyor...</string>
+    <string name="editor_loading_tip_2">Fotoğraflar harekete dönüştürülüyor...</string>
+    <string name="editor_loading_tip_3">Her an ritme uyduruluyor...</string>
+    <string name="editor_loading_tip_4">Harika görünmesi sağlanıyor...</string>
+    <string name="editor_loading_tip_5">Müzik videon hazır! ✨</string>
+    <string name="editor_loading_dont_close">Lütfen uygulamayı kapatma</string>
+    <string name="editor_ratio_label">Oran</string>
+    <string name="editor_image_dragging">Sürükleniyor</string>
+    <string name="editor_image_drag_to_reorder">Yeniden sıralamak için sürükle</string>
+    <string name="editor_image_content_desc">Görsel %1$s</string>
 </resources>

@@ -136,7 +136,7 @@ fun HomeScreen(
     projectHintMode: String? = null,
     onSettingsClick: (String) -> Unit = {},
     onCreateClick: () -> Unit = {},
-    onProjectClick: (String) -> Unit = {},
+    onProjectClick: (projectId: String, thumbnailUri: String?) -> Unit = { _, _ -> },
     onNavigateToSearch: () -> Unit = {},
     onNavigateToSongSearch: () -> Unit = {},
     onNavigateToSuggestedSongsList: () -> Unit = {},

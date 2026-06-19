@@ -171,7 +171,7 @@
     <string name="editor_music_trim_skip_to_start">Jump to Start</string>
     <string name="editor_music_trim_skip_to_end">Jump to End</string>
     <string name="editor_photos_count">%d photos</string>
-    <string name="editor_photos_label">Photos</string>
+    <string name="editor_photos_label">Photo</string>
     <string name="editor_save_dialog_title">Save Project?</string>
     <string name="editor_save_dialog_message">Your project will be saved and available in My Projects.</string>
     <string name="editor_save_and_exit">Save &amp; Exit</string>
@@ -190,6 +190,17 @@
     <string name="editor_images_title">Tap to Edit • Hold to Rearrange</string>
     <string name="editor_add_images">Add Images</string>
     <string name="editor_delete_image">Delete</string>
+    <!-- Editor loading tips (rotating while the video is being prepared) -->
+    <string name="editor_loading_tip_1">Collecting your best moments...</string>
+    <string name="editor_loading_tip_2">Turning photos into motion...</string>
+    <string name="editor_loading_tip_3">Matching every moment to the beat...</string>
+    <string name="editor_loading_tip_4">Making it look amazing...</string>
+    <string name="editor_loading_tip_5">Your music video is ready! ✨</string>
+    <string name="editor_loading_dont_close">Please don\'t close app</string>
+    <string name="editor_ratio_label">Ratio</string>
+    <string name="editor_image_dragging">Dragging</string>
+    <string name="editor_image_drag_to_reorder">Drag to reorder</string>
+    <string name="editor_image_content_desc">Image %1$s</string>
 
     <!-- Projects Tabs -->
     <string name="projects_tab_created_video">Created Video</string>
@@ -368,7 +379,7 @@
     <string name="search_recent">Recently Searched</string>
     <string name="search_clear_all">Clear All</string>
     <string name="search_no_results">No styles found</string>
-    <string name="search_no_results_hint">Try a different word or pick a vibe below</string>
+    <string name="search_no_results_hint">Let\'s try something else</string>
     <string name="search_suggestions">Suggestions</string>
     <string name="search_browse_by_theme">Explore by Vibe</string>
     <string name="search_trending_templates">Popular Right Now</string>
@@ -428,6 +439,8 @@
     <string name="error_video_network">Network error loading video. Please check your connection and try again.</string>
     <string name="video_retrying">Loading preview…</string>
     <string name="dialog_ok">OK</string>
+    <string name="error_dialog_try_again">Try again</string>
+    <string name="error_dialog_back_home">Close back to home</string>
 
     <!-- Songs -->
     <string name="start_project">Start project</string>
@@ -436,9 +449,13 @@
     <string name="song_search_hint">Search for songs…</string>
     <string name="song_search_explore_by_genre">Explore by Genre</string>
     <string name="song_search_suggested">Suggested for You</string>
-    <string name="song_search_no_results">No songs found</string>
+    <string name="song_search_no_results">No Result Found</string>
     <string name="song_search_change_music">Change Music</string>
     <string name="song_search_idle_hint">Start typing to search for songs</string>
+    <string name="song_search_title">Music</string>
+    <string name="song_search_sheet_hint">Searching your style</string>
+    <string name="song_search_searching">Searching…</string>
+    <string name="song_search_results_found">%1$d Results found</string>
 
     <!-- Onboarding Page 4 — Feature Survey -->
     <string name="onboarding_page4_title">How do you want to  start ?</string>

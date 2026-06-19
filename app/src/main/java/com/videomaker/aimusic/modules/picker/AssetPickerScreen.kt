@@ -32,6 +32,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
@@ -732,23 +733,26 @@ fun AssetPickerScreen(
             )
         }
         // Remote Config toggle: native ad (default) or standard banner
-        if (adPlacementConfigService.bannerUseNative) {
-            NativeAdView(
-                placement = AdPlacement.NATIVE_ASSET_PICKER_BANNER,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(100.dp),
-                isDebug = BuildConfig.DEBUG,
-                onAdClicked = { adClickDetector.onAdClick(it) }
-            )
-        } else {
-            BannerAdView(
-                placement = AdPlacement.BANNER_ASSET_PICKER,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp),
-                onAdClicked = { adClickDetector.onAdClick(it) }
-            )
+        Box {
+            Spacer(Modifier.navigationBarsPadding())
+            if (adPlacementConfigService.bannerUseNative) {
+                NativeAdView(
+                    placement = AdPlacement.NATIVE_ASSET_PICKER_BANNER,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(100.dp),
+                    isDebug = BuildConfig.DEBUG,
+                    onAdClicked = { adClickDetector.onAdClick(it) }
+                )
+            } else {
+                BannerAdView(
+                    placement = AdPlacement.BANNER_ASSET_PICKER,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp),
+                    onAdClicked = { adClickDetector.onAdClick(it) }
+                )
+            }
         }
     }
 

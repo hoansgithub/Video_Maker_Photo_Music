@@ -13,5 +13,6 @@ data class LikedSongEntity(
     val previewUrl: String,
     val durationMs: Int,
     val hookStartTimeMs: Long = 0L,
+    val hookStartTimesJson: String = "[]",
     val likedAt: Long = System.currentTimeMillis()
 )

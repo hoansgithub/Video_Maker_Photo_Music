@@ -1,8 +1,9 @@
 package com.videomaker.aimusic.modules.editor.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,8 +20,6 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.draw.rotate
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
@@ -40,33 +39,30 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
-import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInParent
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
-import kotlinx.coroutines.delay
-import kotlin.math.roundToInt
 import coil.compose.AsyncImage
 import coil.decode.BitmapFactoryDecoder
 import coil.request.ImageRequest
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.domain.model.Asset
-import com.videomaker.aimusic.ui.theme.Gray500
 import com.videomaker.aimusic.ui.theme.SplashBackground
 import com.videomaker.aimusic.ui.theme.TextPrimary
+import kotlin.math.roundToInt
 
 /**
  * Images Bottom Sheet - Manage image order and add new images
@@ -137,11 +133,12 @@ internal fun ImagesBottomSheet(
                         .size(40.dp)
                         .background(MaterialTheme.colorScheme.primary, CircleShape)
                         .clickable {
+                            Analytics.trackPhotoSelect()
                             onConfirm(assets)
-                            onDismiss()
                         },
                     contentAlignment = Alignment.Center
                 ) {
+
                     Icon(
                         imageVector = Icons.Default.Check,
                         contentDescription = stringResource(R.string.confirm),
@@ -186,6 +183,7 @@ internal fun ImagesBottomSheet(
                             isDragging = draggedAssetId == asset.id,
                             canDelete = assets.size > 3,
                             onClick = {
+                                Analytics.trackPhotoClick()
                                 if (draggedAssetId == null && assets.size > 3) {
                                     // Only allow selection for delete if more than 3 images
                                     selectedAssetId = if (selectedAssetId == asset.id) null else asset.id
@@ -194,11 +192,13 @@ internal fun ImagesBottomSheet(
                             onRemove = {
                                 // Only allow deletion if more than 3 images
                                 if (assets.size > 3) {
+                                    Analytics.trackPhotoDelete()
                                     assets = assets.filter { it.id != asset.id }
                                     selectedAssetId = null
                                 }
                             },
                             onDragStart = { offset ->
+                                Analytics.trackPhotoDrag()
                                 draggedAssetId = asset.id
                                 dragOffset = offset
                                 selectedAssetId = null
@@ -253,7 +253,10 @@ internal fun ImagesBottomSheet(
                     // Add images button (last item)
                     item {
                         AddImageButton(
-                            onClick = onAddImages
+                            onClick = {
+                                Analytics.trackPhotoAdd()
+                                onAddImages()
+                            }
                         )
                     }
                 }
@@ -287,7 +290,7 @@ internal fun ImagesBottomSheet(
                                 }
                                 AsyncImage(
                                     model = dragImageRequest,
-                                    contentDescription = "Dragging",
+                                    contentDescription = stringResource(R.string.editor_image_dragging),
                                     contentScale = ContentScale.Crop,
                                     modifier = Modifier.fillMaxSize()
                                 )
@@ -387,7 +390,7 @@ private fun ImageItem(
         }
         AsyncImage(
             model = imageRequest,
-            contentDescription = "Image ${asset.id}",
+            contentDescription = stringResource(R.string.editor_image_content_desc, asset.id),
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize()
         )
@@ -404,7 +407,7 @@ private fun ImageItem(
             ) {
                 Icon(
                     imageVector = Icons.Default.OpenWith,
-                    contentDescription = "Drag to reorder",
+                    contentDescription = stringResource(R.string.editor_image_drag_to_reorder),
                     tint = Color.White,
                     modifier = Modifier.size(14.dp)
                 )
@@ -426,7 +429,7 @@ private fun ImageItem(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Delete,
-                        contentDescription = "Delete",
+                        contentDescription = stringResource(R.string.editor_delete_image),
                         tint = Color.Red,
                         modifier = Modifier.size(28.dp)
                     )

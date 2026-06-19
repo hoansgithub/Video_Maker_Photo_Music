@@ -3,6 +3,7 @@ package com.videomaker.aimusic.ui.components
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -34,8 +35,8 @@ fun LocalAsyncImage(
     alignment: Alignment = Alignment.Center
 ) {
     val context = LocalContext.current
-    val painter = rememberAsyncImagePainter(
-        model = ImageRequest.Builder(context)
+    val request = remember(resId, context) {
+        ImageRequest.Builder(context)
             .data(resId)
             .decoderFactory(BitmapFactoryDecoder.Factory())
             .memoryCachePolicy(CachePolicy.ENABLED)
@@ -43,7 +44,8 @@ fun LocalAsyncImage(
             .precision(Precision.INEXACT)
             .allowHardware(true)
             .build()
-    )
+    }
+    val painter = rememberAsyncImagePainter(model = request)
     Image(
         painter = painter,
         contentDescription = contentDescription,

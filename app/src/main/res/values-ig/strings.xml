@@ -639,4 +639,21 @@
     <string name="banner_trending_now">NA-EWU EWU UGBU A</string>
     <string name="banner_new_arrivals">OHURU</string>
 
+    <!-- Editor / music-search strings (mapped from English) -->
+    <string name="error_dialog_try_again">Nwaa ọzọ</string>
+    <string name="error_dialog_back_home">Laghachi n\'ụlọ</string>
+    <string name="song_search_title">Egwu</string>
+    <string name="song_search_sheet_hint">Chọọ ụdị gị</string>
+    <string name="song_search_searching">Na-achọ...</string>
+    <string name="song_search_results_found">Achọtara nsonaazụ %1$d</string>
+    <string name="editor_loading_tip_1">Na-anakọta oge kacha mma gị...</string>
+    <string name="editor_loading_tip_2">Na-atụgharị foto ka ọ bụrụ mmegharị...</string>
+    <string name="editor_loading_tip_3">Na-edozi oge ọ bụla na ụda...</string>
+    <string name="editor_loading_tip_4">Na-eme ka ọ maa mma...</string>
+    <string name="editor_loading_tip_5">Vidiyo egwu gị adịla njikere! ✨</string>
+    <string name="editor_loading_dont_close">Biko emechila ngwa a</string>
+    <string name="editor_ratio_label">Òkè</string>
+    <string name="editor_image_dragging">Na-adọkpụ</string>
+    <string name="editor_image_drag_to_reorder">Dọrọ iji hazigharia</string>
+    <string name="editor_image_content_desc">Foto %1$s</string>
 </resources>

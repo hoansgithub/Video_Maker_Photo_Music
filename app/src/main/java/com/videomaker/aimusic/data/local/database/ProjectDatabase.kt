@@ -27,7 +27,7 @@ import com.videomaker.aimusic.data.local.database.entity.ProjectEntity
         LikedSongEntity::class,
         LikedTemplateEntity::class
     ],
-    version = 15,
+    version = 17,
     exportSchema = true
 )
 abstract class ProjectDatabase : RoomDatabase() {
@@ -134,6 +134,57 @@ abstract class ProjectDatabase : RoomDatabase() {
             }
         }
 
+        internal val MIGRATION_15_16 = object : Migration(15, 16) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // Migrate to audioNodes: drop legacy single-track columns, add audioNodesJson.
+                // Audio nodes are set to NULL — users will need to re-select music for
+                // existing projects. This avoids fragile SQL-based JSON construction that
+                // could crash on special characters in song names.
+                db.execSQL(
+                    """
+                    CREATE TABLE projects_new (
+                        id TEXT NOT NULL PRIMARY KEY,
+                        name TEXT NOT NULL,
+                        createdAt INTEGER NOT NULL,
+                        updatedAt INTEGER NOT NULL,
+                        thumbnailUri TEXT,
+                        totalDurationMs INTEGER NOT NULL DEFAULT 0,
+                        effectSetId TEXT DEFAULT 'dreamy_vibes',
+                        templateId TEXT,
+                        overlayFrameId TEXT,
+                        aspectRatio TEXT NOT NULL DEFAULT 'RATIO_9_16',
+                        audioNodesJson TEXT,
+                        isWatermarkFree INTEGER NOT NULL DEFAULT 0
+                    )
+                    """.trimIndent()
+                )
+
+                db.execSQL(
+                    """
+                    INSERT INTO projects_new (
+                        id, name, createdAt, updatedAt, thumbnailUri, totalDurationMs,
+                        effectSetId, templateId, overlayFrameId, aspectRatio,
+                        isWatermarkFree
+                    )
+                    SELECT
+                        id, name, createdAt, updatedAt, thumbnailUri, totalDurationMs,
+                        effectSetId, templateId, overlayFrameId, aspectRatio,
+                        isWatermarkFree
+                    FROM projects
+                    """.trimIndent()
+                )
+
+                db.execSQL("DROP TABLE projects")
+                db.execSQL("ALTER TABLE projects_new RENAME TO projects")
+            }
+        }
+
+        internal val MIGRATION_16_17 = object : Migration(16, 17) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE liked_songs ADD COLUMN hookStartTimesJson TEXT NOT NULL DEFAULT '[]'")
+            }
+        }
+
         @Volatile
         private var INSTANCE: ProjectDatabase? = null
 
@@ -149,7 +200,7 @@ abstract class ProjectDatabase : RoomDatabase() {
                 ProjectDatabase::class.java,
                 DATABASE_NAME
             )
-                .addMigrations(MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15)
+                .addMigrations(MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16, MIGRATION_16_17)
                 .fallbackToDestructiveMigration(dropAllTables = false)
                 .build()
         }

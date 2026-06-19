@@ -638,4 +638,21 @@
     <string name="banner_trending_now">IM TREND</string>
     <string name="banner_new_arrivals">NEUHEITEN</string>
 
+    <!-- Editor / music-search strings (mapped from English) -->
+    <string name="error_dialog_try_again">Erneut versuchen</string>
+    <string name="error_dialog_back_home">Zurück zur Startseite</string>
+    <string name="song_search_title">Musik</string>
+    <string name="song_search_sheet_hint">Finde deinen Stil</string>
+    <string name="song_search_searching">Suche läuft...</string>
+    <string name="song_search_results_found">%1$d Ergebnisse gefunden</string>
+    <string name="editor_loading_tip_1">Deine besten Momente werden gesammelt...</string>
+    <string name="editor_loading_tip_2">Fotos werden in Bewegung verwandelt...</string>
+    <string name="editor_loading_tip_3">Jeder Moment wird an den Beat angepasst...</string>
+    <string name="editor_loading_tip_4">Wir machen es großartig...</string>
+    <string name="editor_loading_tip_5">Dein Musikvideo ist fertig! ✨</string>
+    <string name="editor_loading_dont_close">Bitte schließe die App nicht</string>
+    <string name="editor_ratio_label">Format</string>
+    <string name="editor_image_dragging">Wird gezogen</string>
+    <string name="editor_image_drag_to_reorder">Zum Neuordnen ziehen</string>
+    <string name="editor_image_content_desc">Bild %1$s</string>
 </resources>

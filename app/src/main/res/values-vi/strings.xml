@@ -632,4 +632,21 @@
     <string name="banner_trending_now">ĐANG THỊNH HÀNH</string>
     <string name="banner_new_arrivals">MỚI RA MẮT</string>
 
+    <!-- Editor / music-search strings (mapped from English) -->
+    <string name="error_dialog_try_again">Thử lại</string>
+    <string name="error_dialog_back_home">Quay về trang chủ</string>
+    <string name="song_search_title">Nhạc</string>
+    <string name="song_search_sheet_hint">Tìm phong cách của bạn</string>
+    <string name="song_search_searching">Đang tìm...</string>
+    <string name="song_search_results_found">Tìm thấy %1$d kết quả</string>
+    <string name="editor_loading_tip_1">Đang thu thập khoảnh khắc đẹp nhất của bạn...</string>
+    <string name="editor_loading_tip_2">Đang biến ảnh thành chuyển động...</string>
+    <string name="editor_loading_tip_3">Đang khớp từng khoảnh khắc theo nhịp...</string>
+    <string name="editor_loading_tip_4">Đang làm cho thật tuyệt...</string>
+    <string name="editor_loading_tip_5">Video nhạc của bạn đã sẵn sàng! ✨</string>
+    <string name="editor_loading_dont_close">Vui lòng không đóng ứng dụng</string>
+    <string name="editor_ratio_label">Tỉ lệ</string>
+    <string name="editor_image_dragging">Đang kéo</string>
+    <string name="editor_image_drag_to_reorder">Kéo để sắp xếp lại</string>
+    <string name="editor_image_content_desc">Ảnh %1$s</string>
 </resources>

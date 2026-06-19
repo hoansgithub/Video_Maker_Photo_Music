@@ -979,10 +979,10 @@ class AssetPickerViewModel(
                 // - Gallery → Template → Image → Editor
                 // - Music → Template → Image → Editor (templateId + overrideSongId both set)
                 templateId != null -> {
-                    // Fetch templates and find by ID
-                    templateRepository.getTemplates(limit = 100, offset = 0)
-                        .onSuccess { templates ->
-                            val template = templates.find { it.id == templateId }
+                    // Fetch the specific template by ID (handles search-result templates
+                    // that may not appear in the default top-N sorted list).
+                    templateRepository.getTemplateById(templateId)
+                        .onSuccess { template ->
                             if (template != null) {
                                 // Determine song ID (override or template's song)
                                 val songId = if (overrideSongId >= 0L) overrideSongId
@@ -1000,7 +1000,6 @@ class AssetPickerViewModel(
                                     musicSongId = songId,
                                     musicSongName = songName,
                                     aspectRatio = aspectRatio ?: AspectRatio.fromString(template.aspectRatio),
-                                    applyHookStartDefaults = overrideSongId >= 0L,
                                     analyticsVideoId = analyticsVideoId
                                 )
 
@@ -1025,7 +1024,6 @@ class AssetPickerViewModel(
                                 musicSongId = overrideSongId,
                                 musicSongName = null,  // Will be loaded by editor
                                 aspectRatio = AspectRatio.RATIO_9_16,
-                                applyHookStartDefaults = true,  // Apply hook start for song-to-video mode
                                 analyticsVideoId = analyticsVideoId
                             )
                         )
@@ -1078,10 +1076,16 @@ class AssetPickerViewModel(
      * Navigate back
      */
     fun navigateBack() {
-        // Check if exit ad is ready (non-blocking)
-        val isAdReady = adsLoaderService.isInterstitialReady(AdPlacement.INTERSTITIAL_ASSET_PICKER_EXIT)
+        // In editing mode, skip exit ad — just pop back to the editor.
+        // The exit ad's onShown + action both call onNavigateBack(), which would
+        // double-pop the backstack (picker + editor) and land on Home.
+        val isAdReady = if (isEditingMode) {
+            false
+        } else {
+            adsLoaderService.isInterstitialReady(AdPlacement.INTERSTITIAL_ASSET_PICKER_EXIT)
+        }
 
-        android.util.Log.d("AssetPickerVM", "🔙 navigateBack - Ad ready: $isAdReady")
+        android.util.Log.d("AssetPickerVM", "🔙 navigateBack - Ad ready: $isAdReady, editMode: $isEditingMode")
 
         // Send navigation event with ad status (Channel - one-time event, no replay)
         // Screen will show ad if ready, otherwise navigate immediately

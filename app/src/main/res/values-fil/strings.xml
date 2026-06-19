@@ -633,4 +633,21 @@
     <string name="banner_trending_now">USO NGAYON</string>
     <string name="banner_new_arrivals">MGA BAGO</string>
 
+    <!-- Editor / music-search strings (mapped from English) -->
+    <string name="error_dialog_try_again">Subukan muli</string>
+    <string name="error_dialog_back_home">Bumalik sa home</string>
+    <string name="song_search_title">Musika</string>
+    <string name="song_search_sheet_hint">Hanapin ang iyong istilo</string>
+    <string name="song_search_searching">Naghahanap...</string>
+    <string name="song_search_results_found">%1$d na resulta ang nahanap</string>
+    <string name="editor_loading_tip_1">Tinitipon ang iyong pinakamagagandang sandali...</string>
+    <string name="editor_loading_tip_2">Ginagawang galaw ang mga larawan...</string>
+    <string name="editor_loading_tip_3">Itinutugma ang bawat sandali sa beat...</string>
+    <string name="editor_loading_tip_4">Ginagawang kahanga-hanga...</string>
+    <string name="editor_loading_tip_5">Handa na ang iyong music video! ✨</string>
+    <string name="editor_loading_dont_close">Huwag isara ang app</string>
+    <string name="editor_ratio_label">Ratio</string>
+    <string name="editor_image_dragging">Kinakaladkad</string>
+    <string name="editor_image_drag_to_reorder">I-drag para ayusin</string>
+    <string name="editor_image_content_desc">Larawan %1$s</string>
 </resources>

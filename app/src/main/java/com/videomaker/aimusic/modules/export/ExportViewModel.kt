@@ -282,11 +282,11 @@ class ExportViewModel(
                         Analytics.trackVideoExportComplete(
                             videoId = projectId,
                             templateId = project?.settings?.templateId,
-                            songId = project?.settings?.musicSongId?.toString(),
+                            songId = project?.settings?.primaryAudioNode?.songId?.toString(),
                             quality = _currentQuality.value.displayName,
                             duration = project?.totalDurationMs,
                             ratioSize = project?.settings?.aspectRatio?.toAnalyticsRatioSize(),
-                            volume = project?.settings?.audioVolume?.times(100f)?.roundToInt(),
+                            volume = (project?.settings?.primaryAudioNode?.volume ?: 1f).times(100f).roundToInt(),
                             mediaQuantity = project?.assets?.size
                         )
                         val generatedAt = System.currentTimeMillis()
@@ -294,7 +294,7 @@ class ExportViewModel(
                             projectId = projectId,
                             generatedAtMs = generatedAt,
                             templateId = project?.settings?.templateId,
-                            songId = project?.settings?.musicSongId,
+                            songId = project?.settings?.primaryAudioNode?.songId,
                             thumbnailUri = _thumbnailUri.value?.toString()
                         )
                         notificationScheduler.scheduleQuickSaveReminder(
@@ -351,7 +351,7 @@ class ExportViewModel(
                             errorMessage = progress.message,
                             errorCode = progress.errorCode,
                             templateId = project?.settings?.templateId,
-                            songId = project?.settings?.musicSongId?.toString(),
+                            songId = project?.settings?.primaryAudioNode?.songId?.toString(),
                             quality = _currentQuality.value.displayName,
                             duration = project?.totalDurationMs,
                             ratioSize = project?.settings?.aspectRatio?.toAnalyticsRatioSize(),
@@ -577,11 +577,11 @@ class ExportViewModel(
         Analytics.trackVideoShare(
             videoId = projectId,
             templateId = project?.settings?.templateId,
-            songId = project?.settings?.musicSongId?.toString(),
+            songId = project?.settings?.primaryAudioNode?.songId?.toString(),
             quality = _currentQuality.value.displayName,
             duration = project?.totalDurationMs,
             ratioSize = project?.settings?.aspectRatio?.toAnalyticsRatioSize(),
-            volume = project?.settings?.audioVolume?.times(100f)?.roundToInt(),
+            volume = (project?.settings?.primaryAudioNode?.volume ?: 1f).times(100f).roundToInt(),
             mediaQuantity = project?.assets?.size,
             location = AnalyticsEvent.Value.Location.RESULT
         )
@@ -746,11 +746,11 @@ class ExportViewModel(
             Analytics.trackVideoDownload(
                 videoId = projectId,
                 templateId = project?.settings?.templateId,
-                songId = project?.settings?.musicSongId?.toString(),
+                songId = project?.settings?.primaryAudioNode?.songId?.toString(),
                 quality = _currentQuality.value.displayName,
                 duration = project?.totalDurationMs,
                 ratioSize = project?.settings?.aspectRatio?.toAnalyticsRatioSize(),
-                volume = project?.settings?.audioVolume?.times(100f)?.roundToInt(),
+                volume = (project?.settings?.primaryAudioNode?.volume ?: 1f).times(100f).roundToInt(),
                 mediaQuantity = project?.assets?.size,
                 location = AnalyticsEvent.Value.Location.RESULT
             )

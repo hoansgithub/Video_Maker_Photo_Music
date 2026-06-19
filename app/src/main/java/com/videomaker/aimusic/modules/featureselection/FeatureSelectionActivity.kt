@@ -148,6 +148,10 @@ class FeatureSelectionActivity : AppCompatActivity() {
                 }
 
                 if (step == FeatureSelectionStep.PERSONALIZING) {
+                    // System renders the personalize (loading) step.
+                    LaunchedEffect(Unit) {
+                        Analytics.track(name = EVENT_PERSONALIZE_RENDER)
+                    }
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
@@ -257,6 +261,9 @@ class FeatureSelectionActivity : AppCompatActivity() {
                                                             if (adShown) {
                                                                 delay(PERSONALIZING_AD_MIN_DISPLAY_MS)
                                                             }
+
+                                                            // System redirects the user to the next step.
+                                                            Analytics.track(name = EVENT_PERSONALIZE_NEXT)
 
                                                             preferencesManager.setOnboardingComplete(true)
                                                             InterstitialAdHelperExt.showInterstitial(

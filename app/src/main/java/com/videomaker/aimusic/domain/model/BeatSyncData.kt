@@ -3,7 +3,7 @@ package com.videomaker.aimusic.domain.model
 import kotlinx.serialization.Serializable
 
 /**
- * Beat-sync data from Supabase beats-cache bucket.
+ * Beat-sync data downloaded from the song's beats_url.
  *
  * Provides beat positions and tempo information for syncing video transitions to music beats.
  *

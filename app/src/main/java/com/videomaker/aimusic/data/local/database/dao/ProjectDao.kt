@@ -52,15 +52,8 @@ interface ProjectDao {
             effectSetId = :effectSetId,
             templateId = :templateId,
             overlayFrameId = :overlayFrameId,
-            musicSongId = :musicSongId,
-            musicSongName = :musicSongName,
-            musicSongArtist = :musicSongArtist,
-            musicSongUrl = :musicSongUrl,
-            musicSongCoverUrl = :musicSongCoverUrl,
-            customAudioUri = :customAudioUri,
-            processedAudioUri = :processedAudioUri,
-            audioVolume = :audioVolume,
             aspectRatio = :aspectRatio,
+            audioNodesJson = :audioNodesJson,
             updatedAt = :updatedAt
         WHERE id = :id
     """)
@@ -70,15 +63,8 @@ interface ProjectDao {
         effectSetId: String?,
         templateId: String?,
         overlayFrameId: String?,
-        musicSongId: Long?,
-        musicSongName: String?,
-        musicSongArtist: String?,
-        musicSongUrl: String?,
-        musicSongCoverUrl: String?,
-        customAudioUri: String?,
-        processedAudioUri: String?,
-        audioVolume: Float,
         aspectRatio: String,
+        audioNodesJson: String?,
         updatedAt: Long
     )
 }

@@ -48,7 +48,7 @@ sealed class TemplatePreviewerUiState {
 
 // ============================================
 // SONG LOAD STATE - REMOVED
-// Videos now have built-in music (template-preview-videos-v2 bucket)
+// Videos now have built-in music
 // No separate music player needed
 // ============================================
 
@@ -524,11 +524,15 @@ class TemplatePreviewerViewModel(
 
     private fun buildSettingsFromTemplate(template: VideoTemplate, aspectRatio: AspectRatio): ProjectSettings {
         val currentOverrideSongId = overrideSongId.value  // Get current value from StateFlow
+        val songId = if (currentOverrideSongId >= 0L) currentOverrideSongId
+                     else template.songId.takeIf { it > 0L }
+        val audioNodes = songId?.let {
+            listOf(com.videomaker.aimusic.domain.model.AudioNode(songId = it))
+        } ?: emptyList()
         return ProjectSettings(
             effectSetId = template.effectSetId,
-            musicSongId = if (currentOverrideSongId >= 0L) currentOverrideSongId
-                          else template.songId.takeIf { it > 0L },
-            aspectRatio = aspectRatio
+            aspectRatio = aspectRatio,
+            audioNodes = audioNodes
         )
     }
 

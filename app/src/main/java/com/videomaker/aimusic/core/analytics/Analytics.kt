@@ -643,6 +643,26 @@ object Analytics {
         )
     }
 
+    /**
+     * Fired when the user changes a song's start time in the editor change-song view,
+     * either by dragging the scrubber ([AnalyticsEvent.Value.Location.DRAG_BAR]) or
+     * tapping the duration bar ([AnalyticsEvent.Value.Location.DURATION_BAR]).
+     */
+    fun trackSongStartTimeChange(songId: String, location: String) {
+        trackWithPolicy(
+            eventName = AnalyticsEvent.SONG_STARTTIME_CHANGE,
+            params = mapOf(
+                AnalyticsEvent.Param.SONG_ID to songId,
+                AnalyticsEvent.Param.LOCATION to location
+            ),
+            requiredParams = setOf(
+                AnalyticsEvent.Param.SONG_ID,
+                AnalyticsEvent.Param.LOCATION
+            ),
+            policy = TrackingPolicy.NORMAL
+        )
+    }
+
     fun trackCreationStart(location: String) {
         trackWithPolicy(
             eventName = AnalyticsEvent.CREATION_START,
@@ -1001,6 +1021,24 @@ object Analytics {
         )
     }
 
+    fun trackVideoEditorRender() {
+        trackWithPolicy(
+            eventName = AnalyticsEvent.VIDEO_EDITOR_RENDER,
+            params = emptyMap(),
+            requiredParams = emptySet(),
+            policy = TrackingPolicy.NORMAL
+        )
+    }
+
+    fun trackVideoPreviewFailed(videoId: String) {
+        trackWithPolicy(
+            eventName = AnalyticsEvent.VIDEO_PREVIEW_FAILED,
+            params = mapOf(AnalyticsEvent.Param.VIDEO_ID to videoId),
+            requiredParams = setOf(AnalyticsEvent.Param.VIDEO_ID),
+            policy = TrackingPolicy.NORMAL
+        )
+    }
+
     fun trackVideoPreview(videoId: String, location: String) {
         trackWithPolicy(
             eventName = AnalyticsEvent.VIDEO_PREVIEW,
@@ -1064,35 +1102,39 @@ object Analytics {
         )
     }
 
-    fun trackEffectClick(videoId: String, effectId: String, effectName: String) {
+    fun trackEffectClick(videoId: String, effectId: String, effectName: String, isPremium: Boolean) {
         trackWithPolicy(
             eventName = AnalyticsEvent.EFFECT_CLICK,
             params = mapOf(
                 AnalyticsEvent.Param.VIDEO_ID to videoId,
                 AnalyticsEvent.Param.EFFECT_ID to effectId,
-                AnalyticsEvent.Param.EFFECT_NAME to effectName
+                AnalyticsEvent.Param.EFFECT_NAME to effectName,
+                AnalyticsEvent.Param.TYPE to premiumType(isPremium)
             ),
             requiredParams = setOf(
                 AnalyticsEvent.Param.VIDEO_ID,
                 AnalyticsEvent.Param.EFFECT_ID,
-                AnalyticsEvent.Param.EFFECT_NAME
+                AnalyticsEvent.Param.EFFECT_NAME,
+                AnalyticsEvent.Param.TYPE
             ),
             policy = TrackingPolicy.NORMAL
         )
     }
 
-    fun trackEffectSelect(videoId: String, effectId: String, effectName: String) {
+    fun trackEffectSelect(videoId: String, effectId: String, effectName: String, isPremium: Boolean) {
         trackWithPolicy(
             eventName = AnalyticsEvent.EFFECT_SELECT,
             params = mapOf(
                 AnalyticsEvent.Param.VIDEO_ID to videoId,
                 AnalyticsEvent.Param.EFFECT_ID to effectId,
-                AnalyticsEvent.Param.EFFECT_NAME to effectName
+                AnalyticsEvent.Param.EFFECT_NAME to effectName,
+                AnalyticsEvent.Param.TYPE to premiumType(isPremium)
             ),
             requiredParams = setOf(
                 AnalyticsEvent.Param.VIDEO_ID,
                 AnalyticsEvent.Param.EFFECT_ID,
-                AnalyticsEvent.Param.EFFECT_NAME
+                AnalyticsEvent.Param.EFFECT_NAME,
+                AnalyticsEvent.Param.TYPE
             ),
             policy = TrackingPolicy.NORMAL
         )
@@ -1395,6 +1437,71 @@ object Analytics {
             policy = TrackingPolicy.NORMAL
         )
     }
+
+    fun trackPhotoEdit() {
+        trackWithPolicy(
+            eventName = AnalyticsEvent.PHOTO_EDIT,
+            params = emptyMap(),
+            requiredParams = emptySet(),
+            policy = TrackingPolicy.NORMAL
+        )
+    }
+
+    fun trackPhotoClick() {
+        trackWithPolicy(
+            eventName = AnalyticsEvent.PHOTO_CLICK,
+            params = emptyMap(),
+            requiredParams = emptySet(),
+            policy = TrackingPolicy.NORMAL
+        )
+    }
+
+    fun trackPhotoDelete() {
+        trackWithPolicy(
+            eventName = AnalyticsEvent.PHOTO_DELETE,
+            params = emptyMap(),
+            requiredParams = emptySet(),
+            policy = TrackingPolicy.NORMAL
+        )
+    }
+
+    fun trackPhotoDrag() {
+        trackWithPolicy(
+            eventName = AnalyticsEvent.PHOTO_DRAG,
+            params = emptyMap(),
+            requiredParams = emptySet(),
+            policy = TrackingPolicy.NORMAL
+        )
+    }
+
+    fun trackPhotoAdd() {
+        trackWithPolicy(
+            eventName = AnalyticsEvent.PHOTO_ADD,
+            params = emptyMap(),
+            requiredParams = emptySet(),
+            policy = TrackingPolicy.NORMAL
+        )
+    }
+
+    fun trackPhotoSelect() {
+        trackWithPolicy(
+            eventName = AnalyticsEvent.PHOTO_SELECT,
+            params = emptyMap(),
+            requiredParams = emptySet(),
+            policy = TrackingPolicy.NORMAL
+        )
+    }
+
+    fun trackPhotoClose() {
+        trackWithPolicy(
+            eventName = AnalyticsEvent.PHOTO_CLOSE,
+            params = emptyMap(),
+            requiredParams = emptySet(),
+            policy = TrackingPolicy.NORMAL
+        )
+    }
+
+
 
     fun trackVideoExport(
         videoId: String,

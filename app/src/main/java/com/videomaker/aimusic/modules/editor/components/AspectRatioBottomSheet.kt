@@ -35,7 +35,9 @@ import androidx.compose.ui.unit.sp
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.domain.model.AspectRatio
 import com.videomaker.aimusic.ui.theme.Gray500
+import com.videomaker.aimusic.ui.theme.Primary
 import com.videomaker.aimusic.ui.theme.SplashBackground
+import com.videomaker.aimusic.ui.theme.TextOnPrimary
 import com.videomaker.aimusic.ui.theme.TextPrimary
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -123,8 +125,99 @@ internal fun SelectRatioBottomSheet(
     }
 }
 
+// ============================================
+// RATIO PANEL (INLINE)
+// ============================================
+
 @Composable
-private fun RatioOptionCard(
+fun RatioPanel(
+    selectedRatio: AspectRatio,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
+    onRatioSelected: (AspectRatio) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(SplashBackground)
+            .padding(horizontal = 20.dp)
+            .padding(top = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        // Header row: X button | center title | checkmark
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            // Left Cancel button
+            Box(
+                modifier = Modifier
+                    .size(32.dp)
+                    .clickable(onClick = onDismiss),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    painter = androidx.compose.ui.res.painterResource(id = R.drawable.ic_close),
+                    contentDescription = stringResource(R.string.close),
+                    tint = TextPrimary,
+                    modifier = Modifier.size(21.dp)
+                )
+            }
+
+            // Center Title
+            Text(
+                text = stringResource(R.string.editor_select_video_ratio),
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = TextPrimary,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                modifier = Modifier.weight(1f)
+            )
+
+            // Right Confirm/Checkmark button
+            Box(
+                modifier = Modifier
+                    .size(28.dp)
+                    .clip(CircleShape)
+                    .background(Primary)
+                    .clickable(onClick = onConfirm),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Check,
+                    contentDescription = stringResource(R.string.confirm),
+                    tint = TextOnPrimary,
+                    modifier = Modifier.size(21.dp)
+                )
+            }
+        }
+
+        // Ratio options row
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            listOf(
+                AspectRatio.RATIO_16_9,
+                AspectRatio.RATIO_9_16,
+                AspectRatio.RATIO_4_5,
+                AspectRatio.RATIO_1_1
+            ).forEach { ratio ->
+                RatioOptionCard(
+                    ratio = ratio,
+                    isSelected = ratio == selectedRatio,
+                    onClick = { onRatioSelected(ratio) },
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+internal fun RatioOptionCard(
     ratio: AspectRatio,
     isSelected: Boolean,
     onClick: () -> Unit,
@@ -166,7 +259,7 @@ private fun RatioOptionCard(
 }
 
 @Composable
-private fun AspectRatioIcon(
+internal fun AspectRatioIcon(
     ratio: AspectRatio,
     isSelected: Boolean
 ) {
@@ -190,7 +283,7 @@ private fun AspectRatioIcon(
 // ASPECT RATIO EXTENSION
 // ============================================
 
-private val AspectRatio.shortLabel: String
+internal val AspectRatio.shortLabel: String
     get() = when (this) {
         AspectRatio.RATIO_16_9 -> "16:9"
         AspectRatio.RATIO_9_16 -> "9:16"

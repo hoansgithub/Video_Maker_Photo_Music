@@ -1,9 +1,10 @@
 package com.videomaker.aimusic.ui.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -21,20 +22,28 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.domain.model.VideoQuality
 import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
+import com.videomaker.aimusic.ui.theme.Neutral_N600
+import com.videomaker.aimusic.ui.theme.SplashBackground
 
 /**
  * Reusable Quality Picker Component
@@ -79,9 +88,13 @@ fun QualityPicker(
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // HD badge for 1080p (on the left)
-            if (selectedQuality == VideoQuality.FHD_1080) {
-                HdBadge()
+            if (!isQualityUnlocked) {
+                AdBadge(
+                    style = AdBadgeStyle.Small(
+                        textColor = textColor,
+                        backgroundColor = textColor.copy(alpha = 0.2f)
+                    )
+                )
                 Spacer(modifier = Modifier.width(6.dp))
             }
             Text(
@@ -90,17 +103,6 @@ fun QualityPicker(
                 fontSize = 14.sp,
                 fontWeight = FontWeight.SemiBold
             )
-            // [AD] badge for locked qualities (720p/1080p)
-            val isLocked = (selectedQuality == VideoQuality.HD_720 || selectedQuality == VideoQuality.FHD_1080) && !isQualityUnlocked
-            if (isLocked) {
-                Spacer(modifier = Modifier.width(6.dp))
-                AdBadge(
-                    style = AdBadgeStyle.Small(
-                        textColor = textColor,
-                        backgroundColor = textColor.copy(alpha = 0.2f)
-                    )
-                )
-            }
             Spacer(modifier = Modifier.width(4.dp))
             Icon(
                 imageVector = Icons.Default.ArrowDropDown,
@@ -116,7 +118,6 @@ fun QualityPicker(
             onDismissRequest = { showQualityMenu = false }
         ) {
             VideoQuality.entries.forEach { quality ->
-                val isQualityLocked = (quality == VideoQuality.HD_720 || quality == VideoQuality.FHD_1080) && !isQualityUnlocked
                 DropdownMenuItem(
                     text = {
                         Row(
@@ -124,11 +125,6 @@ fun QualityPicker(
                             horizontalArrangement = Arrangement.End,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            // HD badge for 1080p
-                            if (quality == VideoQuality.FHD_1080) {
-                                HdBadge()
-                                Spacer(modifier = Modifier.width(8.dp))
-                            }
                             Text(
                                 text = quality.displayName,
                                 fontWeight = if (quality == selectedQuality) {
@@ -138,15 +134,6 @@ fun QualityPicker(
                                 },
                                 textAlign = TextAlign.End
                             )
-                            // [AD] badge for locked qualities
-                            if (isQualityLocked) {
-                                Spacer(modifier = Modifier.width(6.dp))
-                                AdBadge(
-                                    style = AdBadgeStyle.Small(
-                                        textColor = MaterialTheme.colorScheme.onSurface
-                                    )
-                                )
-                            }
                         }
                     },
                     onClick = {
@@ -168,24 +155,109 @@ fun QualityPicker(
     }
 }
 
-/**
- * HD Badge for 1080p quality indicator
- */
 @Composable
-private fun HdBadge(modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier
-            .background(
-                color = MaterialTheme.colorScheme.primary,
-                shape = RoundedCornerShape(4.dp)
+fun QualityPickerV2(
+    selectedQuality: VideoQuality,
+    onQualityChange: (VideoQuality) -> Unit,
+    isQualityUnlocked: Boolean = true,
+    isAdTypeInterstitial: Boolean = false,
+    onMenuOpen: () -> Unit = {},
+) {
+    var showQualityMenu by remember { mutableStateOf(false) }
+
+    // Measure anchor (button) and menu widths so the dropdown can be right-aligned
+    // under the button instead of the default start-alignment (which pushes it right).
+    val density = LocalDensity.current
+    var buttonWidthPx by remember { mutableIntStateOf(0) }
+    var menuWidthPx by remember { mutableIntStateOf(0) }
+
+    Box {
+        // Quality button
+        Row(
+            modifier = Modifier
+                .onSizeChanged { buttonWidthPx = it.width }
+                .clickableSingle {
+                    onMenuOpen()
+                    showQualityMenu = true
+                }
+                .padding(vertical = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(2.5.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // [AD] badge for locked qualities — only when the unlock ad type is NOT
+            // interstitial (interstitial shows on export anyway; badge is for rewarded unlocks)
+            if (!isQualityUnlocked && !isAdTypeInterstitial) {
+                AdBadge(
+                    style = AdBadgeStyle.Small(
+                        textColor = Neutral_N600,
+                        backgroundColor = Neutral_N600.copy(alpha = 0.2f)
+                    )
+                )
+            }
+            Text(
+                text = selectedQuality.displayName,
+                color = Neutral_N600,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.SemiBold
             )
-            .padding(horizontal = 4.dp, vertical = 2.dp)
-    ) {
-        Text(
-            text = stringResource(R.string.editor_hd),
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onPrimary
-        )
+            Spacer(modifier = Modifier.width(1.5.dp))
+            Icon(
+                painter = painterResource(R.drawable.ic_arrow_down),
+                contentDescription = stringResource(R.string.editor_select_quality),
+                tint = Neutral_N600,
+                modifier = Modifier.size(18.dp)
+            )
+        }
+
+        // Quality dropdown menu — right-aligned under the button with an 8.dp gap.
+        // offset.x is negative (menu is wider than the button) so its right edge lines
+        // up with the button's right edge; offset.y adds the vertical spacing.
+        val menuOffsetX = with(density) { (buttonWidthPx - menuWidthPx).toDp() }
+        DropdownMenu(
+            expanded = showQualityMenu,
+            onDismissRequest = { showQualityMenu = false },
+            offset = DpOffset(x = menuOffsetX, y = 8.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .width(IntrinsicSize.Max)
+                    .onSizeChanged { menuWidthPx = it.width }
+            ) {
+                VideoQuality.entries.forEach { quality ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickableSingle{
+                                onQualityChange(quality)
+                                showQualityMenu = false
+                            }
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
+                        horizontalArrangement = Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        if (quality == selectedQuality) {
+                            Icon(
+                                imageVector = Icons.Default.Check,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                            Spacer(Modifier.width(8.dp))
+                        }
+
+                        Text(
+                            text = quality.displayName,
+                            fontWeight = if (quality == selectedQuality) {
+                                FontWeight.Bold
+                            } else {
+                                FontWeight.Normal
+                            },
+                            textAlign = TextAlign.End
+                        )
+                    }
+
+                }
+            }
+        }
     }
 }
+

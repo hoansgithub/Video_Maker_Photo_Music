@@ -40,6 +40,7 @@ class TransitionEffect(
     private val targetAspectRatio: Float = 16f / 9f
 ) : GlEffect {
 
+
     override fun toGlShaderProgram(
         context: Context,
         useHdr: Boolean
@@ -63,6 +64,9 @@ class TransitionEffect(
  * This guarantees no color difference between them.
  * Media3's input texture is IGNORED.
  */
+// Pre-allocated constant — avoids heap allocation per drawFrame call
+private val FADE_COLOR_BLACK = floatArrayOf(0f, 0f, 0f)
+
 private class TransitionShaderProgram(
     useHdr: Boolean,
     private val transition: Transition,
@@ -214,7 +218,7 @@ void main() {
         ShaderErrorHandler.safeSetFloatUniform(program, "progress", progress)
         ShaderErrorHandler.safeSetFloatUniform(program, "ratio", inputWidth.toFloat() / inputHeight.toFloat())
         ShaderErrorHandler.safeSetFloatUniform(program, "smoothness", 0.05f)
-        ShaderErrorHandler.safeSetFloatsUniform(program, "fadeColor", floatArrayOf(0f, 0f, 0f))
+        ShaderErrorHandler.safeSetFloatsUniform(program, "fadeColor", FADE_COLOR_BLACK)
 
         // Verify GL state before drawing
         if (!ShaderErrorHandler.isGlStateValid()) {

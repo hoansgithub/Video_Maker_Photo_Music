@@ -514,6 +514,7 @@ object AdPlacement {
      * Remote Config key: ad_native_editor_banner
      */
     const val NATIVE_EDITOR_BANNER = "ad_native_editor_banner"
+    const val NATIVE_EDITOR_LOADING = "ad_native_editor_loading"
 
     /**
      * Asset picker bottom banner native ad.
@@ -1240,6 +1241,7 @@ object AdPlacement {
         NATIVE_HOME_BANNER,
         NATIVE_TEMPLATE_PREVIEWER_BANNER,
         NATIVE_EDITOR_BANNER,
+        NATIVE_EDITOR_LOADING,
         NATIVE_ASSET_PICKER_BANNER,
         NATIVE_GALLERY_GRID,
         NATIVE_GALLERY_HOT_TPT,
