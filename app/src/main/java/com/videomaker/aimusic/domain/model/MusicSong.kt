@@ -30,7 +30,8 @@ data class MusicSong(
     val usageCount: Int = 0,
     @Deprecated("Use hookStartTimes instead. Kept for backward compatibility — derived from hookStartTimes.first().")
     val hookStartTimeMs: Long = 0L,
-    val hookStartTimes: List<Long> = emptyList()
+    val hookStartTimes: List<Long> = emptyList(),
+    val beatsUrl: String = ""
 ) {
     /** Formatted duration string (e.g., "3:45") */
     val formattedDuration: String

@@ -5,22 +5,24 @@ import android.util.Log
 import com.videomaker.aimusic.domain.model.BeatSyncData
 import com.videomaker.aimusic.domain.repository.BeatSyncRepository
 import io.github.jan.supabase.SupabaseClient
-import io.github.jan.supabase.storage.storage
+import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.query.Columns
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import org.json.JSONObject
 import java.io.File
 
 /**
- * Implementation of BeatSyncRepository using Supabase Storage.
+ * Implementation of BeatSyncRepository.
  *
- * Beat JSON files are stored in Supabase storage bucket: beats-cache
- * Path format: beats-cache/<song_id>.json
+ * Beat JSON files are downloaded from URLs stored in the `beats_url` column of the songs table.
  *
  * Three-layer caching strategy:
  * 1. In-memory cache: Instant access (Map<songId, BeatSyncData>)
  * 2. File cache: <app_cache_dir>/beats_cache/<songId>.json (~50ms)
- * 3. Supabase download: Network fetch (~500ms)
+ * 3. Network download: Fetch from beats_url (~500ms)
  *
  * Beat-sync data is SONG metadata, shared across all projects using that song.
  * Multiple projects with the same song reuse the same cached data.
@@ -44,10 +46,10 @@ class BeatSyncRepositoryImpl(
 
     companion object {
         private const val TAG = "BeatSyncRepository"
-        private const val BUCKET_NAME = "beats-cache"
+        private const val TABLE_SONGS = "songs"
     }
 
-    override suspend fun getBeatData(songId: Long): Result<BeatSyncData?> = withContext(Dispatchers.IO) {
+    override suspend fun getBeatData(songId: Long, beatsUrl: String?): Result<BeatSyncData?> = withContext(Dispatchers.IO) {
         return@withContext try {
             // 1. Check in-memory cache first (instant, shared across all projects)
             if (memoryCache.containsKey(songId)) {
@@ -64,11 +66,27 @@ class BeatSyncRepositoryImpl(
                 return@withContext Result.success(data)
             }
 
-            // 3. Download from Supabase storage (slow, network required)
-            Log.d(TAG, "Downloading beat data from Supabase: $songId")
-            val bytes = supabaseClient.storage
-                .from(BUCKET_NAME)
-                .downloadPublic("$songId.json")
+            // 3. Resolve download URL: use provided beatsUrl or look up from songs table
+            val url = if (!beatsUrl.isNullOrEmpty()) {
+                beatsUrl
+            } else {
+                supabaseClient.from(TABLE_SONGS)
+                    .select(Columns.raw("beats_url")) {
+                        filter { eq("id", songId) }
+                        limit(1)
+                    }
+                    .decodeSingleOrNull<BeatsUrlDto>()
+                    ?.beatsUrl
+            }
+
+            if (url.isNullOrEmpty()) {
+                Log.w(TAG, "No beats URL for song $songId - falling back to legacy mode")
+                memoryCache[songId] = null
+                return@withContext Result.success(null)
+            }
+
+            Log.d(TAG, "Downloading beat data: $songId")
+            val bytes = java.net.URL(url).readBytes()
 
             if (bytes.isEmpty()) {
                 Log.w(TAG, "Beat file not found: $songId.json - falling back to legacy mode")
@@ -129,4 +147,9 @@ class BeatSyncRepositoryImpl(
             numBeats = obj.getInt("num_beats")
         )
     }
+
+    @Serializable
+    private data class BeatsUrlDto(
+        @SerialName("beats_url") val beatsUrl: String? = null
+    )
 }

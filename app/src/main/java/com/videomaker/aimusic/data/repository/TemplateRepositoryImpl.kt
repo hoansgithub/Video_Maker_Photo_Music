@@ -36,8 +36,9 @@ class TemplateRepositoryImpl(
         private const val FN_FEATURED_TEMPLATES = "get_featured_templates"
         private const val FN_ACTIVE_VIBE_TAGS = "get_active_vibe_tags"
         private val COLUMNS_TEMPLATE = Columns.raw(
-            "id,name,name_i18n,thumbnail_path,preview_path,song_id,effect_set_id,aspect_ratio," +
+            "id,name,name_i18n,song_id,effect_set_id,aspect_ratio," +
             "image_duration_ms,transition_pct,is_premium,is_featured,is_active,sort_order,use_count,view_count," +
+            "thumbnail_url,preview_image_url,preview_video_url," +
             "template_vibe_tags(vibe_tag_id,sort_order)"
         )
     }
@@ -270,25 +271,11 @@ class TemplateRepositoryImpl(
 // DTO
 // ============================================
 
-// Lower-res thumbnails for gallery/list views
-private const val THUMBNAIL_BASE_URL =
-    "https://zdydtiwglotssklnkwjh.supabase.co/storage/v1/object/public/template-thumbnails/"
-
-// Higher-res images for full-screen template previewer
-private const val PREVIEW_IMAGE_BASE_URL =
-    "https://zdydtiwglotssklnkwjh.supabase.co/storage/v1/object/public/template-previews/"
-
-// Video previews for full-screen template previewer (v2: with built-in music, no separate audio player needed)
-private const val VIDEO_BASE_URL =
-    "https://zdydtiwglotssklnkwjh.supabase.co/storage/v1/object/public/template-preview-videos-v2/"
-
 @Serializable
 private data class TemplateDto(
     val id: String,
     val name: String,
     @SerialName("name_i18n") val nameI18n: JsonObject? = null,
-    @SerialName("thumbnail_path") val thumbnailPath: String? = null,
-    @SerialName("preview_path") val previewPath: String? = null,
     @SerialName("song_id") val songId: Long,
     @SerialName("effect_set_id") val effectSetId: String,
     @SerialName("aspect_ratio") val aspectRatio: String = "9:16",
@@ -301,12 +288,12 @@ private data class TemplateDto(
     @SerialName("use_count") val useCount: Long = 0,
     @SerialName("view_count") val viewCount: Long = 0,
     @SerialName("template_vibe_tags") val vibeTags: List<VibeTagRef> = emptyList(),
-    @SerialName("target_regions") val targetRegions: List<String>? = null
+    @SerialName("target_regions") val targetRegions: List<String>? = null,
+    @SerialName("thumbnail_url") val thumbnailUrl: String? = null,
+    @SerialName("preview_image_url") val previewImageUrl: String? = null,
+    @SerialName("preview_video_url") val previewVideoUrl: String? = null
 ) {
     fun toDomain(locale: String): VideoTemplate {
-        // Determine if preview_path is a video (.mp4) or image
-        val isVideo = previewPath?.endsWith(".mp4", ignoreCase = true) == true
-
         return VideoTemplate(
             id = id,
             name = I18nHelper.getLocalizedValue(
@@ -314,9 +301,9 @@ private data class TemplateDto(
                 locale = locale,
                 fallback = name
             ),
-            thumbnailPath = if (!thumbnailPath.isNullOrEmpty()) THUMBNAIL_BASE_URL + thumbnailPath else "",
-            previewImagePath = if (!previewPath.isNullOrEmpty() && !isVideo) PREVIEW_IMAGE_BASE_URL + previewPath else "",
-            videoUrl = if (isVideo && !previewPath.isNullOrEmpty()) VIDEO_BASE_URL + previewPath else null,
+            thumbnailPath = thumbnailUrl ?: "",
+            previewImagePath = previewImageUrl ?: "",
+            videoUrl = previewVideoUrl,
             songId = songId,
             effectSetId = effectSetId,
             aspectRatio = aspectRatio,

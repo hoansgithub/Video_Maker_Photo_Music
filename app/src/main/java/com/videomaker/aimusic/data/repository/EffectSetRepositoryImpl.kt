@@ -29,22 +29,12 @@ class EffectSetRepositoryImpl(
 
     companion object {
         private const val TABLE_EFFECT_SETS = "effect_sets"
-        private const val STORAGE_BUCKET = "effect-set-thumbnails"
         private const val ERROR_LOAD_FAILED = "Failed to load effect sets"
         private const val ERROR_NOT_FOUND = "Effect set not found"
 
         /** Cache key for first page only (offset = 0). */
         private fun cacheKeyEffectSetsPaged(region: String, limit: Int, offset: Int): String =
             "effect_sets_paged_${region}_${limit}_${offset}"
-    }
-
-    /** Construct full thumbnail URL from filename. */
-    private fun getThumbnailUrl(filename: String): String {
-        if (filename.isEmpty()) return ""
-        val baseUrl = supabaseClient.supabaseUrl.removeSuffix("/")
-        // Ensure https:// protocol is included
-        val urlWithProtocol = if (baseUrl.startsWith("http")) baseUrl else "https://$baseUrl"
-        return "$urlWithProtocol/storage/v1/object/public/$STORAGE_BUCKET/$filename"
     }
 
     override suspend fun getEffectSetsPaged(offset: Int, limit: Int): Result<List<EffectSet>> =
@@ -74,7 +64,7 @@ class EffectSetRepositoryImpl(
                     }
                     .decodeList<EffectSetDto>()
 
-                val effectSets = dtos.map { it.toEffectSet(::getThumbnailUrl) }
+                val effectSets = dtos.map { it.toEffectSet() }
 
                 // Register in TransitionSetLibrary so CompositionFactory can resolve them
                 TransitionSetLibrary.registerRemote(effectSets)
@@ -112,7 +102,7 @@ class EffectSetRepositoryImpl(
                     .decodeSingleOrNull<EffectSetDto>()
 
                 if (effectSet != null) {
-                    val mapped = effectSet.toEffectSet(::getThumbnailUrl)
+                    val mapped = effectSet.toEffectSet()
                     TransitionSetLibrary.registerRemote(listOf(mapped))
                     Result.success(mapped)
                 } else {
@@ -139,8 +129,6 @@ class EffectSetRepositoryImpl(
         val id: String,
         val name: String,
         val description: String = "",
-        @SerialName("thumbnail_path")
-        val thumbnailPath: String = "",
         @SerialName("is_premium")
         val isPremium: Boolean = false,
         @SerialName("is_active")
@@ -150,18 +138,19 @@ class EffectSetRepositoryImpl(
         @SerialName("transition_ids")
         val transitionIds: List<String>? = null,
         @SerialName("is_new")
-        val isNew: Boolean = false
+        val isNew: Boolean = false,
+        @SerialName("thumbnail_url")
+        val thumbnailUrl: String? = null
     ) {
         /**
          * Maps DTO to domain model.
          * Resolves transition IDs to Transition objects via TransitionShaderLibrary.
-         * @param getThumbnailUrl Function to construct full URL from filename
          */
-        fun toEffectSet(getThumbnailUrl: (String) -> String) = EffectSet(
+        fun toEffectSet() = EffectSet(
             id = id,
             name = name,
             description = description,
-            thumbnailUrl = getThumbnailUrl(thumbnailPath),
+            thumbnailUrl = thumbnailUrl ?: "",
             isPremium = isPremium,
             isActive = isActive,
             transitionIds = transitionIds ?: emptyList(),

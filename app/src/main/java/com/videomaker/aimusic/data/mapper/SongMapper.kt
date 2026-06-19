@@ -32,7 +32,8 @@ fun SongDto.toMusicSong(): MusicSong {
         hookStartTimeMs = primaryHook,
         hookStartTimes = hookTimes.ifEmpty {
             listOfNotNull(primaryHook.takeIf { it > 0L })
-        }
+        },
+        beatsUrl = beatsUrl ?: ""
     )
 }
 

@@ -10,10 +10,10 @@ import androidx.compose.runtime.Immutable
  *
  * vibeTags: from vibe_tags table (e.g. birthday, wedding, travel, party, love, ...)
  *
- * Media URLs:
- * - thumbnailPath: Lower-res image for gallery/list views (template-thumbnails bucket)
- * - previewImagePath: Higher-res image for full-screen previewer (template-previews bucket)
- * - videoUrl: Full-screen video preview (template-preview-videos bucket) - optional, falls back to previewImagePath
+ * Media URLs (read directly from DB columns):
+ * - thumbnailPath: Lower-res image for gallery/list views
+ * - previewImagePath: Higher-res image for full-screen previewer
+ * - videoUrl: Full-screen video preview (all templates have this)
  */
 @Immutable
 data class VideoTemplate(
