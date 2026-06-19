@@ -96,6 +96,16 @@ class AdPlacementConfigService(
     @Volatile
     var bannerUseNative: Boolean = true
         private set
+
+    /**
+     * When true, bottom-positioned native ads receive navigationBarsPadding
+     * to prevent overlap with the system navigation bar.
+     * Controlled via Remote Config key [RemoteConfigKeys.AD_BOTTOM_NAV_PADDING_ENABLED].
+     * Default: false (no extra padding)
+     */
+    @Volatile
+    var adBottomNavPaddingEnabled: Boolean = false
+        private set
     init {
         try {
             registerAllPlacements()
@@ -1336,6 +1346,12 @@ class AdPlacementConfigService(
             com.videomaker.aimusic.core.constants.RemoteConfigKeys.AD_BANNER_USE_NATIVE, "true"
         ).toBoolean()
         Log.d(TAG, "📊 Banner use native: $bannerUseNative")
+
+        // Bottom ad navigation bar padding toggle
+        adBottomNavPaddingEnabled = config.getString(
+            com.videomaker.aimusic.core.constants.RemoteConfigKeys.AD_BOTTOM_NAV_PADDING_ENABLED, "false"
+        ).toBoolean()
+        Log.d(TAG, "📊 Bottom ad nav padding: $adBottomNavPaddingEnabled")
     }
 
     /**

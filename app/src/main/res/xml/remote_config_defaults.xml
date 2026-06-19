@@ -281,6 +281,12 @@
     <value>{"enabled":true,"type":"rewardedInterstitial","units":[{"id":"ca-app-pub-7121075950716954/4370724539","enabled":true},{"id":"ca-app-pub-7121075950716954/6805316184","enabled":true}]}</value>
   </entry>
 
+  <!-- Bottom ad navigation bar padding (false = no extra padding, current behavior) -->
+  <entry>
+    <key>ad_bottom_nav_padding_enabled</key>
+    <value>false</value>
+  </entry>
+
   <!-- Banner → Native toggle (true = replace all banners with native ads) -->
   <entry>
     <key>ad_banner_use_native</key>

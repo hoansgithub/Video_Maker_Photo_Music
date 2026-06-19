@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -671,23 +672,27 @@ fun HomeScreen(
 
             // Ad below tab content (at bottom of screen)
             // Remote Config toggle: native ad (default) or standard banner
-            if (adPlacementConfigService.bannerUseNative) {
-                NativeAdView(
-                    placement = AdPlacement.NATIVE_HOME_BANNER,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(100.dp),
-                    isDebug = BuildConfig.DEBUG,
-                    onAdClicked = { adClickDetector.onAdClick(it) }
-                )
-            } else {
-                BannerAdView(
-                    placement = AdPlacement.BANNER_HOME,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(50.dp),
-                    onAdClicked = { adClickDetector.onAdClick(it) }
-                )
+            val bottomAdModifier = if (adPlacementConfigService.adBottomNavPaddingEnabled)
+                Modifier.navigationBarsPadding() else Modifier
+            Box(modifier = bottomAdModifier) {
+                if (adPlacementConfigService.bannerUseNative) {
+                    NativeAdView(
+                        placement = AdPlacement.NATIVE_HOME_BANNER,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(100.dp),
+                        isDebug = BuildConfig.DEBUG,
+                        onAdClicked = { adClickDetector.onAdClick(it) }
+                    )
+                } else {
+                    BannerAdView(
+                        placement = AdPlacement.BANNER_HOME,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp),
+                        onAdClicked = { adClickDetector.onAdClick(it) }
+                    )
+                }
             }
         }
 

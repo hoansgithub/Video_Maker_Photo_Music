@@ -93,6 +93,7 @@ import org.koin.compose.koinInject
 import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.milliseconds
 import com.videomaker.aimusic.core.ads.AdClickDetector
+import com.videomaker.aimusic.core.ads.AdPlacementConfigService
 
 /**
  * LanguageSelectionScreen - Language picker for onboarding and settings.
@@ -112,6 +113,7 @@ fun LanguageSelectionScreen(
     languageManager: LanguageManager = koinInject()
 ) {
     val adClickDetector: AdClickDetector = koinInject()
+    val adPlacementConfigService: AdPlacementConfigService = koinInject()
     LaunchedEffect(Unit) {
         Analytics.track(name = AnalyticsEvent.LANGUAGE_SHOW)
     }
@@ -416,6 +418,7 @@ fun LanguageSelectionScreen(
                     .onSizeChanged { size ->
                         bottomSectionHeight = size.height  // Measure actual height dynamically!
                     }
+                    .then(if (adPlacementConfigService.adBottomNavPaddingEnabled) Modifier.navigationBarsPadding() else Modifier)
             ) {
                 if (delayedHasSelection) {
                     // ALT ad - shown after user selects a language

@@ -804,7 +804,7 @@ internal fun MusicSearchBottomSheet(
                                         is SongFeedItem.Ad -> {
                                             Box(
                                                 modifier = Modifier
-                                                    .padding(horizontal = 12.dp)
+                                                    .padding(horizontal = 12.dp, vertical = 8.dp)
                                                     .fillMaxWidth()
                                                     .clip(RoundedCornerShape(dimens.radiusXl))
                                                     .background(MaterialTheme.colorScheme.surface)
@@ -936,7 +936,7 @@ internal fun MusicSearchBottomSheet(
                                             is SongFeedItem.Ad -> {
                                                 Box(
                                                     modifier = Modifier
-                                                        .padding(horizontal = 12.dp)
+                                                        .padding(horizontal = 12.dp, vertical = 8.dp)
                                                         .fillMaxWidth()
                                                         .clip(RoundedCornerShape(dimens.radiusXl))
                                                         .background(MaterialTheme.colorScheme.surface)

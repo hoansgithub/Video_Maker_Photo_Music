@@ -1222,25 +1222,29 @@ private fun TemplatePreviewerReadyContent(
 
         // Ad at bottom, above safe area (like HomeScreen)
         // Remote Config toggle: native ad (default) or standard banner
-        if (adPlacementConfigService.bannerUseNative) {
-            NativeAdView(
-                placement = AdPlacement.NATIVE_TEMPLATE_PREVIEWER_BANNER,
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .height(100.dp),
-                isDebug = BuildConfig.DEBUG,
-                onAdClicked = { adClickDetector.onAdClick(it) }
-            )
-        } else {
-            BannerAdView(
-                placement = AdPlacement.BANNER_TEMPLATE_PREVIEWER,
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .height(50.dp),
-                onAdClicked = { adClickDetector.onAdClick(it) }
-            )
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .then(if (adPlacementConfigService.adBottomNavPaddingEnabled) Modifier.navigationBarsPadding() else Modifier)
+        ) {
+            if (adPlacementConfigService.bannerUseNative) {
+                NativeAdView(
+                    placement = AdPlacement.NATIVE_TEMPLATE_PREVIEWER_BANNER,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(100.dp),
+                    isDebug = BuildConfig.DEBUG,
+                    onAdClicked = { adClickDetector.onAdClick(it) }
+                )
+            } else {
+                BannerAdView(
+                    placement = AdPlacement.BANNER_TEMPLATE_PREVIEWER,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp),
+                    onAdClicked = { adClickDetector.onAdClick(it) }
+                )
+            }
         }
 
         AnimatedVisibility(

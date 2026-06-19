@@ -196,6 +196,25 @@ object RemoteConfigKeys {
     // RATING POPUP
     // ============================================
 
+    // ============================================
+    // AD BOTTOM NAVIGATION BAR PADDING
+    // ============================================
+
+    /**
+     * When true, bottom-positioned native ads receive [navigationBarsPadding] to prevent
+     * overlap with the system navigation bar.
+     *
+     * Affects all bottom native ads across Home, Export, Uninstall, Widget, WelcomeBack,
+     * TemplatePreviewer, and all onboarding screens.
+     *
+     * Default: false (no extra padding — current behavior)
+     */
+    const val AD_BOTTOM_NAV_PADDING_ENABLED = "ad_bottom_nav_padding_enabled"
+
+    // ============================================
+    // RATING POPUP
+    // ============================================
+
     /**
      * Threshold for template swipes/song nexts to trigger rating popup.
      * Default: 5.

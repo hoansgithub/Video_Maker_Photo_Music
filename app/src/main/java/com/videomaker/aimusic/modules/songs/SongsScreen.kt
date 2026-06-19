@@ -447,7 +447,7 @@ private fun SongsContent(
                                 Box(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(horizontal = dimens.spaceLg, vertical = dimens.spaceXs)
+                                        .padding(horizontal = dimens.spaceLg, vertical = dimens.spaceSm)
                                         .clip(RoundedCornerShape(dimens.radiusXl))
                                         .background(MaterialTheme.colorScheme.surface)
                                 ) {
