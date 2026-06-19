@@ -44,7 +44,12 @@ data class ProjectSettings(
     // ============================================
     // MULTI-TRACK AUDIO (single source of truth)
     // ============================================
-    val audioNodes: List<AudioNode> = emptyList()
+    val audioNodes: List<AudioNode> = emptyList(),
+
+    // ============================================
+    // TEXT OVERLAYS
+    // ============================================
+    val textOverlays: List<TextOverlay> = emptyList()
 ) {
 
     /** The first (primary) audio node, or null if no audio is configured. */

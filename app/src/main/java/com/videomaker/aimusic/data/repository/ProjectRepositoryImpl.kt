@@ -9,6 +9,7 @@ import com.videomaker.aimusic.domain.model.Asset
 import com.videomaker.aimusic.domain.model.AudioNode
 import com.videomaker.aimusic.domain.model.Project
 import com.videomaker.aimusic.domain.model.ProjectSettings
+import com.videomaker.aimusic.domain.model.TextOverlay
 import com.videomaker.aimusic.domain.repository.ProjectRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -72,6 +73,13 @@ class ProjectRepositoryImpl(
             null
         }
 
+        // Serialize text overlays
+        val textOverlaysJson = if (settings.textOverlays.isNotEmpty()) {
+            json.encodeToString(ListSerializer(TextOverlay.serializer()), settings.textOverlays)
+        } else {
+            null
+        }
+
         // Create project entity with settings
         val projectEntity = ProjectEntity(
             id = projectId,
@@ -84,7 +92,8 @@ class ProjectRepositoryImpl(
             templateId = settings.templateId?.takeIf { it.isNotBlank() },
             overlayFrameId = settings.overlayFrameId,
             aspectRatio = settings.aspectRatio.name,
-            audioNodesJson = audioNodesJson
+            audioNodesJson = audioNodesJson,
+            textOverlaysJson = textOverlaysJson
         )
 
         // Create asset entities
@@ -138,6 +147,13 @@ class ProjectRepositoryImpl(
             null
         }
 
+        // Serialize text overlays
+        val textOverlaysJson = if (settings.textOverlays.isNotEmpty()) {
+            json.encodeToString(ListSerializer(TextOverlay.serializer()), settings.textOverlays)
+        } else {
+            null
+        }
+
         // Update entity with new settings
         val updatedEntity = existingEntity.copy(
             totalDurationMs = settings.totalDurationMs,
@@ -146,6 +162,7 @@ class ProjectRepositoryImpl(
             overlayFrameId = settings.overlayFrameId,
             aspectRatio = settings.aspectRatio.name,
             audioNodesJson = audioNodesJson,
+            textOverlaysJson = textOverlaysJson,
             updatedAt = System.currentTimeMillis()
         )
 

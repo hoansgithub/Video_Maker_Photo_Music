@@ -650,4 +650,20 @@
     <string name="editor_image_dragging">Arrastando</string>
     <string name="editor_image_drag_to_reorder">Arraste para reordenar</string>
     <string name="editor_image_content_desc">Imagem %1$s</string>
+
+    <!-- Editor Text Overlay -->
+    <string name="editor_text">Texto</string>
+    <string name="text_overlay_placeholder">Digite o texto</string>
+    <string name="text_overlay_please_enter">Por favor, digite o texto</string>
+    <string name="text_overlay_color_header">Cor</string>
+    <string name="text_overlay_font_header">Fonte</string>
+    <string name="text_overlay_no_selection">Nenhum texto selecionado</string>
+    <string name="text_overlay_desc_clear_focus">Limpar foco</string>
+    <string name="text_overlay_desc_confirm">Confirmar e fechar</string>
+    <string name="text_overlay_desc_ad_required">Anúncio necessário</string>
+    <string name="text_overlay_desc_new_item">Novo item</string>
+    <string name="text_overlay_desc_delete">Excluir texto</string>
+    <string name="text_overlay_desc_rotate_scale">Rotacionar e dimensionar</string>
+    <string name="text_overlay_font_ad_error">Falha ao carregar o anúncio, por favor tente novamente.</string>
+    <string name="text_overlay_system_default">Padrão do sistema</string>
 </resources>

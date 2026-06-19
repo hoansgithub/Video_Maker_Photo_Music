@@ -59,6 +59,8 @@ import com.videomaker.aimusic.domain.repository.LikedTemplateRepository
 import com.videomaker.aimusic.domain.repository.ProjectRepository
 import com.videomaker.aimusic.domain.repository.SongRepository
 import com.videomaker.aimusic.domain.repository.TemplateRepository
+import com.videomaker.aimusic.domain.repository.TextRepository
+import com.videomaker.aimusic.data.repository.TextRepositoryImpl
 import com.videomaker.aimusic.domain.usecase.AddAssetsUseCase
 import com.videomaker.aimusic.domain.usecase.ClearSongCacheUseCase
 import com.videomaker.aimusic.domain.usecase.CreateProjectUseCase
@@ -277,6 +279,7 @@ val dataModule = module {
 
     // Feedback repository
     single<FeedbackRepository> { FeedbackRepositoryImpl(get(), get()) }
+    single<TextRepository> { TextRepositoryImpl(get(), get(), get()) }
 }
 
 // ========== MEDIA LAYER MODULE ==========
@@ -290,7 +293,7 @@ val dataModule = module {
  * Scope: Singleton - Expensive to create
  */
 val mediaModule = module {
-    single { CompositionFactory(androidContext()) }
+    single { CompositionFactory(androidContext(), get()) }
     single { AudioPreviewCache(androidContext()) }
     single { com.videomaker.aimusic.media.audio.AudioPreprocessingService(androidContext()) }
 
@@ -563,7 +566,9 @@ class EditorViewModelFactory(
     private val projectRepository: ProjectRepository,
     private val adsLoaderService: AdsLoaderService,
     private val audioPreprocessingService: com.videomaker.aimusic.media.audio.AudioPreprocessingService,
-    private val adPlacementConfigService: com.videomaker.aimusic.core.ads.AdPlacementConfigService
+    private val adPlacementConfigService: com.videomaker.aimusic.core.ads.AdPlacementConfigService,
+    private val textRepository: TextRepository,
+    private val regionProvider: RegionProvider
 ) {
     fun create(
         projectId: String?,
@@ -586,7 +591,9 @@ class EditorViewModelFactory(
             projectRepository = projectRepository,
             adsLoaderService = adsLoaderService,
             audioPreprocessingService = audioPreprocessingService,
-            adPlacementConfigService = adPlacementConfigService
+            adPlacementConfigService = adPlacementConfigService,
+            textRepository = textRepository,
+            regionProvider = regionProvider
         )
     }
 }
@@ -1000,7 +1007,9 @@ val presentationModule = module {
             beatSyncRepository = get(),
             adsLoaderService = get(),
             audioPreprocessingService = get(),
-            adPlacementConfigService = get()
+            adPlacementConfigService = get(),
+            textRepository = get(),
+            regionProvider = get()
         )
     }
 

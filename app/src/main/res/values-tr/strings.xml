@@ -650,4 +650,20 @@
     <string name="editor_image_dragging">Sürükleniyor</string>
     <string name="editor_image_drag_to_reorder">Yeniden sıralamak için sürükle</string>
     <string name="editor_image_content_desc">Görsel %1$s</string>
+
+    <!-- Editor Text Overlay -->
+    <string name="editor_text">Metin</string>
+    <string name="text_overlay_placeholder">Metin girin</string>
+    <string name="text_overlay_please_enter">Lütfen metin girin</string>
+    <string name="text_overlay_color_header">Renk</string>
+    <string name="text_overlay_font_header">Yazı Tipi</string>
+    <string name="text_overlay_no_selection">Seçili metin yok</string>
+    <string name="text_overlay_desc_clear_focus">Odağı Temizle</string>
+    <string name="text_overlay_desc_confirm">Onayla ve Kapat</string>
+    <string name="text_overlay_desc_ad_required">Reklam gerekli</string>
+    <string name="text_overlay_desc_new_item">Yeni öge</string>
+    <string name="text_overlay_desc_delete">Metni Sil</string>
+    <string name="text_overlay_desc_rotate_scale">Döndür ve ölçekle</string>
+    <string name="text_overlay_font_ad_error">Reklam yüklenemedi, lütfen tekrar deneyin.</string>
+    <string name="text_overlay_system_default">Sistem Varsayılanı</string>
 </resources>

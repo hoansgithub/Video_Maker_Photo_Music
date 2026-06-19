@@ -18,22 +18,23 @@ import com.videomaker.aimusic.domain.model.AudioNode
 import com.videomaker.aimusic.domain.model.BeatSyncData
 import com.videomaker.aimusic.domain.model.Project
 import com.videomaker.aimusic.domain.model.ProjectSettings
+import com.videomaker.aimusic.domain.model.TextFontPreset
 import com.videomaker.aimusic.domain.model.Transition
 import com.videomaker.aimusic.domain.model.VideoQuality
+import com.videomaker.aimusic.domain.repository.TextRepository
 import com.videomaker.aimusic.media.audio.VolumeAudioProcessor
-import com.videomaker.aimusic.media.audio.FadeoutAudioProcessor
 import com.videomaker.aimusic.media.effects.FrameOverlayEffect
+import com.videomaker.aimusic.media.effects.TextOverlayEffect
 import com.videomaker.aimusic.media.effects.TransitionEffect
 import com.videomaker.aimusic.media.effects.WatermarkOverlayEffect
 import com.videomaker.aimusic.media.library.FrameLibrary
 import com.videomaker.aimusic.media.library.TransitionSetLibrary
 import com.videomaker.aimusic.media.library.TransitionShaderLibrary
-import java.io.File
-import java.util.concurrent.atomic.AtomicReference
-import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlin.coroutines.resume
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.io.File
+import java.util.concurrent.atomic.AtomicReference
+import kotlin.coroutines.resume
 
 /**
  * CompositionFactory - Creates Media3 Composition from Project domain model
@@ -52,7 +53,8 @@ import kotlinx.coroutines.withContext
  * Call createComposition from a coroutine scope.
  */
 class CompositionFactory(
-    private val context: Context
+    private val context: Context,
+    private val textRepository: TextRepository
 ) {
 
     /**
@@ -151,6 +153,7 @@ class CompositionFactory(
             forExport = forExport,
             isWatermarkFree = project.isWatermarkFree
         )
+        val fontPresets = textRepository.getFonts().getOrNull() ?: emptyList()
 
         // Clean up previous resources
         recycleBitmaps()
@@ -185,7 +188,8 @@ class CompositionFactory(
             beatData = beatData,
             processedImages = processedImages,
             transitionBitmaps = transitionBitmaps,
-            includeWatermark = includeWatermark
+            includeWatermark = includeWatermark,
+            fontPresets = fontPresets
         )
 
         val sequences = mutableListOf(videoSequence)
@@ -367,7 +371,8 @@ class CompositionFactory(
         beatData: BeatSyncData,
         processedImages: Map<Int, ProcessedImage>,
         transitionBitmaps: Map<Int, TransitionBitmapPair>,
-        includeWatermark: Boolean
+        includeWatermark: Boolean,
+        fontPresets: List<TextFontPreset>
     ): EditedMediaItemSequence {
         // Track all bitmaps loaded in this method for cleanup
         val loadedBitmaps = mutableListOf<Bitmap>()
@@ -457,7 +462,8 @@ class CompositionFactory(
                 clipStartTimeUs = clipStartTimeUs,
                 includeWatermark = includeWatermark,
                 totalDurationMs = totalDurationMs,
-                transitionDurationMs = transitionDurationMs
+                transitionDurationMs = transitionDurationMs,
+                fontPresets = fontPresets
             )
 
             cumulativeStartTimeUs += totalDurationMs * 1000L
@@ -554,7 +560,8 @@ class CompositionFactory(
         clipStartTimeUs: Long,
         includeWatermark: Boolean,
         totalDurationMs: Long,          // Beat-sync calculated duration (REQUIRED)
-        transitionDurationMs: Long      // Beat-sync calculated transition (REQUIRED)
+        transitionDurationMs: Long,     // Beat-sync calculated transition (REQUIRED)
+        fontPresets: List<TextFontPreset>
     ): EditedMediaItem {
         val totalDurationUs = totalDurationMs * 1000L
         // Passthrough mode: 0 transition duration (just show FROM image)
@@ -575,7 +582,8 @@ class CompositionFactory(
             clipDurationUs = totalDurationUs,
             clipStartTimeUs = clipStartTimeUs,
             isPassthroughMode = isPassthroughMode,
-            includeWatermark = includeWatermark
+            includeWatermark = includeWatermark,
+            fontPresets = fontPresets
         )
 
         return EditedMediaItem.Builder(mediaItem)
@@ -608,7 +616,8 @@ class CompositionFactory(
         clipDurationUs: Long,
         clipStartTimeUs: Long,
         isPassthroughMode: Boolean = false,
-        includeWatermark: Boolean = false
+        includeWatermark: Boolean = false,
+        fontPresets: List<TextFontPreset> = emptyList()
     ): Effects {
         val aspectRatio = settings.aspectRatio.ratio
         val videoEffects = mutableListOf<Effect>()
@@ -638,6 +647,11 @@ class CompositionFactory(
             FrameLibrary.getById(frameId)?.let { frame ->
                 videoEffects.add(FrameOverlayEffect(context, frame.frameUrl))
             }
+        }
+
+        // 3. Text Overlays
+        if (settings.textOverlays.isNotEmpty()) {
+            videoEffects.add(TextOverlayEffect(context, settings.textOverlays, fontPresets))
         }
 
         if (includeWatermark) {

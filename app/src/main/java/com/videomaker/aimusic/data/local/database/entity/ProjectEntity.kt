@@ -29,6 +29,9 @@ data class ProjectEntity(
     // Multi-track audio (serialized List<AudioNode> as JSON)
     val audioNodesJson: String? = null,
 
+    // Serialized List<TextOverlay> as JSON
+    val textOverlaysJson: String? = null,
+
     // Watermark removal (rewarded ad unlock)
     val isWatermarkFree: Boolean = false // True if user watched ad to remove watermark for this project
 )

@@ -2662,6 +2662,54 @@ object Analytics {
             else -> rawLocation
         }
     }
+
+    fun trackTextEdit() {
+        track(AnalyticsEvent.TEXT_EDIT)
+    }
+
+    fun trackTextColorClick(type: String, colorName: String) {
+        track(
+            AnalyticsEvent.TEXT_COLOR_CLICK,
+            mapOf(
+                AnalyticsEvent.Param.TYPE to type,
+                AnalyticsEvent.Param.COLOR_NAME to colorName
+            )
+        )
+    }
+
+    fun trackTextFontClick(type: String, fontName: String) {
+        track(
+            AnalyticsEvent.TEXT_FONT_CLICK,
+            mapOf(
+                AnalyticsEvent.Param.TYPE to type,
+                AnalyticsEvent.Param.FONT_NAME to fontName
+            )
+        )
+    }
+
+    fun trackTextFontDownload(type: String, fontName: String) {
+        track(
+            AnalyticsEvent.TEXT_FONT_DOWNLOAD,
+            mapOf(
+                AnalyticsEvent.Param.TYPE to type,
+                AnalyticsEvent.Param.FONT_NAME to fontName
+            )
+        )
+    }
+
+    fun trackTextSelect(colorName: String, fontName: String) {
+        track(
+            AnalyticsEvent.TEXT_SELECT,
+            mapOf(
+                AnalyticsEvent.Param.COLOR_NAME to colorName,
+                AnalyticsEvent.Param.FONT_NAME to fontName
+            )
+        )
+    }
+
+    fun trackTextClose() {
+        track(AnalyticsEvent.TEXT_CLOSE)
+    }
 }
 
 /**
