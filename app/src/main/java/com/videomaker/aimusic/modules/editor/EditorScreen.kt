@@ -5,9 +5,12 @@ package com.videomaker.aimusic.modules.editor
 // import com.videomaker.aimusic.modules.musicpicker.MusicPickerScreen // Commented out - using Supabase only
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
@@ -21,10 +24,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -104,6 +110,8 @@ import com.videomaker.aimusic.modules.editor.components.MusicSearchBottomSheet
 import com.videomaker.aimusic.modules.editor.components.PlayMusicSlider
 import com.videomaker.aimusic.modules.editor.components.RatioPanel
 import com.videomaker.aimusic.modules.editor.components.SettingsTabBar
+import com.videomaker.aimusic.modules.editor.components.TextBottomSheet
+import com.videomaker.aimusic.modules.editor.components.TextOverlayCanvas
 import com.videomaker.aimusic.modules.editor.components.VolumeBottomSheet
 import com.videomaker.aimusic.ui.components.AppAsyncImage
 import com.videomaker.aimusic.ui.components.EditorErrorDialog
@@ -179,6 +187,8 @@ fun EditorScreen(
     // var showMusicPicker by remember { mutableStateOf(false) } // Commented out - using Supabase only
     var showRatioSheet by remember { mutableStateOf(false) }
     var showEffectSetSheet by remember { mutableStateOf(false) }
+    var showTextSheet by remember { mutableStateOf(false) }
+    var textFocusTrigger by remember { mutableStateOf(0L) }
     var effectSetIdBeforePanel by remember { mutableStateOf<String?>(null) }
     var showMusicSearchSheet by remember { mutableStateOf(false) }
     var showVolumeSheet by remember { mutableStateOf(false) }
@@ -191,6 +201,15 @@ fun EditorScreen(
     var hasTrackedExitPopupShow by remember { mutableStateOf(false) }
     var ratioBeforePanel by remember { mutableStateOf<AspectRatio?>(null) }
     val scope = rememberCoroutineScope()
+    LaunchedEffect(viewModel) {
+        viewModel.selectedTextOverlayId.collect { id ->
+            if (id != null) {
+                showTextSheet = true
+            } else {
+                showTextSheet = false
+            }
+        }
+    }
     val context = androidx.compose.ui.platform.LocalContext.current
     val activity = context as? android.app.Activity
     val adsLoaderService = koinInject<AdsLoaderService>()
@@ -515,6 +534,12 @@ fun EditorScreen(
                     effectSetIdBeforePanel = state.displaySettings.effectSetId
                     showEffectSetSheet = true
                 },
+                onTextClick = {
+                    val state = currentState() ?: return@EditorMainContent
+                    val defaultText = context.getString(R.string.text_overlay_placeholder)
+                    viewModel.addTextOverlay(defaultText)
+                    showTextSheet = true
+                },
                 onRatioClick = {
                     val state = currentState() ?: return@EditorMainContent
                     Analytics.trackRatioEdit(
@@ -636,9 +661,25 @@ fun EditorScreen(
                         )
                     }
                 },
+                showTextPanel = showTextSheet,
+                textFocusTrigger = textFocusTrigger,
+                editorViewModel = viewModel,
+                onDoubleTapText = { id ->
+                    viewModel.setSelectedTextOverlayId(id)
+                    showTextSheet = true
+                    textFocusTrigger = System.currentTimeMillis()
+                },
+                onTextPanelDismiss = {
+                    viewModel.setSelectedTextOverlayId(null)
+                    showTextSheet = false
+                },
+                onTextPanelConfirm = {
+                    viewModel.setSelectedTextOverlayId(null)
+                    showTextSheet = false
+                },
                 topBar = {
                     androidx.compose.animation.AnimatedVisibility(
-                        visible = !showEffectSetSheet && !showRatioSheet,
+                        visible = !showEffectSetSheet && !showRatioSheet && !showTextSheet,
                         enter = slideInVertically(initialOffsetY = { -it }) + fadeIn(),
                         exit = slideOutVertically(targetOffsetY = { -it }) + fadeOut()
                     ) {
@@ -1208,6 +1249,7 @@ internal fun EditorMainContent(
     onScrubComplete: () -> Unit,
     onImagesClick: () -> Unit,
     onEffectClick: () -> Unit,
+    onTextClick: () -> Unit,
     onRatioClick: () -> Unit,
     onVolumeClick: () -> Unit = {},
     onMusicSelectorClick: () -> Unit = {},
@@ -1220,6 +1262,12 @@ internal fun EditorMainContent(
     onRatioPanelDismiss: () -> Unit = {},
     onRatioPanelConfirm: () -> Unit = {},
     onRatioSelected: (AspectRatio) -> Unit = {},
+    showTextPanel: Boolean = false,
+    textFocusTrigger: Long = 0L,
+    editorViewModel: EditorViewModel? = null,
+    onDoubleTapText: (String) -> Unit = {},
+    onTextPanelDismiss: () -> Unit = {},
+    onTextPanelConfirm: () -> Unit = {},
     topBar: @Composable () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
@@ -1237,8 +1285,8 @@ internal fun EditorMainContent(
     val maxHeight = 620.dp
     var currentPanelHeight by remember(minHeight) { mutableStateOf(minHeight) }
 
-    LaunchedEffect(showEffectSetPanel, showRatioPanel, minHeight) {
-        if (showEffectSetPanel || showRatioPanel) {
+    LaunchedEffect(showEffectSetPanel, showTextPanel, showRatioPanel, minHeight) {
+        if (showEffectSetPanel || showTextPanel || showRatioPanel) {
             currentPanelHeight = minHeight
         }
     }
@@ -1304,13 +1352,26 @@ internal fun EditorMainContent(
             // tight constraints (min==max) which prevents aspectRatio() from adjusting.
             // Without fillMaxSize(), aspectRatio() receives loose constraints and can freely
             // choose the largest size that fits within the Box while maintaining the ratio.
-            PreviewSurfaceView(
-                renderState = renderState,
-                playbackClock = playbackClock,
-                isPlaying = isPlaying,
+            Box(
                 modifier = Modifier
-                    .aspectRatio(previewAspectRatio)
-            )
+                    .aspectRatio(previewAspectRatio),
+                contentAlignment = Alignment.Center
+            ) {
+                PreviewSurfaceView(
+                    renderState = renderState,
+                    playbackClock = playbackClock,
+                    isPlaying = isPlaying,
+                    modifier = Modifier.fillMaxSize()
+                )
+
+                if (editorViewModel != null) {
+                    TextOverlayCanvas(
+                        viewModel = editorViewModel,
+                        onDoubleTapText = onDoubleTapText,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+            }
 
             // Audio-only player — synced to PlaybackClock
             AudioPreviewPlayer(
@@ -1336,7 +1397,7 @@ internal fun EditorMainContent(
         }
 
 
-        if (showEffectSetPanel) {
+        if (showEffectSetPanel || showTextPanel) {
             Spacer(modifier = Modifier.height(minHeight))
         } else if (showRatioPanel) {
             Spacer(modifier = Modifier.height(210.dp))
@@ -1517,6 +1578,7 @@ internal fun EditorMainContent(
                             showMusicControls = hasMusic,
                             onImagesClick = onImagesClick,
                             onEffectClick = onEffectClick,
+                            onTextClick = onTextClick,
                             onRatioClick = onRatioClick,
                             onVolumeClick = onVolumeClick,
                             modifier = Modifier.fillMaxWidth()
@@ -1642,6 +1704,83 @@ internal fun EditorMainContent(
                 onSeekEnd = onSeekEnd,
                 onPlayPauseClick = onPlayPauseClick,
                 modifier = Modifier.fillMaxWidth()
+            )
+        }
+    }
+
+    if (showTextPanel && editorViewModel != null) {
+        Column(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .height(currentPanelHeight)
+                .background(SplashBackground)
+                .nestedScroll(nestedScrollConnection)
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null
+                ) { /* consume clicks */ }
+        ) {
+            // Drag handle area
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .pointerInput(Unit) {
+                        detectDragGestures { change, dragAmount ->
+                            change.consume()
+                            val dragDp = with(density) { -dragAmount.y.toDp() }
+                            currentPanelHeight = (currentPanelHeight + dragDp).coerceIn(minHeight, maxHeight)
+                        }
+                    }
+                    .padding(vertical = 12.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(width = 36.dp, height = 4.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(Color.Gray)
+                )
+            }
+
+            val isKeyboardOpen = WindowInsets.ime.asPaddingValues().calculateBottomPadding() > 0.dp
+
+            // Player Controls — hidden when user swipes the panel up or keyboard is open
+            AnimatedVisibility(
+                visible = currentPanelHeight <= minHeight + 30.dp && !isKeyboardOpen,
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically()
+            ) {
+                EditorPlayerControls(
+                    currentPositionMs = currentPositionMs,
+                    durationMs = durationMs,
+                    isPlaying = isPlaying,
+                    onSeek = { position ->
+                        if (durationMs > 0) {
+                            onSeek((position * durationMs).toLong())
+                        }
+                    },
+                    onScrub = { position ->
+                        if (durationMs > 0) {
+                            onScrub((position * durationMs).toLong())
+                        }
+                    },
+                    onSeekStart = onSeekStart,
+                    onSeekEnd = onSeekEnd,
+                    onPlayPauseClick = onPlayPauseClick,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+
+            // Inline TextBottomSheet
+            TextBottomSheet(
+                viewModel = editorViewModel,
+                onDismiss = onTextPanelDismiss,
+                onConfirm = onTextPanelConfirm,
+                focusTrigger = textFocusTrigger,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
             )
         }
     }
@@ -1779,8 +1918,8 @@ private fun EditorPlayerControls(
     modifier: Modifier = Modifier
 ) {
     val sliderInteractionSource =
-        remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
-    var isDragging by remember { androidx.compose.runtime.mutableStateOf(false) }
+        remember { MutableInteractionSource() }
+    var isDragging by remember { mutableStateOf(false) }
     var localPosition by remember { androidx.compose.runtime.mutableFloatStateOf(0f) }
     var lastScrubTime by remember { androidx.compose.runtime.mutableLongStateOf(0L) }
 

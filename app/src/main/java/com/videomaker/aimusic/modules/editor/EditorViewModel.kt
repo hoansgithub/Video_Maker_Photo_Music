@@ -1,34 +1,35 @@
 package com.videomaker.aimusic.modules.editor
 
+// DurationPlanner removed - beat-sync only mode
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import android.net.Uri
 import com.videomaker.aimusic.core.ads.AdPlacementConfigService
 import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
 import com.videomaker.aimusic.core.ads.RewardedAdController
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.constants.AdPlacement
-import com.videomaker.aimusic.domain.model.Asset
 import com.videomaker.aimusic.domain.model.AspectRatio
+import com.videomaker.aimusic.domain.model.Asset
 import com.videomaker.aimusic.domain.model.AudioNode
-// DurationPlanner removed - beat-sync only mode
 import com.videomaker.aimusic.domain.model.EditorInitialData
 import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.domain.model.Project
 import com.videomaker.aimusic.domain.model.ProjectSettings
+import com.videomaker.aimusic.domain.model.TextFontPreset
+import com.videomaker.aimusic.domain.model.TextOverlay
 import com.videomaker.aimusic.domain.model.VideoQuality
 import com.videomaker.aimusic.domain.repository.EffectSetRepository
 import com.videomaker.aimusic.domain.repository.SongRepository
-import com.videomaker.aimusic.media.library.TransitionSetLibrary
-import com.videomaker.aimusic.media.renderer.PlaybackClock
-import com.videomaker.aimusic.media.renderer.RenderState
 import com.videomaker.aimusic.domain.usecase.AddAssetsUseCase
 import com.videomaker.aimusic.domain.usecase.CreateProjectUseCase
 import com.videomaker.aimusic.domain.usecase.GetProjectUseCase
 import com.videomaker.aimusic.domain.usecase.RemoveAssetUseCase
 import com.videomaker.aimusic.domain.usecase.UpdateProjectSettingsUseCase
+import com.videomaker.aimusic.media.library.TransitionSetLibrary
+import com.videomaker.aimusic.media.renderer.PlaybackClock
+import com.videomaker.aimusic.media.renderer.RenderState
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.async
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -215,6 +216,132 @@ class EditorViewModel(
     // GL renderer state — updated instantly on property changes, read by VideoRenderer each frame
     private val _renderState = MutableStateFlow(RenderState.EMPTY)
     val renderState: StateFlow<RenderState> = _renderState.asStateFlow()
+
+    // ============================================
+    // TEXT EDITING OVERLAY STATE
+    // ============================================
+    private val _textOverlays = MutableStateFlow<List<TextOverlay>>(emptyList())
+    val textOverlays: StateFlow<List<TextOverlay>> = _textOverlays.asStateFlow()
+
+    private val _selectedTextOverlayId = MutableStateFlow<String?>(null)
+    val selectedTextOverlayId: StateFlow<String?> = _selectedTextOverlayId.asStateFlow()
+
+    private val _unlockedFontIds = MutableStateFlow<Set<String>>(setOf("system_default", "neue_haas_regular", "neue_haas_bold", "carbon"))
+    val unlockedFontIds: StateFlow<Set<String>> = _unlockedFontIds.asStateFlow()
+
+    // Rewarded ad controller for premium fonts (reusing EFFECT_SET placement)
+    private val fontAdController = RewardedAdController(
+        placement = AdPlacement.REWARD_UNLOCK_EFFECT_SET,
+        viewModelScope = viewModelScope
+    )
+    val shouldPresentFontAd: StateFlow<Boolean> = fontAdController.shouldPresentAd
+
+    private val _fontAdError = MutableStateFlow<String?>(null)
+    val fontAdError: StateFlow<String?> = _fontAdError.asStateFlow()
+
+    private var onFontUnlockCallback: (() -> Unit)? = null
+    private var pendingUnlockFontId: String? = null
+
+    fun addTextOverlay(text: String = "Enter Text") {
+        val newOverlay = TextOverlay(text = text)
+        _textOverlays.update { it + newOverlay }
+        _selectedTextOverlayId.value = newOverlay.id
+    }
+
+    fun updateTextOverlay(
+        id: String,
+        text: String? = null,
+        color: Long? = null,
+        fontId: String? = null,
+        xPercentage: Float? = null,
+        yPercentage: Float? = null,
+        scale: Float? = null,
+        rotation: Float? = null
+    ) {
+        _textOverlays.update { list ->
+            list.map { overlay ->
+                if (overlay.id == id) {
+                    overlay.copy(
+                        text = text ?: overlay.text,
+                        color = color ?: overlay.color,
+                        fontId = fontId ?: overlay.fontId,
+                        xPercentage = xPercentage ?: overlay.xPercentage,
+                        yPercentage = yPercentage ?: overlay.yPercentage,
+                        scale = scale ?: overlay.scale,
+                        rotation = rotation ?: overlay.rotation
+                    )
+                } else {
+                    overlay
+                }
+            }
+        }
+    }
+
+    fun removeTextOverlay(id: String) {
+        _textOverlays.update { list ->
+            list.filter { it.id != id }
+        }
+        if (_selectedTextOverlayId.value == id) {
+            _selectedTextOverlayId.value = null
+        }
+    }
+
+    fun setSelectedTextOverlayId(id: String?) {
+        _selectedTextOverlayId.value = id
+    }
+
+    fun isFontUnlocked(fontPreset: TextFontPreset): Boolean {
+        if (!fontPreset.isPremium) return true
+        return _unlockedFontIds.value.contains(fontPreset.id)
+    }
+
+    fun onFontClick(fontPreset: TextFontPreset, onUnlockSuccess: () -> Unit) {
+        if (isFontUnlocked(fontPreset)) {
+            onUnlockSuccess()
+        } else {
+            pendingUnlockFontId = fontPreset.id
+            onFontUnlockCallback = onUnlockSuccess
+            fontAdController.requestAd(
+                onReward = {
+                    val fontId = pendingUnlockFontId
+                    if (fontId != null) {
+                        _unlockedFontIds.update { it + fontId }
+                        onFontUnlockCallback?.invoke()
+                    }
+                    cleanupFontAdState()
+                },
+                onSkip = {
+                    val fontId = pendingUnlockFontId
+                    if (fontId != null) {
+                        _unlockedFontIds.update { it + fontId }
+                        onFontUnlockCallback?.invoke()
+                    }
+                    cleanupFontAdState()
+                },
+                checkEnabled = { adsLoaderService.canLoadAd(AdPlacement.REWARD_UNLOCK_EFFECT_SET) }
+            )
+        }
+    }
+
+    fun onFontRewardEarned() {
+        fontAdController.onRewardEarned()
+    }
+
+    fun onFontAdFailed() {
+        _fontAdError.value = context.getString(com.videomaker.aimusic.R.string.text_overlay_font_ad_error)
+        fontAdController.onAdFailed()
+        cleanupFontAdState()
+    }
+
+    fun clearFontAdError() {
+        _fontAdError.value = null
+    }
+
+    private fun cleanupFontAdState() {
+        pendingUnlockFontId = null
+        onFontUnlockCallback = null
+    }
+
 
     // Playback position — separate from uiState to avoid 240 state copies/sec.
     // Only the slider and time label observe these, not the entire EditorScreen tree.
