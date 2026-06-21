@@ -293,6 +293,16 @@ object AnalyticsEvent {
     const val REWARD_TEMPLATE_EXIT = "reward_template_exit"
 
     // ============================================
+    // TEXT OVERLAY EVENTS
+    // ============================================
+    const val TEXT_EDIT = "text_edit"
+    const val TEXT_COLOR_CLICK = "text_color_click"
+    const val TEXT_FONT_CLICK = "text_font_click"
+    const val TEXT_FONT_DOWNLOAD = "text_font_download"
+    const val TEXT_SELECT = "text_select"
+    const val TEXT_CLOSE = "text_close"
+
+    // ============================================
     // PARAMETER KEYS
     // ============================================
     object Param {
@@ -383,6 +393,9 @@ object AnalyticsEvent {
         const val TRIGGER = "trigger"
         const val ERROR_CODE = "error_code"
         const val ERROR_MESSAGE = "error_message"
+        
+        const val COLOR_NAME = "color_name"
+        const val FONT_NAME = "font_name"
     }
 
     // ============================================

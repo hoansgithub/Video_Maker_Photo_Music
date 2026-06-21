@@ -650,4 +650,20 @@
     <string name="editor_image_dragging">جارٍ السحب</string>
     <string name="editor_image_drag_to_reorder">اسحب لإعادة الترتيب</string>
     <string name="editor_image_content_desc">صورة %1$s</string>
+
+    <!-- Editor Text Overlay -->
+    <string name="editor_text">نص</string>
+    <string name="text_overlay_placeholder">أدخل النص</string>
+    <string name="text_overlay_please_enter">الرجاء إدخال نص</string>
+    <string name="text_overlay_color_header">اللون</string>
+    <string name="text_overlay_font_header">الخط</string>
+    <string name="text_overlay_no_selection">لم يتم تحديد أي نص</string>
+    <string name="text_overlay_desc_clear_focus">مسح التركيز</string>
+    <string name="text_overlay_desc_confirm">تأكيد وإغلاق</string>
+    <string name="text_overlay_desc_ad_required">مطلوب إعلان</string>
+    <string name="text_overlay_desc_new_item">عنصر جديد</string>
+    <string name="text_overlay_desc_delete">حذف النص</string>
+    <string name="text_overlay_desc_rotate_scale">تدوير وتكبير/تصغير</string>
+    <string name="text_overlay_font_ad_error">فشل تحميل الإعلان، يرجى المحاولة مرة أخرى.</string>
+    <string name="text_overlay_system_default">افتراضي النظام</string>
 </resources>

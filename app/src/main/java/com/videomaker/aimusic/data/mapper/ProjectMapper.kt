@@ -10,6 +10,7 @@ import com.videomaker.aimusic.domain.model.AssetType
 import com.videomaker.aimusic.domain.model.AudioNode
 import com.videomaker.aimusic.domain.model.Project
 import com.videomaker.aimusic.domain.model.ProjectSettings
+import com.videomaker.aimusic.domain.model.TextOverlay
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 
@@ -51,13 +52,23 @@ object ProjectMapper {
             }
         } ?: emptyList()
 
+        val textOverlays = entity.textOverlaysJson?.let { jsonStr ->
+            try {
+                json.decodeFromString(ListSerializer(TextOverlay.serializer()), jsonStr)
+            } catch (e: Exception) {
+                android.util.Log.w("ProjectMapper", "Failed to deserialize textOverlaysJson: ${e.message}")
+                emptyList()
+            }
+        } ?: emptyList()
+
         return ProjectSettings(
             totalDurationMs = entity.totalDurationMs,
             effectSetId = entity.effectSetId,
             templateId = entity.templateId?.takeIf { it.isNotBlank() },
             overlayFrameId = entity.overlayFrameId,
             aspectRatio = AspectRatio.fromString(entity.aspectRatio),
-            audioNodes = audioNodes
+            audioNodes = audioNodes,
+            textOverlays = textOverlays
         )
     }
 
@@ -83,6 +94,12 @@ object ProjectMapper {
             null
         }
 
+        val textOverlaysJson = if (project.settings.textOverlays.isNotEmpty()) {
+            json.encodeToString(ListSerializer(TextOverlay.serializer()), project.settings.textOverlays)
+        } else {
+            null
+        }
+
         return ProjectEntity(
             id = project.id,
             name = project.name,
@@ -95,6 +112,7 @@ object ProjectMapper {
             overlayFrameId = project.settings.overlayFrameId,
             aspectRatio = project.settings.aspectRatio.name,
             audioNodesJson = audioNodesJson,
+            textOverlaysJson = textOverlaysJson,
             isWatermarkFree = project.isWatermarkFree
         )
     }

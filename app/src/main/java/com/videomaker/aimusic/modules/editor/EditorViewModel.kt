@@ -1,34 +1,38 @@
 package com.videomaker.aimusic.modules.editor
 
+// DurationPlanner removed - beat-sync only mode
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import android.net.Uri
 import com.videomaker.aimusic.core.ads.AdPlacementConfigService
 import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
 import com.videomaker.aimusic.core.ads.RewardedAdController
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.constants.AdPlacement
-import com.videomaker.aimusic.domain.model.Asset
 import com.videomaker.aimusic.domain.model.AspectRatio
+import com.videomaker.aimusic.domain.model.Asset
 import com.videomaker.aimusic.domain.model.AudioNode
-// DurationPlanner removed - beat-sync only mode
 import com.videomaker.aimusic.domain.model.EditorInitialData
 import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.domain.model.Project
 import com.videomaker.aimusic.domain.model.ProjectSettings
+import com.videomaker.aimusic.domain.model.TextFontPreset
+import com.videomaker.aimusic.domain.model.TextOverlay
 import com.videomaker.aimusic.domain.model.VideoQuality
+import com.videomaker.aimusic.domain.model.mockFontPresets
+import com.videomaker.aimusic.domain.repository.TextRepository
+import com.videomaker.aimusic.core.data.local.RegionProvider
 import com.videomaker.aimusic.domain.repository.EffectSetRepository
 import com.videomaker.aimusic.domain.repository.SongRepository
-import com.videomaker.aimusic.media.library.TransitionSetLibrary
-import com.videomaker.aimusic.media.renderer.PlaybackClock
-import com.videomaker.aimusic.media.renderer.RenderState
 import com.videomaker.aimusic.domain.usecase.AddAssetsUseCase
 import com.videomaker.aimusic.domain.usecase.CreateProjectUseCase
 import com.videomaker.aimusic.domain.usecase.GetProjectUseCase
 import com.videomaker.aimusic.domain.usecase.RemoveAssetUseCase
 import com.videomaker.aimusic.domain.usecase.UpdateProjectSettingsUseCase
+import com.videomaker.aimusic.media.library.TransitionSetLibrary
+import com.videomaker.aimusic.media.renderer.PlaybackClock
+import com.videomaker.aimusic.media.renderer.RenderState
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.async
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -165,7 +169,9 @@ class EditorViewModel(
     private val projectRepository: com.videomaker.aimusic.domain.repository.ProjectRepository,
     private val adsLoaderService: co.alcheclub.lib.acccore.ads.loader.AdsLoaderService,
     private val audioPreprocessingService: com.videomaker.aimusic.media.audio.AudioPreprocessingService,
-    private val adPlacementConfigService: AdPlacementConfigService
+    private val adPlacementConfigService: AdPlacementConfigService,
+    private val textRepository: TextRepository,
+    private val regionProvider: RegionProvider
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<EditorUiState>(EditorUiState.Loading())
@@ -215,6 +221,241 @@ class EditorViewModel(
     // GL renderer state — updated instantly on property changes, read by VideoRenderer each frame
     private val _renderState = MutableStateFlow(RenderState.EMPTY)
     val renderState: StateFlow<RenderState> = _renderState.asStateFlow()
+
+    // ============================================
+    // TEXT EDITING OVERLAY STATE
+    // ============================================
+    private val _textOverlays = MutableStateFlow<List<TextOverlay>>(emptyList())
+    val textOverlays: StateFlow<List<TextOverlay>> = _textOverlays.asStateFlow()
+
+    private val _selectedTextOverlayId = MutableStateFlow<String?>(null)
+    val selectedTextOverlayId: StateFlow<String?> = _selectedTextOverlayId.asStateFlow()
+
+    private val _unlockedFontIds = MutableStateFlow<Set<String>>(emptySet())
+    val unlockedFontIds: StateFlow<Set<String>> = _unlockedFontIds.asStateFlow()
+
+    // ============================================
+    // DYNAMIC FONTS STATE
+    // ============================================
+    private val _fontPresets = MutableStateFlow<List<TextFontPreset>>(mockFontPresets)
+    val fontPresets: StateFlow<List<TextFontPreset>> = _fontPresets.asStateFlow()
+
+    private val _isFontsLoading = MutableStateFlow(false)
+    val isFontsLoading: StateFlow<Boolean> = _isFontsLoading.asStateFlow()
+
+    // Keep track of fonts currently downloading to avoid duplicate requests
+    private val downloadingFonts = java.util.concurrent.ConcurrentHashMap<String, Job>()
+
+    // State flow of downloaded font IDs to trigger composition updates when a download completes
+    private val _downloadedFontIds = MutableStateFlow<Set<String>>(emptySet())
+    val downloadedFontIds: StateFlow<Set<String>> = _downloadedFontIds.asStateFlow()
+
+    // Rewarded ad controller for premium fonts (reusing EFFECT_SET placement)
+    private val fontAdController = RewardedAdController(
+        placement = AdPlacement.REWARD_UNLOCK_EFFECT_SET,
+        viewModelScope = viewModelScope
+    )
+    val shouldPresentFontAd: StateFlow<Boolean> = fontAdController.shouldPresentAd
+
+    private val _fontAdError = MutableStateFlow<String?>(null)
+    val fontAdError: StateFlow<String?> = _fontAdError.asStateFlow()
+
+    private var onFontUnlockCallback: (() -> Unit)? = null
+    private var pendingUnlockFontId: String? = null
+
+    fun addTextOverlay(text: String = "Enter Text") {
+        val defaultFontId = _fontPresets.value.firstOrNull()?.id ?: "neue_haas_regular"
+        val newOverlay = TextOverlay(text = text, fontId = defaultFontId)
+        _textOverlays.update { it + newOverlay }
+        _selectedTextOverlayId.value = newOverlay.id
+        updatePendingSettingsAudioOnly { it.copy(textOverlays = _textOverlays.value) }
+    }
+
+    fun updateTextOverlay(
+        id: String,
+        text: String? = null,
+        color: Long? = null,
+        fontId: String? = null,
+        xPercentage: Float? = null,
+        yPercentage: Float? = null,
+        scale: Float? = null,
+        rotation: Float? = null
+    ) {
+        _textOverlays.update { list ->
+            list.map { overlay ->
+                if (overlay.id == id) {
+                    overlay.copy(
+                        text = text ?: overlay.text,
+                        color = color ?: overlay.color,
+                        fontId = fontId ?: overlay.fontId,
+                        xPercentage = xPercentage ?: overlay.xPercentage,
+                        yPercentage = yPercentage ?: overlay.yPercentage,
+                        scale = scale ?: overlay.scale,
+                        rotation = rotation ?: overlay.rotation
+                    )
+                } else {
+                    overlay
+                }
+            }
+        }
+        updatePendingSettingsAudioOnly { it.copy(textOverlays = _textOverlays.value) }
+    }
+
+    fun removeTextOverlay(id: String) {
+        _textOverlays.update { list ->
+            list.filter { it.id != id }
+        }
+        if (_selectedTextOverlayId.value == id) {
+            _selectedTextOverlayId.value = null
+        }
+        updatePendingSettingsAudioOnly { it.copy(textOverlays = _textOverlays.value) }
+
+        // Save immediately to DB if not an unsaved project
+        val currentState = _uiState.value
+        if (currentState is EditorUiState.Success && !currentState.isUnsavedProject) {
+            viewModelScope.launch {
+                currentProjectId?.let { id ->
+                    val updatedSettings = currentState.displaySettings
+                    updateSettingsUseCase(id, updatedSettings)
+                }
+            }
+        }
+    }
+
+    fun setSelectedTextOverlayId(id: String?) {
+        _selectedTextOverlayId.value = id
+    }
+
+    fun isFontUnlocked(fontPreset: TextFontPreset): Boolean {
+        if (!fontPreset.isPremium) return true
+        return _unlockedFontIds.value.contains(fontPreset.id)
+    }
+
+    fun onFontClick(fontPreset: TextFontPreset, onUnlockSuccess: () -> Unit) {
+        if (isFontUnlocked(fontPreset)) {
+            onUnlockSuccess()
+        } else {
+            pendingUnlockFontId = fontPreset.id
+            onFontUnlockCallback = onUnlockSuccess
+            fontAdController.requestAd(
+                onReward = {
+                    val fontId = pendingUnlockFontId
+                    if (fontId != null) {
+                        _unlockedFontIds.update { it + fontId }
+                        onFontUnlockCallback?.invoke()
+                    }
+                    cleanupFontAdState()
+                },
+                onSkip = {
+                    val fontId = pendingUnlockFontId
+                    if (fontId != null) {
+                        _unlockedFontIds.update { it + fontId }
+                        onFontUnlockCallback?.invoke()
+                    }
+                    cleanupFontAdState()
+                },
+                checkEnabled = { adsLoaderService.canLoadAd(AdPlacement.REWARD_UNLOCK_EFFECT_SET) }
+            )
+        }
+    }
+
+    fun onFontRewardEarned() {
+        fontAdController.onRewardEarned()
+    }
+
+    fun onFontAdFailed() {
+        _fontAdError.value = context.getString(com.videomaker.aimusic.R.string.text_overlay_font_ad_error)
+        fontAdController.onAdFailed()
+        cleanupFontAdState()
+    }
+
+    fun clearFontAdError() {
+        _fontAdError.value = null
+    }
+
+    private fun cleanupFontAdState() {
+        pendingUnlockFontId = null
+        onFontUnlockCallback = null
+    }
+
+    private fun fetchFonts() {
+        viewModelScope.launch {
+            _isFontsLoading.value = true
+            val result = textRepository.getFonts()
+            result.fold(
+                onSuccess = { fonts ->
+                    // Sort fonts: Local GEO -> GL -> others
+                    val currentGeo = regionProvider.getRegionCode()
+                    val sortedFonts = fonts.sortedWith(compareBy { font ->
+                        when {
+                            font.fontResId != null -> 0
+                            font.geo.any { it.equals(currentGeo, ignoreCase = true) } -> 1
+                            font.geo.any { 
+                                it.equals("GL", ignoreCase = true) || 
+                                it.equals("Global", ignoreCase = true) || 
+                                it.startsWith("Global", ignoreCase = true) 
+                            } -> 2
+                            else -> 3
+                        }
+                    })
+                    _fontPresets.value = sortedFonts
+                    
+                    // Pre-populate already cached fonts
+                    val downloaded = sortedFonts.filter { font ->
+                        if (font.fontResId != null) true
+                        else {
+                            val file = font.getFontFile(context)
+                            file != null && file.exists()
+                        }
+                    }.map { it.id }.toSet()
+                    _downloadedFontIds.update { it + downloaded }
+                },
+                onFailure = { e ->
+                    android.util.Log.e("EditorViewModel", "Failed to fetch fonts: ${e.message}", e)
+                }
+            )
+            _isFontsLoading.value = false
+        }
+    }
+
+    fun downloadFontIfNeeded(fontPreset: TextFontPreset) {
+        val fontId = fontPreset.id
+        // Already local resource
+        if (fontPreset.fontResId != null) return
+        // No remote URL details
+        val url = fontPreset.fontUrl ?: return
+        val path = fontPreset.fontPath ?: return
+        val fullUrl = url + path
+
+        val fontFile = fontPreset.getFontFile(context) ?: return
+        if (fontFile.exists()) {
+            if (!_downloadedFontIds.value.contains(fontId)) {
+                _downloadedFontIds.update { it + fontId }
+            }
+            return
+        }
+
+        if (downloadingFonts.containsKey(fontId)) return
+
+        val downloadJob = viewModelScope.launch(Dispatchers.IO) {
+            try {
+                android.util.Log.d("EditorViewModel", "Downloading font: ${fontPreset.name} from $fullUrl")
+                val bytes = java.net.URL(fullUrl).readBytes()
+                if (bytes.isNotEmpty()) {
+                    fontFile.parentFile?.mkdirs()
+                    fontFile.writeBytes(bytes)
+                    android.util.Log.d("EditorViewModel", "Font downloaded and saved: ${fontFile.absolutePath}")
+                    _downloadedFontIds.update { it + fontId }
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("EditorViewModel", "Failed to download font ${fontPreset.name}: ${e.message}", e)
+            } finally {
+                downloadingFonts.remove(fontId)
+            }
+        }
+        downloadingFonts[fontId] = downloadJob
+    }
+
 
     // Playback position — separate from uiState to avoid 240 state copies/sec.
     // Only the slider and time label observe these, not the entire EditorScreen tree.
@@ -319,6 +560,7 @@ class EditorViewModel(
                 }
             }
         }
+        fetchFonts()
     }
 
     /**
@@ -515,6 +757,10 @@ class EditorViewModel(
 
                         // Load effect set name
                         val effectSetName = getEffectSetName(project.settings.effectSetId)
+
+                        if (prev == null) {
+                            _textOverlays.value = project.settings.textOverlays
+                        }
 
                         val shouldAutoPlay = prev == null && !hasAutoPlayed
                         _uiState.value = EditorUiState.Success(

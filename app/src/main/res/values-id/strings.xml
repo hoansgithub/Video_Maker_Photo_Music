@@ -650,4 +650,20 @@
     <string name="editor_image_dragging">Menyeret</string>
     <string name="editor_image_drag_to_reorder">Seret untuk menyusun ulang</string>
     <string name="editor_image_content_desc">Gambar %1$s</string>
+
+    <!-- Editor Text Overlay -->
+    <string name="editor_text">Teks</string>
+    <string name="text_overlay_placeholder">Masukkan teks</string>
+    <string name="text_overlay_please_enter">Silakan masukkan teks</string>
+    <string name="text_overlay_color_header">Warna</string>
+    <string name="text_overlay_font_header">Font</string>
+    <string name="text_overlay_no_selection">Tidak ada teks yang dipilih</string>
+    <string name="text_overlay_desc_clear_focus">Bersihkan Fokus</string>
+    <string name="text_overlay_desc_confirm">Konfirmasi dan Tutup</string>
+    <string name="text_overlay_desc_ad_required">Iklan diperlukan</string>
+    <string name="text_overlay_desc_new_item">Item baru</string>
+    <string name="text_overlay_desc_delete">Hapus Teks</string>
+    <string name="text_overlay_desc_rotate_scale">Putar dan skala</string>
+    <string name="text_overlay_font_ad_error">Gagal memuat Iklan, silakan coba lagi.</string>
+    <string name="text_overlay_system_default">Bawaan Sistem</string>
 </resources>

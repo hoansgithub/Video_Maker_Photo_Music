@@ -655,4 +655,20 @@
     <string name="editor_image_dragging">টেনে নেওয়া হচ্ছে</string>
     <string name="editor_image_drag_to_reorder">পুনর্বিন্যাস করতে টেনে আনুন</string>
     <string name="editor_image_content_desc">ছবি %1$s</string>
+
+    <!-- Editor Text Overlay -->
+    <string name="editor_text">টেক্সট</string>
+    <string name="text_overlay_placeholder">টেক্সট লিখুন</string>
+    <string name="text_overlay_please_enter">দয়া করে টেক্সট লিখুন</string>
+    <string name="text_overlay_color_header">রঙ</string>
+    <string name="text_overlay_font_header">ফন্ট</string>
+    <string name="text_overlay_no_selection">কোনো টেক্সট নির্বাচন করা হয়নি</string>
+    <string name="text_overlay_desc_clear_focus">ফোকাস সাফ করুন</string>
+    <string name="text_overlay_desc_confirm">নিশ্চিত করুন এবং বন্ধ করুন</string>
+    <string name="text_overlay_desc_ad_required">বিজ্ঞাপন প্রয়োজন</string>
+    <string name="text_overlay_desc_new_item">নতুন আইটেম</string>
+    <string name="text_overlay_desc_delete">টেক্সট মুছুন</string>
+    <string name="text_overlay_desc_rotate_scale">ঘোরান এবং আকার পরিবর্তন করুন</string>
+    <string name="text_overlay_font_ad_error">বিজ্ঞাপন লোড করা ব্যর্থ হয়েছে, অনুগ্রহ করে আবার চেষ্টা করুন।</string>
+    <string name="text_overlay_system_default">সিস্টেম ডিফল্ট</string>
 </resources>
