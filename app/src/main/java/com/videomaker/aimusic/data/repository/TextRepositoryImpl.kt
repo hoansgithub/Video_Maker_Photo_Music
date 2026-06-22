@@ -3,7 +3,6 @@ package com.videomaker.aimusic.data.repository
 import com.videomaker.aimusic.core.data.local.ApiCacheManager
 import com.videomaker.aimusic.core.data.local.RegionProvider
 import com.videomaker.aimusic.domain.model.TextFontPreset
-import com.videomaker.aimusic.domain.model.mockFontPresets
 import com.videomaker.aimusic.domain.repository.TextRepository
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.from
@@ -44,22 +43,15 @@ class TextRepositoryImpl(
 
                 val fonts = dtos.map { it.toDomain() }
 
-                // Merge local resource-based mock fonts with remote Supabase fonts
-                // Keep local fonts at the top
-                val localFonts = mockFontPresets.filter { it.fontResId != null }
-                val mergedFonts = localFonts + fonts
-
-                apiCacheManager.put(cacheKey, mergedFonts)
-                Result.success(mergedFonts)
-            } catch (e: Exception) {
-                android.util.Log.e("TextRepository", "getFonts failed: ${e.message}", e)
-
-                // Fallback to cache if expired, then mockFontPresets
+                apiCacheManager.put(cacheKey, fonts)
+                Result.success(fonts)
+            } catch (_: Exception) {
+                // Fallback to cache if expired
                 apiCacheManager.getStale<List<TextFontPreset>>(cacheKey)?.let {
                     return@withContext Result.success(it)
                 }
 
-                Result.success(mockFontPresets)
+                Result.success(emptyList())
             }
         }
 }

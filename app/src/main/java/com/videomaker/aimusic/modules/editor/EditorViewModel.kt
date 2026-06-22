@@ -19,7 +19,6 @@ import com.videomaker.aimusic.domain.model.ProjectSettings
 import com.videomaker.aimusic.domain.model.TextFontPreset
 import com.videomaker.aimusic.domain.model.TextOverlay
 import com.videomaker.aimusic.domain.model.VideoQuality
-import com.videomaker.aimusic.domain.model.mockFontPresets
 import com.videomaker.aimusic.domain.repository.TextRepository
 import com.videomaker.aimusic.core.data.local.RegionProvider
 import com.videomaker.aimusic.domain.repository.EffectSetRepository
@@ -237,7 +236,7 @@ class EditorViewModel(
     // ============================================
     // DYNAMIC FONTS STATE
     // ============================================
-    private val _fontPresets = MutableStateFlow<List<TextFontPreset>>(mockFontPresets)
+    private val _fontPresets = MutableStateFlow<List<TextFontPreset>>(emptyList())
     val fontPresets: StateFlow<List<TextFontPreset>> = _fontPresets.asStateFlow()
 
     private val _isFontsLoading = MutableStateFlow(false)
