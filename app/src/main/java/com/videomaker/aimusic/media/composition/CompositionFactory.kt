@@ -11,6 +11,7 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.transformer.Composition
 import androidx.media3.transformer.EditedMediaItem
 import androidx.media3.transformer.EditedMediaItemSequence
+import androidx.media3.effect.OverlayEffect
 import androidx.media3.transformer.Effects
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.domain.model.Asset
@@ -23,7 +24,12 @@ import com.videomaker.aimusic.domain.model.Transition
 import com.videomaker.aimusic.domain.model.VideoQuality
 import com.videomaker.aimusic.domain.repository.TextRepository
 import com.videomaker.aimusic.media.audio.VolumeAudioProcessor
+import com.videomaker.aimusic.media.audio.FadeoutAudioProcessor
+import com.videomaker.aimusic.domain.model.StickerPlacement
+import com.videomaker.aimusic.media.effects.AnimatedStickerDecoder
+import com.videomaker.aimusic.media.effects.DecodedSticker
 import com.videomaker.aimusic.media.effects.FrameOverlayEffect
+import com.videomaker.aimusic.media.effects.StickerOverlay
 import com.videomaker.aimusic.media.effects.TextOverlayEffect
 import com.videomaker.aimusic.media.effects.TransitionEffect
 import com.videomaker.aimusic.media.effects.WatermarkOverlayEffect
@@ -92,6 +98,16 @@ class CompositionFactory(
      */
     private val beatSyncLoadedBitmaps = AtomicReference<MutableList<Bitmap>?>(null)
 
+    /** Decodes sticker assets (incl. animated GIF frames) for export compositing. */
+    private val stickerDecoder by lazy { AnimatedStickerDecoder(context) }
+
+    /**
+     * Decoded stickers for the current composition, shared across all per-clip effects.
+     * Thread-safe; recycled in [recycleBitmaps].
+     */
+    private val lastDecodedStickers =
+        AtomicReference<List<Pair<StickerPlacement, DecodedSticker>>?>(null)
+
     /**
      * Recycle all tracked transition bitmaps (both FROM and TO).
      * Thread-safe - can be called from any thread.
@@ -119,6 +135,9 @@ class CompositionFactory(
                 }
             }
         }
+
+        // Recycle decoded sticker frames
+        lastDecodedStickers.getAndSet(null)?.forEach { (_, decoded) -> decoded.recycle() }
     }
 
     /**
@@ -174,6 +193,15 @@ class CompositionFactory(
         // STEP 2: Load transition TO bitmaps from cache files
         val transitionBitmaps = loadTransitionBitmapsFromCache(processedImages, settings)
         lastTransitionBitmaps.set(transitionBitmaps)
+
+        // STEP 2b: Decode sticker assets (incl. animated GIF frames) for overlay compositing.
+        // Shared across all clips so each per-clip effect chain reuses the same frames.
+        val decodedStickers = if (settings.stickers.isNotEmpty()) {
+            stickerDecoder.decodeAll(settings.stickers)
+        } else {
+            emptyList()
+        }
+        lastDecodedStickers.set(decodedStickers)
 
         // STEP 3: Create video sequence - BEAT-SYNC ONLY
         val beatData = settings.beatSyncData
@@ -652,6 +680,18 @@ class CompositionFactory(
         // 3. Text Overlays
         if (settings.textOverlays.isNotEmpty()) {
             videoEffects.add(TextOverlayEffect(context, settings.textOverlays, fontPresets))
+        }
+
+        // 4. Stickers — one overlay per placement, drawn on top of the video content.
+        // Added to every clip so they appear for the whole video; clipStartTimeUs keeps
+        // animation continuous across the per-clip Media3 items.
+        val decodedStickers = lastDecodedStickers.get()
+        if (!decodedStickers.isNullOrEmpty()) {
+            val overlays: List<androidx.media3.effect.TextureOverlay> =
+                decodedStickers.map { (placement, decoded) ->
+                    StickerOverlay(placement, decoded, clipStartTimeUs)
+                }
+            videoEffects.add(OverlayEffect(overlays))
         }
 
         if (includeWatermark) {

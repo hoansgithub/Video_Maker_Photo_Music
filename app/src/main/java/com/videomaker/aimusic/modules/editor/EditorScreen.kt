@@ -112,6 +112,7 @@ import com.videomaker.aimusic.modules.editor.components.RatioPanel
 import com.videomaker.aimusic.modules.editor.components.SettingsTabBar
 import com.videomaker.aimusic.modules.editor.components.TextBottomSheet
 import com.videomaker.aimusic.modules.editor.components.TextOverlayCanvas
+import com.videomaker.aimusic.modules.editor.components.StickerPanel
 import com.videomaker.aimusic.modules.editor.components.VolumeBottomSheet
 import com.videomaker.aimusic.ui.components.AppAsyncImage
 import com.videomaker.aimusic.ui.components.EditorErrorDialog
@@ -189,6 +190,8 @@ fun EditorScreen(
     var showEffectSetSheet by remember { mutableStateOf(false) }
     var showTextSheet by remember { mutableStateOf(false) }
     var textFocusTrigger by remember { mutableStateOf(0L) }
+    var showStickerSheet by remember { mutableStateOf(false) }
+    var selectedStickerId by remember { mutableStateOf<String?>(null) }
     var effectSetIdBeforePanel by remember { mutableStateOf<String?>(null) }
     var showMusicSearchSheet by remember { mutableStateOf(false) }
     var showVolumeSheet by remember { mutableStateOf(false) }
@@ -228,6 +231,9 @@ fun EditorScreen(
 
     // Effect Set ViewModel - created once and reused
     val effectSetViewModel: EffectSetViewModel = koinViewModel()
+
+    // Sticker ViewModel - created once and reused
+    val stickerViewModel: StickerViewModel = koinViewModel()
 
     // Song Search ViewModel - created once and reused
     val songSearchViewModel: com.videomaker.aimusic.modules.songsearch.SongSearchViewModel =
@@ -666,6 +672,34 @@ fun EditorScreen(
                         )
                     }
                 },
+                stickers = successState?.displaySettings?.stickers ?: emptyList(),
+                selectedStickerId = selectedStickerId,
+                onStickerTabClick = {
+                    showStickerSheet = true
+                },
+                onStickerSelect = { id -> selectedStickerId = id },
+                onStickerTransform = { placement ->
+                    viewModel.updateStickerPlacement(placement)
+                },
+                onStickerDelete = { instanceId ->
+                    viewModel.removeSticker(instanceId)
+                    if (selectedStickerId == instanceId) selectedStickerId = null
+                },
+                onStickerDoubleTapTopMost = {
+                    val top = currentState()?.displaySettings?.stickers?.maxByOrNull { it.zIndex }
+                    if (top != null) {
+                        viewModel.bringStickerToFront(top.instanceId)
+                        selectedStickerId = top.instanceId
+                    }
+                },
+                showStickerPanel = showStickerSheet,
+                stickerViewModel = stickerViewModel,
+                onStickerPanelDismiss = { showStickerSheet = false },
+                onStickerPanelConfirm = { showStickerSheet = false },
+                onAddSticker = { sticker ->
+                    // Auto-select the newly added sticker so its handles show immediately.
+                    selectedStickerId = viewModel.addSticker(sticker)
+                },
                 showTextPanel = showTextSheet,
                 textFocusTrigger = textFocusTrigger,
                 editorViewModel = viewModel,
@@ -695,7 +729,7 @@ fun EditorScreen(
                 },
                 topBar = {
                     androidx.compose.animation.AnimatedVisibility(
-                        visible = !showEffectSetSheet && !showRatioSheet && !showTextSheet,
+                        visible = !showEffectSetSheet && !showRatioSheet && !showTextSheet  && !showStickerSheet,
                         enter = slideInVertically(initialOffsetY = { -it }) + fadeIn(),
                         exit = slideOutVertically(targetOffsetY = { -it }) + fadeOut()
                     ) {
@@ -1284,6 +1318,19 @@ internal fun EditorMainContent(
     onDoubleTapText: (String) -> Unit = {},
     onTextPanelDismiss: () -> Unit = {},
     onTextPanelConfirm: () -> Unit = {},
+    // Stickers
+    stickers: List<com.videomaker.aimusic.domain.model.StickerPlacement> = emptyList(),
+    selectedStickerId: String? = null,
+    onStickerTabClick: () -> Unit = {},
+    onStickerSelect: (String?) -> Unit = {},
+    onStickerTransform: (com.videomaker.aimusic.domain.model.StickerPlacement) -> Unit = {},
+    onStickerDelete: (String) -> Unit = {},
+    onStickerDoubleTapTopMost: () -> Unit = {},
+    showStickerPanel: Boolean = false,
+    stickerViewModel: StickerViewModel? = null,
+    onStickerPanelDismiss: () -> Unit = {},
+    onStickerPanelConfirm: () -> Unit = {},
+    onAddSticker: (com.videomaker.aimusic.domain.model.Sticker) -> Unit = {},
     topBar: @Composable () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
@@ -1301,8 +1348,8 @@ internal fun EditorMainContent(
     val maxHeight = 620.dp
     var currentPanelHeight by remember(minHeight) { mutableStateOf(minHeight) }
 
-    LaunchedEffect(showEffectSetPanel, showTextPanel, showRatioPanel, minHeight) {
-        if (showEffectSetPanel || showTextPanel || showRatioPanel) {
+    LaunchedEffect(showEffectSetPanel, showTextPanel, showRatioPanel, showStickerPanel, minHeight) {
+        if (showEffectSetPanel || showTextPanel || showRatioPanel || showStickerPanel) {
             currentPanelHeight = minHeight
         }
     }
@@ -1410,10 +1457,24 @@ internal fun EditorMainContent(
                     modifier = Modifier.fillMaxSize()
                 )
             }
+
+            // Sticker overlay — sized to exactly the video rect (same aspectRatio as the
+            // GL surface) so preview coordinates match the exported video.
+            if (currentState == EditorScreenState.READY && stickers.isNotEmpty()) {
+                com.videomaker.aimusic.modules.editor.components.StickerOverlayLayer(
+                    stickers = stickers,
+                    selectedInstanceId = selectedStickerId,
+                    onSelect = onStickerSelect,
+                    onTransform = onStickerTransform,
+                    onDelete = onStickerDelete,
+                    onDoubleTapTopMost = onStickerDoubleTapTopMost,
+                    modifier = Modifier.aspectRatio(previewAspectRatio)
+                )
+            }
         }
 
 
-        if (showEffectSetPanel || showTextPanel) {
+        if (showEffectSetPanel || showTextPanel|| showStickerPanel) {
             Spacer(modifier = Modifier.height(minHeight))
         } else if (showRatioPanel) {
             Spacer(modifier = Modifier.height(210.dp))
@@ -1595,6 +1656,7 @@ internal fun EditorMainContent(
                             onImagesClick = onImagesClick,
                             onEffectClick = onEffectClick,
                             onTextClick = onTextClick,
+                            onStickerClick = onStickerTabClick,
                             onRatioClick = onRatioClick,
                             onVolumeClick = onVolumeClick,
                             modifier = Modifier.fillMaxWidth()
@@ -1720,6 +1782,53 @@ internal fun EditorMainContent(
                 onSeekEnd = onSeekEnd,
                 onPlayPauseClick = onPlayPauseClick,
                 modifier = Modifier.fillMaxWidth()
+            )
+        }
+    }
+
+    if (showStickerPanel && stickerViewModel != null) {
+        Column(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .height(currentPanelHeight)
+                .background(SplashBackground)
+                .nestedScroll(nestedScrollConnection)
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null
+                ) { /* consume clicks */ }
+        ) {
+            // Drag handle area
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .pointerInput(Unit) {
+                        detectDragGestures { change, dragAmount ->
+                            change.consume()
+                            val dragDp = with(density) { -dragAmount.y.toDp() }
+                            currentPanelHeight = (currentPanelHeight + dragDp).coerceIn(minHeight, maxHeight)
+                        }
+                    }
+                    .padding(vertical = 12.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(width = 36.dp, height = 4.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(Color.Gray)
+                )
+            }
+
+            StickerPanel(
+                viewModel = stickerViewModel,
+                onAddSticker = onAddSticker,
+                onDismiss = onStickerPanelDismiss,
+                onConfirm = onStickerPanelConfirm,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
             )
         }
     }
