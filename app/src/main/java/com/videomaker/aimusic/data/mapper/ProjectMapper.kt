@@ -79,7 +79,7 @@ object ProjectMapper {
             aspectRatio = AspectRatio.fromString(entity.aspectRatio),
             audioNodes = audioNodes,
             stickers = stickers,
-            audioNodes = audioNodes
+            textOverlays = textOverlays
         )
     }
 

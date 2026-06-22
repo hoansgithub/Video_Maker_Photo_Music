@@ -24,7 +24,6 @@ import com.videomaker.aimusic.domain.model.Transition
 import com.videomaker.aimusic.domain.model.VideoQuality
 import com.videomaker.aimusic.domain.repository.TextRepository
 import com.videomaker.aimusic.media.audio.VolumeAudioProcessor
-import com.videomaker.aimusic.media.audio.FadeoutAudioProcessor
 import com.videomaker.aimusic.domain.model.StickerPlacement
 import com.videomaker.aimusic.media.effects.AnimatedStickerDecoder
 import com.videomaker.aimusic.media.effects.DecodedSticker
