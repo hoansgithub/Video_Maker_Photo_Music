@@ -228,6 +228,7 @@ fun AssetPickerScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val durationInfo by viewModel.durationInfo.collectAsStateWithLifecycle()
     val gridScrollState by viewModel.gridScrollState.collectAsStateWithLifecycle()
+    val isConfirming by viewModel.isConfirming.collectAsStateWithLifecycle()
     var hasInitializedPermissionCheck by remember { mutableStateOf(false) }
     var showExitConfirmDialog by remember { mutableStateOf(false) }
     var hasTrackedMediaRender by remember { mutableStateOf(false) }
@@ -689,9 +690,11 @@ fun AssetPickerScreen(
         }
     }
 
-    // Handle system back button
+    // Handle system back button; swallow during confirm to prevent cancelling the coroutine
     BackHandler(enabled = true) {
-        requestExit()
+        if (!isConfirming) {
+            requestExit()
+        }
     }
 
     // Full-screen content
@@ -708,6 +711,7 @@ fun AssetPickerScreen(
                 maxSelection = AssetPickerViewModel.MAX_SELECTION,
                 durationText = durationInfo.formatted,
                 additionalForIdeal = durationInfo.additionalForIdeal,
+                isConfirming = isConfirming,
                 initialGridScrollState = gridScrollState,
                 onAlbumSelect = { albumId -> viewModel.selectAlbum(albumId) },
                 onAssetClick = { asset -> viewModel.addAssetSelection(asset) },
@@ -825,6 +829,7 @@ private fun AssetPickerContent(
     maxSelection: Int,
     durationText: String,
     additionalForIdeal: Int,
+    isConfirming: Boolean = false,
     initialGridScrollState: AssetPickerGridScrollState,
     onAlbumSelect: (String) -> Unit,
     onAssetClick: (GalleryAsset) -> Unit,
@@ -946,6 +951,7 @@ private fun AssetPickerContent(
                         maxSelection = maxSelection,
                         durationText = durationText,
                         additionalForIdeal = additionalForIdeal,
+                        isConfirming = isConfirming,
                         onRemoveSelectedAt = onRemoveSelectedAt,
                         onConfirmClick = onConfirmClick
                     )
@@ -987,6 +993,7 @@ private fun PickerSelectionBar(
     maxSelection: Int,
     durationText: String,
     additionalForIdeal: Int,
+    isConfirming: Boolean = false,
     onRemoveSelectedAt: (Int) -> Unit,
     onConfirmClick: () -> Unit
 ) {
@@ -1090,7 +1097,8 @@ private fun PickerSelectionBar(
                 contentAlignment = Alignment.Center
             ){
                 ConfirmCheckButton(
-                    enabled = canConfirm,
+                    enabled = canConfirm && !isConfirming,
+                    isLoading = isConfirming,
                     onClick = onConfirmClick
                 )
             }
@@ -1137,22 +1145,31 @@ private fun DurationPill(text: String) {
 @Composable
 private fun ConfirmCheckButton(
     enabled: Boolean,
+    isLoading: Boolean = false,
     onClick: () -> Unit
 ) {
     Box(
         modifier = Modifier
             .size(CHECK_BUTTON_SIZE_DP.dp)
             .clip(CircleShape)
-            .background(if (enabled) Primary else Primary.copy(alpha = 0.35f))
+            .background(if (enabled || isLoading) Primary else Primary.copy(alpha = 0.35f))
             .clickableSingle(enabled = enabled) { onClick() },
         contentAlignment = Alignment.Center
     ) {
-        Icon(
-            imageVector = Icons.Default.Check,
-            contentDescription = stringResource(R.string.picker_selected),
-            tint = FoundationBlack,
-            modifier = Modifier.size(24.dp)
-        )
+        if (isLoading) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(22.dp),
+                strokeWidth = 2.5.dp,
+                color = FoundationBlack
+            )
+        } else {
+            Icon(
+                imageVector = Icons.Default.Check,
+                contentDescription = stringResource(R.string.picker_selected),
+                tint = FoundationBlack,
+                modifier = Modifier.size(24.dp)
+            )
+        }
     }
 }
 
