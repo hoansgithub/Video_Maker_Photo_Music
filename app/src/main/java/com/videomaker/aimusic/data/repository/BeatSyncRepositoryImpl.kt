@@ -180,7 +180,7 @@ class BeatSyncRepositoryImpl(
         return BeatSyncData(
             beats = beats,
             bpm = obj.getDouble("bpm"),
-            numBeats = obj.getInt("num_beats")
+            numBeats = obj.optInt("num_beats", beats.size)
         )
     }
 
