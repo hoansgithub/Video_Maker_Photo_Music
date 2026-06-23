@@ -1120,16 +1120,18 @@ internal fun EditorTopBar(
             .padding(horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(
-            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-            contentDescription = stringResource(R.string.back),
-            modifier = Modifier
-                .size(32.dp)
-                .clickableSingle {
-                    onBackClick.invoke()
-                }
-                .padding(4.dp)
-        )
+        if (isLoading.not()) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = stringResource(R.string.back),
+                modifier = Modifier
+                    .size(32.dp)
+                    .clickableSingle {
+                        onBackClick.invoke()
+                    }
+                    .padding(4.dp)
+            )
+        }
 
         Spacer(Modifier.weight(1f))
         if (isLoading.not()) {
