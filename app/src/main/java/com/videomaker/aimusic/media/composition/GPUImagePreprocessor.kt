@@ -17,6 +17,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import kotlin.math.roundToInt
 
 /**
  * GPUImagePreprocessor - Preprocesses images using GPU for consistent color handling
@@ -178,9 +179,25 @@ class GPUImagePreprocessor(private val context: Context) {
             val inputHeight = inputBitmap.height
             val inputAspect = inputWidth.toFloat() / inputHeight.toFloat()
 
-            // Calculate output dimensions
-            val outputWidth = textureSize
-            val outputHeight = (textureSize / targetAspectRatio).toInt()
+            // Calculate output dimensions.
+            // textureSize = quality height = the SHORT side of the video. Anchor the short side
+            // to textureSize, derive the long side from the aspect ratio, and force BOTH
+            // dimensions even. H.264 / MediaCodec encoders reject odd width/height: the old
+            // "outputWidth = textureSize" always made width the short side, so every landscape
+            // ratio produced the wrong orientation AND 16:9 720p yielded 720×405 (odd height),
+            // which failed encoder init whenever an effect (sticker/text/watermark/transition)
+            // locked the frame size — i.e. every non-portrait export.
+            val outputWidth: Int
+            val outputHeight: Int
+            if (targetAspectRatio >= 1f) {
+                // Landscape or square: short side is the height.
+                outputHeight = makeEven(textureSize)
+                outputWidth = makeEven((textureSize * targetAspectRatio).roundToInt())
+            } else {
+                // Portrait: short side is the width.
+                outputWidth = makeEven(textureSize)
+                outputHeight = makeEven((textureSize / targetAspectRatio).roundToInt())
+            }
 
             // Create input texture
             val inputTexture = createTexture(inputBitmap)
@@ -252,6 +269,9 @@ class GPUImagePreprocessor(private val context: Context) {
             return false
         }
     }
+
+    /** Round down to the nearest even integer (min 2) so the encoder never sees odd dimensions. */
+    private fun makeEven(value: Int): Int = value.coerceAtLeast(2) and 1.inv()
 
     private fun loadBitmap(uri: Uri, maxSize: Int): Bitmap? {
         return try {
