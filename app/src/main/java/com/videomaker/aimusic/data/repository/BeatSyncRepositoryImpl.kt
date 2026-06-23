@@ -13,6 +13,8 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import org.json.JSONObject
 import java.io.File
+import java.net.HttpURLConnection
+import java.net.URL
 
 /**
  * Implementation of BeatSyncRepository.
@@ -27,10 +29,10 @@ import java.io.File
  * Beat-sync data is SONG metadata, shared across all projects using that song.
  * Multiple projects with the same song reuse the same cached data.
  *
- * Graceful degradation strategy:
- * - Network errors, 404s, parsing errors → return null (NOT failure)
- * - Null triggers fallback to legacy fixed-duration mode
- * - No user-facing errors, only logged warnings
+ * Error handling strategy:
+ * - Network errors, timeouts, parse errors -> return Result.failure() (retryable)
+ * - Genuinely missing data (no beats_url, empty file) -> return Result.success(null) (legacy fallback)
+ * - Only cache successful results and confirmed-missing data (NOT failures)
  */
 class BeatSyncRepositoryImpl(
     private val context: Context,
@@ -39,7 +41,7 @@ class BeatSyncRepositoryImpl(
 
     private val cacheDir = File(context.cacheDir, "beats_cache")
 
-    // In-memory cache: song ID → BeatSyncData
+    // In-memory cache: song ID -> BeatSyncData
     // Shared across all projects using the same song
     // Cleared when app process dies (file cache persists)
     private val memoryCache = mutableMapOf<Long, BeatSyncData?>()
@@ -47,13 +49,15 @@ class BeatSyncRepositoryImpl(
     companion object {
         private const val TAG = "BeatSyncRepository"
         private const val TABLE_SONGS = "songs"
+        private const val CONNECT_TIMEOUT_MS = 20_000
+        private const val READ_TIMEOUT_MS = 20_000
     }
 
     override suspend fun getBeatData(songId: Long, beatsUrl: String?): Result<BeatSyncData?> = withContext(Dispatchers.IO) {
         return@withContext try {
             // 1. Check in-memory cache first (instant, shared across all projects)
             if (memoryCache.containsKey(songId)) {
-                Log.d(TAG, "✅ Beat data from memory cache: $songId")
+                Log.d(TAG, "Beat data from memory cache: $songId")
                 return@withContext Result.success(memoryCache[songId])
             }
 
@@ -81,16 +85,16 @@ class BeatSyncRepositoryImpl(
 
             if (url.isNullOrEmpty()) {
                 Log.w(TAG, "No beats URL for song $songId - falling back to legacy mode")
-                memoryCache[songId] = null
+                memoryCache[songId] = null  // Confirmed missing - safe to cache
                 return@withContext Result.success(null)
             }
 
             Log.d(TAG, "Downloading beat data: $songId")
-            val bytes = java.net.URL(url).readBytes()
+            val bytes = downloadWithTimeout(url)
 
             if (bytes.isEmpty()) {
                 Log.w(TAG, "Beat file not found: $songId.json - falling back to legacy mode")
-                memoryCache[songId] = null  // Cache the null result to avoid repeated downloads
+                memoryCache[songId] = null  // Confirmed empty - safe to cache
                 return@withContext Result.success(null) // Graceful degradation
             }
 
@@ -100,17 +104,49 @@ class BeatSyncRepositoryImpl(
             Log.d(TAG, "Beat data cached to file: $songId (${bytes.size} bytes)")
 
             val data = parseJson(bytes.decodeToString())
-            Log.d(TAG, "✅ Beat-sync loaded from network: $songId - ${data.beats.size} beats, ${data.bpm} BPM")
+            Log.d(TAG, "Beat-sync loaded from network: $songId - ${data.beats.size} beats, ${data.bpm} BPM")
 
             // Store in memory cache for instant access next time
             memoryCache[songId] = data
             Result.success(data)
 
         } catch (e: Exception) {
-            // ANY error → return null (graceful degradation, NOT a failure)
-            Log.w(TAG, "Failed to load beat data for $songId: ${e.message} - falling back to legacy mode")
-            memoryCache[songId] = null  // Cache the failure to avoid repeated attempts
-            Result.success(null)
+            // Network/timeout/parse error -> return failure (retryable)
+            // Do NOT cache failures so retry can re-fetch from network
+            Log.w(TAG, "Failed to load beat data for $songId: ${e.message}")
+            Result.failure(e)
+        }
+    }
+
+    override fun clearErrorCache(songId: Long) {
+        // Remove cached null so the next getBeatData() hits the network
+        if (memoryCache[songId] == null && memoryCache.containsKey(songId)) {
+            memoryCache.remove(songId)
+            Log.d(TAG, "Cleared error cache for song $songId")
+        }
+    }
+
+    /**
+     * Download bytes from URL with connect and read timeouts.
+     * Uses HttpURLConnection instead of URL.readBytes() which has no timeout.
+     */
+    private fun downloadWithTimeout(url: String): ByteArray {
+        val connection = URL(url).openConnection() as HttpURLConnection
+        try {
+            connection.connectTimeout = CONNECT_TIMEOUT_MS
+            connection.readTimeout = READ_TIMEOUT_MS
+            connection.requestMethod = "GET"
+            connection.connect()
+
+            val responseCode = connection.responseCode
+            if (responseCode != HttpURLConnection.HTTP_OK) {
+                Log.w(TAG, "HTTP $responseCode for beat data download: $url")
+                return byteArrayOf()
+            }
+
+            return connection.inputStream.use { it.readBytes() }
+        } finally {
+            connection.disconnect()
         }
     }
 
@@ -135,7 +171,7 @@ class BeatSyncRepositoryImpl(
         val obj = JSONObject(json)
         val beatsArray = obj.getJSONArray("beats")
 
-        // beats is [[time_s, kick_s], ...] — extract only time_s (index 0)
+        // beats is [[time_s, kick_s], ...] -- extract only time_s (index 0)
         val beats = (0 until beatsArray.length()).map { i ->
             val pair = beatsArray.getJSONArray(i)
             pair.getDouble(0)  // time in seconds (ignore kick_strength at index 1)
@@ -144,7 +180,7 @@ class BeatSyncRepositoryImpl(
         return BeatSyncData(
             beats = beats,
             bpm = obj.getDouble("bpm"),
-            numBeats = obj.getInt("num_beats")
+            numBeats = obj.optInt("num_beats", beats.size)
         )
     }
 

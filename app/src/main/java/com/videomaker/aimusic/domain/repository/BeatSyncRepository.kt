@@ -21,4 +21,10 @@ interface BeatSyncRepository {
      * @return Result with BeatSyncData if successful, null if unavailable (triggers legacy fallback)
      */
     suspend fun getBeatData(songId: Long, beatsUrl: String? = null): Result<BeatSyncData?>
+
+    /**
+     * Clear cached null/error entry for a specific song so the next getBeatData() re-fetches from network.
+     * Called before retry to ensure fresh network attempt.
+     */
+    fun clearErrorCache(songId: Long)
 }
