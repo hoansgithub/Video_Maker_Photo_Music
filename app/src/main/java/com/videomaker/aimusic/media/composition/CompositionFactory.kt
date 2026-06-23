@@ -676,21 +676,41 @@ class CompositionFactory(
             }
         }
 
-        // 3. Text Overlays
-        if (settings.textOverlays.isNotEmpty()) {
-            videoEffects.add(TextOverlayEffect(context, settings.textOverlays, fontPresets))
-        }
+        // 3+4. Text + Sticker overlays, interleaved by shared z-order (add order). Media3
+        // applies effects in order (later draws on top), so emitting one effect per z-run
+        // reproduces the preview's interleaving (OverlayInterleaveLayer) in the export.
+        run {
+            val decodedById = lastDecodedStickers.get().orEmpty().associate { (placement, decoded) ->
+                placement.instanceId to decoded
+            }
+            val overlayRuns = com.videomaker.aimusic.modules.editor.overlay.buildOverlayRuns(
+                textOverlays = settings.textOverlays,
+                stickers = settings.stickers
+            )
+            overlayRuns.forEach { overlayRun ->
+                when (overlayRun) {
+                    is com.videomaker.aimusic.modules.editor.overlay.OverlayRun.TextRun -> {
+                        if (overlayRun.overlays.isNotEmpty()) {
+                            videoEffects.add(
+                                TextOverlayEffect(context, overlayRun.overlays, fontPresets)
+                            )
+                        }
+                    }
 
-        // 4. Stickers — one overlay per placement, drawn on top of the video content.
-        // Added to every clip so they appear for the whole video; clipStartTimeUs keeps
-        // animation continuous across the per-clip Media3 items.
-        val decodedStickers = lastDecodedStickers.get()
-        if (!decodedStickers.isNullOrEmpty()) {
-            val overlays: List<androidx.media3.effect.TextureOverlay> =
-                decodedStickers.map { (placement, decoded) ->
-                    StickerOverlay(placement, decoded, clipStartTimeUs)
+                    is com.videomaker.aimusic.modules.editor.overlay.OverlayRun.StickerRun -> {
+                        // clipStartTimeUs keeps animation continuous across per-clip Media3 items.
+                        val overlays: List<androidx.media3.effect.TextureOverlay> =
+                            overlayRun.stickers.mapNotNull { placement ->
+                                decodedById[placement.instanceId]?.let { decoded ->
+                                    StickerOverlay(placement, decoded, clipStartTimeUs)
+                                }
+                            }
+                        if (overlays.isNotEmpty()) {
+                            videoEffects.add(OverlayEffect(overlays))
+                        }
+                    }
                 }
-            videoEffects.add(OverlayEffect(overlays))
+            }
         }
 
         if (includeWatermark) {

@@ -264,10 +264,15 @@ class EditorViewModel(
 
     fun addTextOverlay(text: String = "Enter Text") {
         val defaultFontId = _fontPresets.value.firstOrNull()?.id ?: "neue_haas_regular"
-        val newOverlay = TextOverlay(text = text, fontId = defaultFontId)
-        _textOverlays.update { it + newOverlay }
-        _selectedTextOverlayId.value = newOverlay.id
-        updatePendingSettingsAudioOnly { it.copy(textOverlays = _textOverlays.value) }
+        updatePendingSettingsAudioOnly { settings ->
+            // Shared stacking counter across text + stickers so overlays interleave by add order.
+            val nextZ = com.videomaker.aimusic.modules.editor.overlay
+                .combinedMaxZIndex(_textOverlays.value, settings.stickers) + 1
+            val newOverlay = TextOverlay(text = text, fontId = defaultFontId, zIndex = nextZ)
+            _textOverlays.update { it + newOverlay }
+            _selectedTextOverlayId.value = newOverlay.id
+            settings.copy(textOverlays = _textOverlays.value)
+        }
     }
 
     fun updateTextOverlay(
@@ -1624,7 +1629,8 @@ class EditorViewModel(
     fun addSticker(sticker: com.videomaker.aimusic.domain.model.Sticker): String {
         val instanceId = java.util.UUID.randomUUID().toString()
         updatePendingSettingsAudioOnly { settings ->
-            val nextZ = (settings.stickers.maxOfOrNull { it.zIndex } ?: -1) + 1
+            val nextZ = com.videomaker.aimusic.modules.editor.overlay
+                .combinedMaxZIndex(settings.textOverlays, settings.stickers) + 1
             val placement = com.videomaker.aimusic.domain.model.StickerPlacement(
                 instanceId = instanceId,
                 stickerId = sticker.id,

@@ -112,7 +112,6 @@ import com.videomaker.aimusic.modules.editor.components.PlayMusicSlider
 import com.videomaker.aimusic.modules.editor.components.RatioPanel
 import com.videomaker.aimusic.modules.editor.components.SettingsTabBar
 import com.videomaker.aimusic.modules.editor.components.TextBottomSheet
-import com.videomaker.aimusic.modules.editor.components.TextOverlayCanvas
 import com.videomaker.aimusic.modules.editor.components.StickerPanel
 import com.videomaker.aimusic.modules.editor.components.VolumeBottomSheet
 import com.videomaker.aimusic.ui.components.AppAsyncImage
@@ -706,6 +705,12 @@ fun EditorScreen(
                 },
                 // Tap a committed sticker → select it and re-open the picker (like text editing).
                 onStickerRequestEdit = { id ->
+                    // Switching from the text panel: commit text edits (live-applied) and just
+                    // hide its panel so only the sticker panel shows.
+                    if (showTextSheet) {
+                        viewModel.setSelectedTextOverlayId(null)
+                        showTextSheet = false
+                    }
                     Analytics.trackStickerEdit()
                     lastPickedStickerName = null
                     lastPickedStickerSetName = null
@@ -753,6 +758,17 @@ fun EditorScreen(
                     viewModel.setSelectedTextOverlayId(id)
                     showTextSheet = true
                     textFocusTrigger = System.currentTimeMillis()
+                },
+                // Tapping a text while the sticker panel is open → switch to editing that text:
+                // commit/keep the stickers, hide the sticker panel, show only the text panel.
+                onTextTapped = { id ->
+                    if (showStickerSheet) {
+                        showStickerSheet = false
+                        selectedStickerId = null
+                        viewModel.setSelectedTextOverlayId(id)
+                        showTextSheet = true
+                        textFocusTrigger = System.currentTimeMillis()
+                    }
                 },
                 onTextPanelDismiss = {
                     viewModel.setSelectedTextOverlayId(null)
@@ -1362,6 +1378,7 @@ internal fun EditorMainContent(
     textFocusTrigger: Long = 0L,
     editorViewModel: EditorViewModel? = null,
     onDoubleTapText: (String) -> Unit = {},
+    onTextTapped: (String) -> Unit = {},
     onTextPanelDismiss: () -> Unit = {},
     onTextPanelConfirm: () -> Unit = {},
     // Stickers
@@ -1474,10 +1491,21 @@ internal fun EditorMainContent(
                     modifier = Modifier.fillMaxSize()
                 )
 
-                if (editorViewModel != null) {
-                    TextOverlayCanvas(
-                        viewModel = editorViewModel,
+                // Unified overlay layer: text + stickers interleaved by shared z-order (add
+                // order). Text stays tappable while stickers are present (see OverlayInterleaveLayer).
+                if (editorViewModel != null && currentState == EditorScreenState.READY) {
+                    com.videomaker.aimusic.modules.editor.components.OverlayInterleaveLayer(
+                        editorViewModel = editorViewModel,
+                        stickers = stickers,
+                        selectedStickerId = selectedStickerId,
+                        onStickerSelect = onStickerSelect,
+                        onStickerTransform = onStickerTransform,
+                        onStickerDelete = onStickerDelete,
+                        onStickerDoubleTapTopMost = onStickerDoubleTapTopMost,
+                        onStickerRequestEdit = onStickerRequestEdit,
+                        stickerInteractive = showStickerPanel,
                         onDoubleTapText = onDoubleTapText,
+                        onTextTapped = onTextTapped,
                         modifier = Modifier.fillMaxSize()
                     )
                 }
@@ -1505,23 +1533,7 @@ internal fun EditorMainContent(
                 )
             }
 
-            // Sticker overlay — sized to exactly the video rect (same aspectRatio as the
-            // GL surface) so preview coordinates match the exported video.
-            if (currentState == EditorScreenState.READY && stickers.isNotEmpty()) {
-                com.videomaker.aimusic.modules.editor.components.StickerOverlayLayer(
-                    stickers = stickers,
-                    selectedInstanceId = selectedStickerId,
-                    onSelect = onStickerSelect,
-                    onTransform = onStickerTransform,
-                    onDelete = onStickerDelete,
-                    onDoubleTapTopMost = onStickerDoubleTapTopMost,
-                    // Tapping a committed sticker re-opens the picker for editing (like text).
-                    onRequestEdit = onStickerRequestEdit,
-                    // Only editable while the sticker picker is open; committed otherwise.
-                    interactive = showStickerPanel,
-                    modifier = Modifier.aspectRatio(previewAspectRatio)
-                )
-            }
+            // (Stickers are now rendered by OverlayInterleaveLayer above, interleaved with text.)
         }
 
 
