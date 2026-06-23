@@ -118,6 +118,8 @@ object AnalyticsEvent {
     const val VIDEO_PREVIEW_COMPLETE = "video_preview_complete"
     const val VIDEO_PLAY = "video_play"
     const val VIDEO_PAUSE = "video_pause"
+    const val EDITOR_PREPARE_FAILED = "editor_prepare_failed"
+    const val EDITOR_PREPARE_STEP = "editor_prepare_step"
 
     const val EFFECT_EDIT = "effect_edit"
     const val EFFECT_CLICK = "effect_click"
@@ -394,6 +396,7 @@ object AnalyticsEvent {
         const val ERROR_CODE = "error_code"
         const val ERROR_MESSAGE = "error_message"
         
+        const val STEP = "step"
         const val COLOR_NAME = "color_name"
         const val FONT_NAME = "font_name"
     }

@@ -1039,6 +1039,30 @@ object Analytics {
         )
     }
 
+    fun trackEditorPrepareStep(step: String, songId: String? = null) {
+        trackWithPolicy(
+            eventName = AnalyticsEvent.EDITOR_PREPARE_STEP,
+            params = buildMap {
+                put(AnalyticsEvent.Param.STEP, step)
+                songId?.let { put(AnalyticsEvent.Param.SONG_ID, it) }
+            },
+            requiredParams = setOf(AnalyticsEvent.Param.STEP),
+            policy = TrackingPolicy.NORMAL
+        )
+    }
+
+    fun trackEditorPrepareFailed(errorCode: String, songId: String? = null) {
+        trackWithPolicy(
+            eventName = AnalyticsEvent.EDITOR_PREPARE_FAILED,
+            params = buildMap {
+                put(AnalyticsEvent.Param.ERROR_CODE, errorCode)
+                songId?.let { put(AnalyticsEvent.Param.SONG_ID, it) }
+            },
+            requiredParams = setOf(AnalyticsEvent.Param.ERROR_CODE),
+            policy = TrackingPolicy.NORMAL
+        )
+    }
+
     fun trackVideoPreview(videoId: String, location: String) {
         trackWithPolicy(
             eventName = AnalyticsEvent.VIDEO_PREVIEW,

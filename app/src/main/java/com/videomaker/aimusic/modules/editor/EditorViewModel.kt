@@ -815,15 +815,20 @@ class EditorViewModel(
                     )
                 }
 
+                val songIdStr = data.musicSongId?.toString()
+
                 // Fetch song data with retry (name + URL) to ensure consistency across app
                 val song = data.musicSongId?.let { songId ->
                     fetchSongWithRetry(songId)
                 }
+                Analytics.trackEditorPrepareStep("song_fetched", songIdStr)
 
                 // Load beat-sync data if music is selected
-                val beatSyncData = data.musicSongId?.let { songId ->
+                val rawBeatSyncData = data.musicSongId?.let { songId ->
                     loadBeatSyncWithRetry(songId)
-                }?.takeIf { beatData ->
+                }
+                Analytics.trackEditorPrepareStep("beat_sync_loaded", songIdStr)
+                val beatSyncData = rawBeatSyncData?.takeIf { beatData ->
                     // Validate beat-sync data: BPM must be positive and beats must not be empty
                     (beatData.bpm > 0 && beatData.beats.isNotEmpty()).also { valid ->
                         if (!valid) {
@@ -832,24 +837,38 @@ class EditorViewModel(
                     }
                 }
 
-                // CRITICAL: If music is selected but beat-sync data failed to load or is invalid, return early
+                // CRITICAL: Song check FIRST so the correct error reason is identified
+                // (song fetch failure vs beat-sync failure are different root causes)
+                if (data.musicSongId != null && song == null) {
+                    android.util.Log.e("EditorViewModel", "Song data required but unavailable after retries (songId=${data.musicSongId}) - aborting initialization")
+                    Analytics.trackEditorPrepareFailed("song_fetch_failed", data.musicSongId.toString())
+                    _showBeatSyncErrorDialog.value = true
+                    return@launch
+                }
+
+                if (data.musicSongId != null && song != null && song.mp3Url.isBlank()) {
+                    android.util.Log.e("EditorViewModel", "Song fetched but mp3Url is blank (songId=${data.musicSongId}, name=${song.name}) - aborting initialization")
+                    Analytics.trackEditorPrepareFailed("song_url_blank", data.musicSongId.toString())
+                    _showBeatSyncErrorDialog.value = true
+                    return@launch
+                }
+
+                Analytics.trackEditorPrepareStep("song_validated", songIdStr)
+
+                // Beat-sync data failed to load or is invalid
                 // loadBeatSyncWithRetry already shows error dialog on load failure;
                 // we set it here too for validation failures (idempotent on StateFlow)
                 if (data.musicSongId != null && beatSyncData == null) {
-                    android.util.Log.e("EditorViewModel", "Beat-sync data required but unavailable - aborting initialization")
+                    val errorCode = if (rawBeatSyncData != null) "beat_sync_invalid" else "beat_sync_load_failed"
+                    android.util.Log.e("EditorViewModel", "Beat-sync data required but unavailable ($errorCode) - aborting initialization")
+                    Analytics.trackEditorPrepareFailed(errorCode, data.musicSongId.toString())
                     if (!_showBeatSyncErrorDialog.value) {
                         _showBeatSyncErrorDialog.value = true
                     }
                     return@launch
                 }
 
-                // CRITICAL: If music is selected but song data couldn't be fetched (deleted/network error),
-                // abort to avoid silent video (beat-sync works but no audio URL to play)
-                if (data.musicSongId != null && (song == null || song.mp3Url.isBlank())) {
-                    android.util.Log.e("EditorViewModel", "Song data required but unavailable after retries (songId=${data.musicSongId}, song=${song?.name}, mp3Url=${song?.mp3Url}) - aborting initialization")
-                    _showBeatSyncErrorDialog.value = true
-                    return@launch
-                }
+                Analytics.trackEditorPrepareStep("beat_sync_validated", songIdStr)
 
                 // Fetch first effect set from Supabase if not provided
                 val effectSetId = if (data.effectSetId == null) {
@@ -864,12 +883,14 @@ class EditorViewModel(
                                 firstEffectSet.id
                             } else {
                                 android.util.Log.e("EditorViewModel", "No effect sets found in Supabase")
+                                Analytics.trackEditorPrepareFailed("effect_set_empty", data.musicSongId?.toString())
                                 _showBeatSyncErrorDialog.value = true
                                 return@launch
                             }
                         },
                         onFailure = { error ->
                             android.util.Log.e("EditorViewModel", "Failed to fetch first effect set: ${error.message}", error)
+                            Analytics.trackEditorPrepareFailed("effect_set_fetch_failed", data.musicSongId?.toString())
                             _showBeatSyncErrorDialog.value = true
                             return@launch
                         }
@@ -909,6 +930,7 @@ class EditorViewModel(
                         }
                     } catch (e: Exception) {
                         android.util.Log.e("EditorViewModel", "Failed to preprocess template audio", e)
+                        Analytics.trackEditorPrepareFailed("audio_preprocess_failed", data.musicSongId.toString())
                         null // Non-fatal: user can still preview without preprocessed audio
                     }
                 } else {
@@ -1436,7 +1458,16 @@ class EditorViewModel(
         val maxRetries = 3
         repeat(maxRetries) { attempt ->
             try {
-                val result = songRepository.getSongById(songId)
+                val result = withTimeoutOrNull(15_000L) {
+                    songRepository.getSongById(songId)
+                }
+                if (result == null) {
+                    android.util.Log.w("EditorViewModel", "Song fetch timed out (attempt ${attempt + 1}/$maxRetries)")
+                    if (attempt < maxRetries - 1) {
+                        delay(1000L * (attempt + 1))
+                    }
+                    return@repeat
+                }
                 if (result.isSuccess) {
                     val song = result.getOrNull()
                     android.util.Log.d("EditorViewModel", "Song fetched: id=${song?.id}, name=${song?.name}, hasUrl=${song?.mp3Url?.isNotBlank()}")
@@ -1469,7 +1500,20 @@ class EditorViewModel(
         repeat(maxRetries) { attempt ->
             try {
                 android.util.Log.i("EditorViewModel", "Loading beat-sync data (attempt ${attempt + 1}/$maxRetries)")
-                val result = beatSyncRepository.getBeatData(songId)
+
+                // Safety-net timeout in case getBeatData hangs despite its own timeouts
+                val result = withTimeoutOrNull(25_000L) {
+                    beatSyncRepository.getBeatData(songId)
+                }
+
+                if (result == null) {
+                    // Timed out at ViewModel level
+                    android.util.Log.w("EditorViewModel", "Beat-sync load timed out (attempt ${attempt + 1}/$maxRetries)")
+                    if (attempt < maxRetries - 1) {
+                        delay(1000L * (attempt + 1))
+                    }
+                    return@repeat
+                }
 
                 if (result.isSuccess) {
                     val data = result.getOrNull()
@@ -2614,6 +2658,12 @@ class EditorViewModel(
     /** Dismiss the network/beat-sync error dialog and re-run the load. */
     fun onBeatSyncErrorRetry() {
         _showBeatSyncErrorDialog.value = false
+        // Clear cached null so re-fetch hits the network instead of returning cached failure
+        val songId = initialData?.musicSongId
+            ?: (_uiState.value as? EditorUiState.Success)?.project?.settings?.primaryAudioNode?.songId
+        if (songId != null) {
+            beatSyncRepository.clearErrorCache(songId)
+        }
         retry()
     }
 
