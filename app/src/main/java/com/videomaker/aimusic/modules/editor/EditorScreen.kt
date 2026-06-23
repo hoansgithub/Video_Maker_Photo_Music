@@ -31,11 +31,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -98,8 +100,8 @@ import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.domain.model.AspectRatio
 import com.videomaker.aimusic.domain.model.EffectSet
-import com.videomaker.aimusic.domain.model.StickerPlacement
 import com.videomaker.aimusic.domain.model.Project
+import com.videomaker.aimusic.domain.model.StickerPlacement
 import com.videomaker.aimusic.domain.model.VideoQuality
 import com.videomaker.aimusic.media.renderer.PlaybackClock
 import com.videomaker.aimusic.media.renderer.PreviewSurfaceView
@@ -112,8 +114,8 @@ import com.videomaker.aimusic.modules.editor.components.OverlayInterleaveLayer
 import com.videomaker.aimusic.modules.editor.components.PlayMusicSlider
 import com.videomaker.aimusic.modules.editor.components.RatioPanel
 import com.videomaker.aimusic.modules.editor.components.SettingsTabBar
-import com.videomaker.aimusic.modules.editor.components.TextBottomSheet
 import com.videomaker.aimusic.modules.editor.components.StickerPanel
+import com.videomaker.aimusic.modules.editor.components.TextBottomSheet
 import com.videomaker.aimusic.modules.editor.components.VolumeBottomSheet
 import com.videomaker.aimusic.ui.components.AppAsyncImage
 import com.videomaker.aimusic.ui.components.EditorErrorDialog
@@ -1951,41 +1953,60 @@ internal fun EditorMainContent(
     }
 
     if (showTextPanel && textOverlayViewModel != null) {
+        val isKeyboardOpen = WindowInsets.ime.asPaddingValues().calculateBottomPadding() > 0.dp
+
         Column(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
-                .height(currentPanelHeight)
+                .then(
+                    if (isKeyboardOpen) {
+                        val adPlacementConfigService: AdPlacementConfigService = koinInject()
+                        val keyboardHeight = WindowInsets.ime.asPaddingValues().calculateBottomPadding()
+                        val navigationBarsHeight = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+                        val bannerHeight = if (adPlacementConfigService.bannerUseNative) 100.dp else 50.dp
+                        val bottomOffset = navigationBarsHeight + bannerHeight
+                        val dynamicPadding = (keyboardHeight - bottomOffset + 8.dp).coerceAtLeast(0.dp)
+
+                        Modifier
+                            .padding(bottom = dynamicPadding)
+                            .wrapContentHeight()
+                    } else {
+                        Modifier.height(currentPanelHeight)
+                    }
+                )
                 .background(SplashBackground)
-                .nestedScroll(nestedScrollConnection)
+                .then(
+                    if (isKeyboardOpen) Modifier else Modifier.nestedScroll(nestedScrollConnection)
+                )
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null
                 ) { /* consume clicks */ }
         ) {
-            // Drag handle area
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .pointerInput(Unit) {
-                        detectDragGestures { change, dragAmount ->
-                            change.consume()
-                            val dragDp = with(density) { -dragAmount.y.toDp() }
-                            currentPanelHeight = (currentPanelHeight + dragDp).coerceIn(minHeight, maxHeight)
-                        }
-                    }
-                    .padding(vertical = 12.dp),
-                contentAlignment = Alignment.Center
-            ) {
+            if (!isKeyboardOpen) {
+                // Drag handle area
                 Box(
                     modifier = Modifier
-                        .size(width = 36.dp, height = 4.dp)
-                        .clip(RoundedCornerShape(2.dp))
-                        .background(Color.Gray)
-                )
+                        .fillMaxWidth()
+                        .pointerInput(Unit) {
+                            detectDragGestures { change, dragAmount ->
+                                change.consume()
+                                val dragDp = with(density) { -dragAmount.y.toDp() }
+                                currentPanelHeight = (currentPanelHeight + dragDp).coerceIn(minHeight, maxHeight)
+                            }
+                        }
+                        .padding(vertical = 12.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(width = 36.dp, height = 4.dp)
+                            .clip(RoundedCornerShape(2.dp))
+                            .background(Color.Gray)
+                    )
+                }
             }
-
-            val isKeyboardOpen = WindowInsets.ime.asPaddingValues().calculateBottomPadding() > 0.dp
 
             // Player Controls — hidden when user swipes the panel up or keyboard is open
             AnimatedVisibility(
@@ -2022,7 +2043,9 @@ internal fun EditorMainContent(
                 focusTrigger = textFocusTrigger,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f)
+                    .then(
+                        if (isKeyboardOpen) Modifier else Modifier.weight(1f)
+                    )
             )
         }
     }

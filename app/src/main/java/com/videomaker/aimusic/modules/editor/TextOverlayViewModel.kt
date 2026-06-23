@@ -128,6 +128,7 @@ class TextOverlayViewModel(
     }
 
     fun isFontUnlocked(fontPreset: TextFontPreset): Boolean {
+        if (_fontPresets.value.firstOrNull()?.id == fontPreset.id) return true
         if (!fontPreset.isPremium) return true
         return _unlockedFontIds.value.contains(fontPreset.id)
     }
