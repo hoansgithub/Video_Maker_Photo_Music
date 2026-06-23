@@ -1417,6 +1417,12 @@ class EditorViewModel(
     }
 
     fun updateAspectRatio(ratio: AspectRatio) {
+        // Only the ratio changes. Sticker placements are left untouched: both the preview
+        // (frac * rectW) and the export (frac * frameWidth) interpret widthFractionOfVideo
+        // relative to the frame, and centers are normalized — so each sticker keeps the same
+        // position and frame-relative size across ratios and stays inside the frame, exactly
+        // like text overlays (which are also not remapped). Rescaling the fraction here would
+        // grow edge stickers when switching to a narrower frame and push them outside.
         updatePendingSettings { it.copy(aspectRatio = ratio) }
         // Restart from beginning so user sees the new aspect ratio from the start
         restartPlaybackFromStart()
@@ -1430,8 +1436,11 @@ class EditorViewModel(
     // project and read by the export pipeline.
 
     /**
-     * Add a sticker centered on the video, 1:1, width = 1/3 of the video.
-     * Each call adds a NEW instance (stacking on top).
+     * Add a sticker centered on the video, sized to 1/3 of the frame's SHORT side. Because the
+     * short side is the same (1080) in every aspect ratio, [StickerPlacement.widthFractionOfVideo]
+     * is interpreted against the short side (see [StickerOverlayLayer]/[StickerOverlay]), so 1/3
+     * stays a sensible, ratio-invariant size — no per-ratio adjustment needed. Each call adds a
+     * NEW instance (stacking on top).
      */
     fun addSticker(sticker: com.videomaker.aimusic.domain.model.Sticker): String {
         val instanceId = java.util.UUID.randomUUID().toString()

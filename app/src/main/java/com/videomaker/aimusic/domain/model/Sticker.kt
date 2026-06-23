@@ -52,7 +52,9 @@ data class Sticker(
  * @param assetUrl Remote URL of the sticker image (animated or static)
  * @param centerXNorm Center X in video space (0f = left, 1f = right)
  * @param centerYNorm Center Y in video space (0f = top, 1f = bottom)
- * @param widthFractionOfVideo Sticker width as a fraction of video width (1:1 box)
+ * @param widthFractionOfVideo Sticker width as a fraction of the frame's SHORT side (which is
+ *   the same 1080 dimension in every aspect ratio), so the rendered size stays constant across
+ *   ratios. Height follows the sticker's intrinsic aspect.
  * @param rotationDeg Clockwise rotation in degrees
  * @param opacity 0f..1f
  * @param zIndex Stacking order; higher draws on top

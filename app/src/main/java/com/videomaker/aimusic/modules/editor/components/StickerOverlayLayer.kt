@@ -122,6 +122,11 @@ fun StickerOverlayLayer(
                 if (rectSize == Size.Zero) return@pointerInput
                 val rectW = rectSize.width
                 val rectH = rectSize.height
+                // Sticker SIZE is anchored to the frame's SHORT side (which maps to the 1080
+                // video dimension in every aspect ratio), so a sticker keeps the same absolute
+                // size across ratios — like text's fixed font size — instead of growing/shrinking
+                // with the frame width. POSITION still uses rectW/rectH (normalized centers).
+                val sizeRefPx = minOf(rectW, rectH)
                 val handleRadiusPx = with(density) { 24.dp.toPx() }
                 val minVisiblePx = with(density) { 2.dp.toPx() }
                 val touchSlop = viewConfiguration.touchSlop
@@ -131,8 +136,8 @@ fun StickerOverlayLayer(
                 fun aspectOf(p: StickerPlacement) = aspectRatios[p.assetUrl] ?: 1f
                 fun centerOf(p: StickerPlacement) = Offset(p.centerXNorm * rectW, p.centerYNorm * rectH)
                 fun cornerOf(p: StickerPlacement, sx: Float, sy: Float): Offset {
-                    val halfW = boxWidthPx(p, rectW) / 2f
-                    val halfH = boxHeightPx(p, rectW, aspectOf(p)) / 2f
+                    val halfW = boxWidthPx(p, sizeRefPx) / 2f
+                    val halfH = boxHeightPx(p, sizeRefPx, aspectOf(p)) / 2f
                     val rad = Math.toRadians(p.rotationDeg.toDouble())
                     val c = cos(rad).toFloat()
                     val s = sin(rad).toFloat()
@@ -144,8 +149,8 @@ fun StickerOverlayLayer(
                 fun hitTest(pos: Offset): StickerPlacement? {
                     // Top-most first.
                     for (p in latestStickers.sortedByDescending { it.zIndex }) {
-                        val halfW = boxWidthPx(p, rectW) / 2f
-                        val halfH = boxHeightPx(p, rectW, aspectOf(p)) / 2f
+                        val halfW = boxWidthPx(p, sizeRefPx) / 2f
+                        val halfH = boxHeightPx(p, sizeRefPx, aspectOf(p)) / 2f
                         val ctr = centerOf(p)
                         val rad = Math.toRadians(-p.rotationDeg.toDouble())
                         val c = cos(rad).toFloat()
@@ -213,6 +218,8 @@ fun StickerOverlayLayer(
                             }
                         } while (e.changes.any { it.pressed })
                         result?.let { onTransformState(it) }   // commit once on release
+                        live = null   // clear the live preview so later recompositions (e.g. an
+                                      // aspect-ratio remap) render the committed placement, not a stale one
                         return@awaitEachGesture
                     }
 
@@ -256,7 +263,7 @@ fun StickerOverlayLayer(
                                 // focal-center scaling. Otherwise, when width is at the cap, the
                                 // center would still get scaled by the requested zoom → the
                                 // sticker drifts while size doesn't change (hard to move/pinch).
-                                val newW = (w * zoom).coerceIn(MIN_WIDTH_FRACTION, maxWidthFraction(rectW, aspect))
+                                val newW = (w * zoom).coerceIn(MIN_WIDTH_FRACTION, maxWidthFraction(sizeRefPx, aspect))
                                 val effZoom = if (w > 0f) newW / w else 1f
                                 var p = Offset(cx * rectW, cy * rectH)
                                 p += pan
@@ -297,6 +304,7 @@ fun StickerOverlayLayer(
                                 else -> onSelectState(null)
                             }
                         }
+                        live = null   // clear the live preview (see note in the resize branch)
                         return@awaitEachGesture
                     }
 
@@ -379,19 +387,25 @@ private const val STICKER_DECODE_PX = 1024
  */
 private const val STICKER_BASE_PX = 1280f
 
-/** Max sticker width (fraction of video) so neither rendered dimension exceeds [MAX_BOX_PX]. */
-private fun maxWidthFraction(rectW: Float, aspect: Float): Float {
-    if (rectW <= 0f) return MIN_WIDTH_FRACTION
+/**
+ * Max sticker width (fraction of the short side) so neither rendered dimension exceeds
+ * [MAX_BOX_PX]. [refPx] is the frame's short side — the ratio-invariant size reference.
+ */
+private fun maxWidthFraction(refPx: Float, aspect: Float): Float {
+    if (refPx <= 0f) return MIN_WIDTH_FRACTION
     val a = if (aspect > 0f) aspect else 1f
-    return minOf(MAX_BOX_PX / rectW, MAX_BOX_PX * a / rectW).coerceAtLeast(MIN_WIDTH_FRACTION)
+    return minOf(MAX_BOX_PX / refPx, MAX_BOX_PX * a / refPx).coerceAtLeast(MIN_WIDTH_FRACTION)
 }
 
-/** Box pixel dimensions for a placement (width drives, height follows the sticker aspect). */
-private fun boxWidthPx(placement: StickerPlacement, rectW: Float): Float =
-    (placement.widthFractionOfVideo * rectW).coerceAtLeast(1f)
+/**
+ * Box pixel dimensions for a placement (width drives, height follows the sticker aspect).
+ * [refPx] is the frame's SHORT side, so size stays constant across aspect ratios.
+ */
+private fun boxWidthPx(placement: StickerPlacement, refPx: Float): Float =
+    (placement.widthFractionOfVideo * refPx).coerceAtLeast(1f)
 
-private fun boxHeightPx(placement: StickerPlacement, rectW: Float, aspect: Float): Float =
-    boxWidthPx(placement, rectW) / (if (aspect > 0f) aspect else 1f)
+private fun boxHeightPx(placement: StickerPlacement, refPx: Float, aspect: Float): Float =
+    boxWidthPx(placement, refPx) / (if (aspect > 0f) aspect else 1f)
 
 /**
  * Clamp a candidate transform: enforce only a minimum size (zoom in is unlimited), and allow
@@ -410,8 +424,10 @@ private fun clampPlacement(
 ): StickerPlacement {
     // Allow zoom bigger than the video (CapCut-style); only cap at MAX_BOX_PX so neither
     // rendered dimension can overflow Compose's layout Constraints and crash.
-    val clampedWidth = widthFrac.coerceIn(MIN_WIDTH_FRACTION, maxWidthFraction(rectW, aspect))
-    val halfWpx = clampedWidth * rectW / 2f
+    // Size is measured against the short side (ratio-invariant); position against rectW/rectH.
+    val refPx = minOf(rectW, rectH)
+    val clampedWidth = widthFrac.coerceIn(MIN_WIDTH_FRACTION, maxWidthFraction(refPx, aspect))
+    val halfWpx = clampedWidth * refPx / 2f
     val halfHpx = halfWpx / (if (aspect > 0f) aspect else 1f)
     val cxLow = if (rectW > 0f) (minVisiblePx - halfWpx) / rectW else 0f
     val cyLow = if (rectH > 0f) (minVisiblePx - halfHpx) / rectH else 0f
@@ -448,9 +464,11 @@ private fun StickerImage(
     val density = LocalDensity.current
     val context = LocalContext.current
     val a = if (aspect > 0f) aspect else 1f
-    // Fixed base layer: width = STICKER_BASE_PX (capped to the video so we never allocate a
+    // Size is anchored to the frame's SHORT side (ratio-invariant), not the width.
+    val sizeRefPx = minOf(rectW, rectH)
+    // Fixed base layer: width = STICKER_BASE_PX (capped to the short side so we never allocate a
     // buffer wider than needed on huge surfaces), height follows the sticker aspect.
-    val baseWpx = rectW.coerceAtMost(STICKER_BASE_PX).coerceAtLeast(1f)
+    val baseWpx = sizeRefPx.coerceAtMost(STICKER_BASE_PX).coerceAtLeast(1f)
     val baseHpx = (baseWpx / a).coerceAtLeast(1f)
     val baseWdp = with(density) { baseWpx.toDp() }
     val baseHdp = with(density) { baseHpx.toDp() }
@@ -475,7 +493,7 @@ private fun StickerImage(
             // center (scale/rotate pivot is the layer center, so translating the center is
             // zoom-invariant and never drifts).
             .graphicsLayer {
-                val boxWpx = (placement.widthFractionOfVideo * rectW).coerceAtLeast(1f)
+                val boxWpx = (placement.widthFractionOfVideo * sizeRefPx).coerceAtLeast(1f)
                 val s = (boxWpx / baseWpx).coerceAtLeast(0.0001f)
                 scaleX = s
                 scaleY = s
@@ -514,8 +532,9 @@ private fun StickerSelectionChrome(
     aspect: Float
 ) {
     val density = LocalDensity.current
-    val boxW = boxWidthPx(placement, rectW)
-    val boxH = boxHeightPx(placement, rectW, aspect)
+    val sizeRefPx = minOf(rectW, rectH)
+    val boxW = boxWidthPx(placement, sizeRefPx)
+    val boxH = boxHeightPx(placement, sizeRefPx, aspect)
     val centerXpx = placement.centerXNorm * rectW
     val centerYpx = placement.centerYNorm * rectH
     val thetaRad = Math.toRadians(placement.rotationDeg.toDouble())
