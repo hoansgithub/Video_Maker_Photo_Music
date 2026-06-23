@@ -59,6 +59,19 @@ internal fun SettingsTabBar(
             label = stringResource(R.string.editor_effect),
             onClick = onEffectClick,
         )
+        // Sticker button - opens the sticker picker panel
+        SettingsTabButton(
+            icon = R.drawable.ic_edit_sticker,
+            label = stringResource(R.string.editor_sticker),
+            onClick = onStickerClick,
+        )
+
+        // Text button
+        SettingsTabButton(
+            icon = R.drawable.ic_add_text,
+            label = stringResource(R.string.editor_text),
+            onClick = onTextClick,
+        )
 
         // Images button - shows "Photos" label
         SettingsTabButton(
@@ -66,12 +79,7 @@ internal fun SettingsTabBar(
             label = stringResource(R.string.editor_photos_label),
             onClick = onImagesClick,
         )
-        // Sticker button - opens the sticker picker panel
-        SettingsTabButton(
-            icon = R.drawable.ic_edit_sticker,
-            label = stringResource(R.string.editor_sticker),
-            onClick = onStickerClick,
-        )
+
 
         // Ratio button - shows current ratio
         SettingsTabButton(
@@ -90,12 +98,6 @@ internal fun SettingsTabBar(
             )
         }
 
-        // Text button
-        SettingsTabButton(
-            icon = R.drawable.ic_add_text,
-            label = stringResource(R.string.editor_text),
-            onClick = onTextClick,
-        )
     }
 }
 
