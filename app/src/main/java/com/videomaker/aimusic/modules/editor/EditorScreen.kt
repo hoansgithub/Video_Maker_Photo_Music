@@ -1011,6 +1011,8 @@ fun EditorScreen(
                     currentVideoDurationMs = durationMs,
                     initialSong = editorInitialSong,
                     onSongClick = { song ->
+                        // Prefetch beat-sync data while user previews the song
+                        viewModel.prefetchBeatSync(song.id, song.beatsUrl.ifBlank { null })
                         val videoId = currentVideoId()
                         if (videoId != null) {
                             Analytics.trackEditorSongClick(
@@ -1040,7 +1042,9 @@ fun EditorScreen(
                             songUrl = song.mp3Url,
                             songCoverUrl = song.coverUrl,
                             trimStartMs = selectionStartMs,
-                            hookStartTimes = song.hookStartTimes
+                            hookStartTimes = song.hookStartTimes,
+                            songDurationMs = song.durationMs?.toLong(),
+                            beatsUrl = song.beatsUrl.ifBlank { null }
                         )
                         showMusicSearchSheet = false
                         // ViewModel handles auto-play after music change completes
@@ -1541,9 +1545,16 @@ internal fun EditorMainContent(
             }
 
             // Audio-only player — synced to PlaybackClock
+            // Fadeout is applied via realtime volume ramp (no Transformer preprocessing)
+            val beatSyncBpm = project?.settings?.beatSyncData?.bpm ?: 0.0
+            val previewFadeoutDurationMs = if (beatSyncBpm > 0) {
+                ((60000.0 / beatSyncBpm) * 6).toLong() // 6 beats
+            } else 0L
             AudioPreviewPlayer(
                 audioNodes = project?.settings?.audioNodes ?: emptyList(),
                 hookStartTimeMs = project?.settings?.hookStartTimeMs ?: 0L,
+                totalDurationMs = project?.settings?.totalDurationMs ?: 0L,
+                fadeoutDurationMs = previewFadeoutDurationMs,
                 isPlaying = isPlaying,
                 playbackClock = playbackClock,
                 seekToPosition = seekToPosition,

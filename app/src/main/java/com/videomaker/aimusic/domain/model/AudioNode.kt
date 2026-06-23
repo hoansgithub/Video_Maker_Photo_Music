@@ -46,7 +46,8 @@ data class AudioNode(
     val fadeInMs: Long = 0L,
     val fadeOutMs: Long = 0L,
     val processedAudioUri: String? = null,
-    val hookStartTimes: List<Long> = emptyList()
+    val hookStartTimes: List<Long> = emptyList(),
+    val songDurationMs: Long? = null
 ) {
     /**
      * Duration of the trimmed audio clip.

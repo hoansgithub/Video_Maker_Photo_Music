@@ -25,19 +25,21 @@ import org.koin.compose.koinInject
  * Supports:
  * - Multiple overlapping audio nodes (BGM + voiceover + SFX)
  * - Per-node volume and fade envelopes
- * - Preprocessed audio (fadeout baked in, no clipping)
  * - Source audio with hookStartTimeMs clipping (beat-sync)
+ * - Realtime fadeout via volume ramp (no Transformer preprocessing for preview)
  * - Cached remote URLs via AudioPreviewCache (prevents 403 on expired CDN links)
- * - 50ms drift correction loop keeps audio in sync with GL renderer
+ * - 500ms drift correction loop keeps audio in sync with GL renderer
  *
  * Only rebuilds individual ExoPlayers when a node's audio source changes.
- * Volume changes are applied in-place (no rebuild). Effect set / aspect ratio /
- * overlay changes do NOT trigger any audio rebuild.
+ * Volume and fadeout changes are applied in-place (no rebuild). Effect set /
+ * aspect ratio / overlay changes do NOT trigger any audio rebuild.
  */
 @Composable
 fun AudioPreviewPlayer(
     audioNodes: List<AudioNode>,
     hookStartTimeMs: Long,
+    totalDurationMs: Long,
+    fadeoutDurationMs: Long,
     isPlaying: Boolean,
     playbackClock: PlaybackClock,
     seekToPosition: Long?,
@@ -58,11 +60,11 @@ fun AudioPreviewPlayer(
         AudioTimelinePlayer(context, playbackClock, scope, audioCache)
     }
 
-    // Update nodes when audioNodes or hookStartTimeMs changes.
+    // Update nodes when audioNodes, hookStartTimeMs, or fadeout params change.
     // AudioTimelinePlayer.setNodes() diffs internally: only rebuilds players
     // whose source changed, updates volume in-place for the rest.
-    LaunchedEffect(audioNodes, hookStartTimeMs) {
-        timelinePlayer.setNodes(audioNodes, hookStartTimeMs)
+    LaunchedEffect(audioNodes, hookStartTimeMs, totalDurationMs, fadeoutDurationMs) {
+        timelinePlayer.setNodes(audioNodes, hookStartTimeMs, totalDurationMs, fadeoutDurationMs)
 
         // If already playing, kick the sync loop so new nodes start immediately
         if (currentIsPlaying) {
