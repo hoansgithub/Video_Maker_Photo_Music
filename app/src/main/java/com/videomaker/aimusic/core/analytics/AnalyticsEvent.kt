@@ -120,6 +120,7 @@ object AnalyticsEvent {
     const val VIDEO_PAUSE = "video_pause"
     const val EDITOR_PREPARE_FAILED = "editor_prepare_failed"
     const val EDITOR_PREPARE_STEP = "editor_prepare_step"
+    const val EDITOR_ERROR_DIALOG = "editor_error_dialog"
 
     const val EFFECT_EDIT = "effect_edit"
     const val EFFECT_CLICK = "effect_click"

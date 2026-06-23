@@ -984,48 +984,63 @@ class AssetPickerViewModel(
                 // - Gallery → Template → Image → Editor
                 // - Music → Template → Image → Editor (templateId + overrideSongId both set)
                 templateId != null -> {
-                    // Fetch the specific template by ID (handles search-result templates
+                    // Fetch the specific template by ID with retry (handles search-result templates
                     // that may not appear in the default top-N sorted list).
-                    templateRepository.getTemplateById(templateId)
-                        .onSuccess { template ->
-                            if (template != null) {
-                                // Determine song ID (override or template's song)
-                                val songId = if (overrideSongId >= 0L) overrideSongId
-                                            else template.songId.takeIf { it > 0L }
+                    val maxRetries = 3
+                    var template: com.videomaker.aimusic.domain.model.VideoTemplate? = null
+                    var lastError: Throwable? = null
 
-                                // Fetch song name (avoid extra network request in Editor)
-                                val songName = songId?.let { id ->
-                                    songRepository.getSongById(id).getOrNull()?.name
-                                }
-
-                                val initialData = EditorInitialData(
-                                    imageUris = uris.map { it.toString() },
-                                    effectSetId = template.effectSetId,
-                                    templateId = template.id,
-                                    musicSongId = songId,
-                                    musicSongName = songName,
-                                    aspectRatio = aspectRatio ?: AspectRatio.fromString(template.aspectRatio),
-                                    analyticsVideoId = analyticsVideoId
-                                )
-
-                                _navigationEvent.send(AssetPickerNavigationEvent.NavigateToEditorWithData(initialData))
-                            } else {
-                                Analytics.trackEditorPrepareFailed(
-                                    "template_not_found",
-                                    overrideSongId.takeIf { it >= 0L }?.toString()
-                                )
-                                _messageEvent.value = "Template not found"
-                                _isConfirming.value = false
+                    for (attempt in 1..maxRetries) {
+                        val result = templateRepository.getTemplateById(templateId)
+                        if (result.isSuccess) {
+                            template = result.getOrNull()
+                            lastError = null
+                            break
+                        } else {
+                            lastError = result.exceptionOrNull()
+                            android.util.Log.w("AssetPickerVM", "Template fetch failed (attempt $attempt/$maxRetries): ${lastError?.message}")
+                            if (attempt < maxRetries) {
+                                kotlinx.coroutines.delay(1000L * attempt)
                             }
                         }
-                        .onFailure { error ->
-                            Analytics.trackEditorPrepareFailed(
-                                "template_fetch_failed",
-                                overrideSongId.takeIf { it >= 0L }?.toString()
-                            )
-                            _messageEvent.value = error.message ?: "Failed to load template"
-                            _isConfirming.value = false
+                    }
+
+                    if (lastError != null) {
+                        Analytics.trackEditorPrepareFailed(
+                            "template_fetch_failed",
+                            overrideSongId.takeIf { it >= 0L }?.toString()
+                        )
+                        _messageEvent.value = lastError.message ?: "Failed to load template"
+                        _isConfirming.value = false
+                    } else if (template != null) {
+                        // Determine song ID (override or template's song)
+                        val songId = if (overrideSongId >= 0L) overrideSongId
+                                    else template.songId.takeIf { it > 0L }
+
+                        // Fetch song name (avoid extra network request in Editor)
+                        val songName = songId?.let { id ->
+                            songRepository.getSongById(id).getOrNull()?.name
                         }
+
+                        val initialData = EditorInitialData(
+                            imageUris = uris.map { it.toString() },
+                            effectSetId = template.effectSetId,
+                            templateId = template.id,
+                            musicSongId = songId,
+                            musicSongName = songName,
+                            aspectRatio = aspectRatio ?: AspectRatio.fromString(template.aspectRatio),
+                            analyticsVideoId = analyticsVideoId
+                        )
+
+                        _navigationEvent.send(AssetPickerNavigationEvent.NavigateToEditorWithData(initialData))
+                    } else {
+                        Analytics.trackEditorPrepareFailed(
+                            "template_not_found",
+                            overrideSongId.takeIf { it >= 0L }?.toString()
+                        )
+                        _messageEvent.value = "Template not found"
+                        _isConfirming.value = false
+                    }
                 }
                 // PRIORITY 2: Song-to-video mode WITHOUT template selected
                 // Navigate directly to Editor - effect set will be fetched from Supabase

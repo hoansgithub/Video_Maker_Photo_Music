@@ -882,17 +882,15 @@ class EditorViewModel(
                                 android.util.Log.d("EditorViewModel", "✅ Fetched first effect set: ${firstEffectSet.id} (${firstEffectSet.name})")
                                 firstEffectSet.id
                             } else {
-                                android.util.Log.e("EditorViewModel", "No effect sets found in Supabase")
+                                android.util.Log.w("EditorViewModel", "No effect sets from Supabase, falling back to local default")
                                 Analytics.trackEditorPrepareFailed("effect_set_empty", data.musicSongId?.toString())
-                                _showBeatSyncErrorDialog.value = true
-                                return@launch
+                                TransitionSetLibrary.getDefault().id
                             }
                         },
                         onFailure = { error ->
-                            android.util.Log.e("EditorViewModel", "Failed to fetch first effect set: ${error.message}", error)
+                            android.util.Log.w("EditorViewModel", "Effect set fetch failed, falling back to local default: ${error.message}")
                             Analytics.trackEditorPrepareFailed("effect_set_fetch_failed", data.musicSongId?.toString())
-                            _showBeatSyncErrorDialog.value = true
-                            return@launch
+                            TransitionSetLibrary.getDefault().id
                         }
                     )
                 } else {
@@ -2645,6 +2643,7 @@ class EditorViewModel(
     }
 
     fun onBeatSyncErrorDismissed() {
+        Analytics.trackEditorErrorDialog("dismiss_back_home")
         _showBeatSyncErrorDialog.value = false
         if (isMusicChangeError) {
             // Music change failed — stay in editor with previous song, resume playback
@@ -2664,6 +2663,7 @@ class EditorViewModel(
 
     /** Dismiss the network/beat-sync error dialog and re-run the load. */
     fun onBeatSyncErrorRetry() {
+        Analytics.trackEditorErrorDialog("retry")
         _showBeatSyncErrorDialog.value = false
         // Clear cached null so re-fetch hits the network instead of returning cached failure
         val songId = initialData?.musicSongId

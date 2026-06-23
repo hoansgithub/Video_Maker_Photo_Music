@@ -753,9 +753,15 @@ fun EditorScreen(
                     title = stringResource(R.string.error_network_title),
                     message = errorState.message,
                     primaryText = stringResource(R.string.error_dialog_try_again),
-                    onPrimary = { viewModel.retry() },
+                    onPrimary = {
+                        Analytics.trackEditorErrorDialog("retry")
+                        viewModel.retry()
+                    },
                     secondaryText = stringResource(R.string.error_dialog_back_home),
-                    onSecondary = { onNavigateToHome() }
+                    onSecondary = {
+                        Analytics.trackEditorErrorDialog("dismiss_back_home")
+                        onNavigateToHome()
+                    }
                 )
             }
 
