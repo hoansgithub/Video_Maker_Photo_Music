@@ -899,6 +899,8 @@ class EditorViewModel(
                     data.effectSetId
                 }
 
+                Analytics.trackEditorPrepareStep("effect_set_fetched", songIdStr)
+
                 // Always use the song's hook start time when song metadata is available
                 val hookStartTimeMs = song?.hookStartTimes?.firstOrNull() ?: 0L
 
@@ -912,6 +914,8 @@ class EditorViewModel(
                 } else {
                     0L
                 }
+
+                Analytics.trackEditorPrepareStep("duration_calculated", songIdStr)
 
                 // Preprocess audio BEFORE setting UI state (wait for all assets ready)
                 // This prevents double "Preparing video" by ensuring everything is ready before first preview
@@ -936,6 +940,8 @@ class EditorViewModel(
                 } else {
                     null
                 }
+
+                Analytics.trackEditorPrepareStep("audio_preprocessed", songIdStr)
 
                 // Build audio node from song data
                 val audioNodes = if (data.musicSongId != null && song != null) {
@@ -991,6 +997,7 @@ class EditorViewModel(
                 startPositionTicker()
                 hasAutoPlayed = true
                 playbackClock.play()
+                Analytics.trackEditorPrepareStep("project_built", songIdStr)
                 trackVideoGenerateCompleteReadyToEdit(
                     data = data,
                     totalDurationMs = settings.totalDurationMs,
