@@ -1253,7 +1253,7 @@ internal fun EditorTopBar(
 
             // Done button - disabled during processing
             Text(
-                text = stringResource(R.string.done),
+                text = "Export",
                 fontSize = 14.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = Neutral_N100,
@@ -1489,7 +1489,7 @@ internal fun EditorMainContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
-                .padding(top = 8.dp),
+                .padding(top = 2.dp),
             contentAlignment = Alignment.Center
         ) {
             // GL renderer — always mounted. AndroidEmbeddedExternalSurface (TextureView)
@@ -1677,7 +1677,7 @@ internal fun EditorMainContent(
                                     ?: stringResource(R.string.editor_no_music_selected),
                                 contentScale = ContentScale.Crop,
                                 modifier = Modifier
-                                    .size(64.dp)
+                                    .size(40.dp)
                                     .clip(RoundedCornerShape(8.dp))
                             )
 
@@ -1688,7 +1688,7 @@ internal fun EditorMainContent(
                                 Text(
                                     text = project?.settings?.primaryAudioNode?.songName
                                         ?: stringResource(R.string.editor_no_music_selected),
-                                    fontSize = 17.sp,
+                                    fontSize = 14.sp,
                                     fontWeight = FontWeight.W500,
                                     color = TextPrimary,
                                     maxLines = 2,
@@ -1699,7 +1699,7 @@ internal fun EditorMainContent(
                                 if (!songArtist.isNullOrBlank()) {
                                     Text(
                                         text = songArtist,
-                                        fontSize = 13.sp,
+                                        fontSize = 10.sp,
                                         fontWeight = FontWeight.W400,
                                         color = TextPrimary,
                                         maxLines = 1,
@@ -1715,7 +1715,7 @@ internal fun EditorMainContent(
                                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                                 contentDescription = null,
                                 tint = TextPrimary,
-                                modifier = Modifier.size(32.dp)
+                                modifier = Modifier.size(26.dp)
                             )
                         }
 
