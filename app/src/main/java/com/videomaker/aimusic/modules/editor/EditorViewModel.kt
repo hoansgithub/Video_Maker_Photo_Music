@@ -503,7 +503,8 @@ class EditorViewModel(
                                         songUrl = loadNode.songUrl,
                                         beatSyncData = project.settings.beatSyncData,
                                         totalDurationMs = project.settings.totalDurationMs,
-                                        trimStartMs = loadNode.trimStartMs
+                                        trimStartMs = loadNode.trimStartMs,
+                                        songDurationMs = loadNode.songDurationMs
                                     )
                                 }
                             } catch (e: Exception) {
@@ -688,10 +689,11 @@ class EditorViewModel(
                                 songUrl = song.mp3Url,
                                 beatSyncData = beatSyncData,
                                 totalDurationMs = totalDurationMs,
-                                trimStartMs = hookStartTimeMs
+                                trimStartMs = hookStartTimeMs,
+                                songDurationMs = song.durationMs?.toLong()
                             )
                         }.also {
-                            android.util.Log.d("EditorViewModel", "✅ Template audio preprocessed with fadeout")
+                            android.util.Log.d("EditorViewModel", "Template audio preprocessed with fadeout")
                         }
                     } catch (e: Exception) {
                         android.util.Log.e("EditorViewModel", "Failed to preprocess template audio", e)
@@ -717,7 +719,8 @@ class EditorViewModel(
                             trimStartMs = hookStartTimeMs,
                             volume = 1.0f,
                             processedAudioUri = preprocessedUri?.toString(),
-                            hookStartTimes = song.hookStartTimes
+                            hookStartTimes = song.hookStartTimes,
+                            songDurationMs = song.durationMs?.toLong()
                         )
                     )
                 } else {
@@ -1001,12 +1004,13 @@ class EditorViewModel(
                                     songUrl = song.mp3Url,
                                     beatSyncData = beatSyncData,
                                     totalDurationMs = totalDurationMs,
-                                    trimStartMs = songTrimStart
+                                    trimStartMs = songTrimStart,
+                                    songDurationMs = song.durationMs?.toLong()
                                 )
                             }
                         }.also { uri ->
                             if (uri != null) {
-                                android.util.Log.d("EditorViewModel", "✅ Preprocessed audio ready")
+                                android.util.Log.d("EditorViewModel", "Preprocessed audio ready")
                             } else {
                                 android.util.Log.w("EditorViewModel", "Audio preprocessing timed out after 30s, proceeding without fadeout")
                             }
@@ -1032,7 +1036,8 @@ class EditorViewModel(
                     trimStartMs = song?.hookStartTimes?.firstOrNull() ?: 0L,
                     volume = 1.0f,
                     processedAudioUri = preprocessedUri?.toString(),
-                    hookStartTimes = song?.hookStartTimes ?: emptyList()
+                    hookStartTimes = song?.hookStartTimes ?: emptyList(),
+                    songDurationMs = song?.durationMs?.toLong()
                 )
 
                 // Update settings once with all assets ready (including preprocessed audio)
@@ -1059,7 +1064,7 @@ class EditorViewModel(
         }
     }
 
-    fun updateMusicTrack(songId: Long, songName: String, songArtist: String, songUrl: String, songCoverUrl: String, trimStartMs: Long? = null, hookStartTimes: List<Long> = emptyList()) {
+    fun updateMusicTrack(songId: Long, songName: String, songArtist: String, songUrl: String, songCoverUrl: String, trimStartMs: Long? = null, hookStartTimes: List<Long> = emptyList(), songDurationMs: Long? = null) {
         // Reset error flag from any previous failed music change
         isMusicChangeError = false
 
@@ -1134,12 +1139,13 @@ class EditorViewModel(
                                 songUrl = songUrl,
                                 beatSyncData = beatSyncData,
                                 totalDurationMs = totalDurationMs,
-                                trimStartMs = effectiveTrimStart
+                                trimStartMs = effectiveTrimStart,
+                                songDurationMs = songDurationMs
                             )
                         }
                     }.also { uri ->
                         if (uri != null) {
-                            android.util.Log.d("EditorViewModel", "✅ Preprocessed audio ready")
+                            android.util.Log.d("EditorViewModel", "Preprocessed audio ready")
                         } else {
                             android.util.Log.w("EditorViewModel", "Audio preprocessing timed out after 30s, proceeding without fadeout")
                         }
@@ -1162,7 +1168,8 @@ class EditorViewModel(
                     trimStartMs = effectiveTrimStart,
                     volume = 1.0f,
                     processedAudioUri = preprocessedUri?.toString(),
-                    hookStartTimes = hookStartTimes
+                    hookStartTimes = hookStartTimes,
+                    songDurationMs = songDurationMs
                 )
 
                 // Seek to start — beat-sync timing is completely different with new song
@@ -1332,9 +1339,10 @@ class EditorViewModel(
         songUrl: String,
         beatSyncData: com.videomaker.aimusic.domain.model.BeatSyncData,
         totalDurationMs: Long,
-        trimStartMs: Long = 0L
+        trimStartMs: Long = 0L,
+        songDurationMs: Long? = null
     ): Uri {
-        android.util.Log.d("EditorViewModel", "Preprocessing audio with fadeout: songId=$songId, trimStart=${trimStartMs}ms, duration=${totalDurationMs}ms")
+        android.util.Log.d("EditorViewModel", "Preprocessing audio with fadeout: songId=$songId, trimStart=${trimStartMs}ms, duration=${totalDurationMs}ms, songDuration=${songDurationMs}ms")
 
         val sourceUri = Uri.parse(songUrl)
         val beatMs = 60000.0 / beatSyncData.bpm
@@ -1345,10 +1353,11 @@ class EditorViewModel(
             songId = songId,
             trimStartMs = trimStartMs,
             totalDurationMs = totalDurationMs,
-            fadeoutDurationMs = fadeoutDurationMs
+            fadeoutDurationMs = fadeoutDurationMs,
+            songDurationMs = songDurationMs
         ) ?: throw Exception("Audio preprocessing failed: service returned null")
 
-        android.util.Log.d("EditorViewModel", "✅ Audio preprocessing successful: $preprocessedUri")
+        android.util.Log.d("EditorViewModel", "Audio preprocessing successful: $preprocessedUri")
         return preprocessedUri
     }
 
@@ -1721,7 +1730,8 @@ class EditorViewModel(
                     songUrl = nodeSongUrl,
                     beatSyncData = beatSyncData,
                     totalDurationMs = newDuration,
-                    trimStartMs = currentState.project.settings.hookStartTimeMs
+                    trimStartMs = currentState.project.settings.hookStartTimeMs,
+                    songDurationMs = primaryNode.songDurationMs
                 )
             }.also { uri ->
                 if (uri == null) {

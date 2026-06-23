@@ -1,6 +1,8 @@
 package com.videomaker.aimusic.media.audio
 
 import android.content.Context
+import android.media.MediaExtractor
+import android.media.MediaFormat
 import android.net.Uri
 import android.util.Log
 import androidx.media3.common.MediaItem
@@ -11,7 +13,7 @@ import androidx.media3.transformer.Effects
 import androidx.media3.transformer.ExportException
 import androidx.media3.transformer.ExportResult
 import androidx.media3.transformer.Transformer
-import com.videomaker.aimusic.domain.model.BeatSyncData
+import com.videomaker.aimusic.media.composition.ExportAudioLoopPlanner
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
@@ -40,6 +42,8 @@ class AudioPreprocessingService(
     companion object {
         private const val TAG = "AudioPreprocessing"
         private const val MAX_CACHE_SIZE_MB = 100L
+        // Bump when preprocessing logic changes to invalidate stale cache entries
+        private const val CACHE_VERSION = 2
     }
 
     /**
@@ -48,11 +52,18 @@ class AudioPreprocessingService(
      * Volume is NOT baked in — apply via VolumeAudioProcessor at composition time
      * (or audioPlayer.volume at preview time) so a single cache file serves all volumes.
      *
+     * If the source audio (from trimStartMs to end) is shorter than totalDurationMs,
+     * the audio is looped to fill the video duration before applying fadeout.
+     *
+     * Optimized: no HTTP download step — Transformer handles remote URIs natively,
+     * and MediaExtractor reads duration from HTTP headers without downloading the full file.
+     *
      * @param sourceUri Original audio URI (song or custom audio)
      * @param songId Song ID for cache key (0 for custom audio)
      * @param trimStartMs Start position in source audio (hook_start_time)
      * @param totalDurationMs Total video duration
      * @param fadeoutDurationMs Fadeout duration (6 beats in milliseconds)
+     * @param songDurationMs Unused — kept for API compatibility. Duration is measured locally.
      * @return URI of preprocessed audio file, or null if preprocessing failed
      */
     suspend fun preprocessAudioWithFadeout(
@@ -60,7 +71,8 @@ class AudioPreprocessingService(
         songId: Long,
         trimStartMs: Long,
         totalDurationMs: Long,
-        fadeoutDurationMs: Long
+        fadeoutDurationMs: Long,
+        songDurationMs: Long? = null
     ): Uri? {
         try {
             // Check cache first
@@ -70,71 +82,152 @@ class AudioPreprocessingService(
                 return Uri.fromFile(cacheFile)
             }
 
-            Log.d(TAG, "Preprocessing audio with fadeout: songId=$songId, trimStart=${trimStartMs}ms, duration=${totalDurationMs}ms, fadeout=${fadeoutDurationMs}ms")
+            Log.d(TAG, "Preprocessing audio: songId=$songId, trimStart=${trimStartMs}ms, duration=${totalDurationMs}ms, fadeout=${fadeoutDurationMs}ms")
 
-            // Create temporary output file
-            val tempFile = File.createTempFile("audio_preprocessing_", ".m4a", context.cacheDir)
+            // Measure actual audio duration (MediaExtractor reads from HTTP headers without full download)
+            val measuredDurationMs = withContext(Dispatchers.IO) {
+                getAudioDurationMs(sourceUri)
+            }
+            Log.d(TAG, "Measured audio duration: ${measuredDurationMs}ms")
 
-            val totalDurationUs = totalDurationMs * 1000L
-            val fadeoutDurationUs = fadeoutDurationMs * 1000L
-
-            // Beat-sync mode: TRIM audio from source (NO LOOPING)
-            // Audio is trimmed to exact video duration with fadeout applied
-            Log.d(TAG, "Trimming audio to video duration (no looping)")
-
-            val audioEffects = Effects(
-                listOf(FadeoutAudioProcessor(totalDurationUs, fadeoutDurationUs)),
-                emptyList()
-            )
-
-            // Trim audio from hook_start_time to (hook_start_time + video_duration)
-            val clippingConfig = MediaItem.ClippingConfiguration.Builder()
-                .setStartPositionMs(trimStartMs)
-                .setEndPositionMs(trimStartMs + totalDurationMs)
-                .build()
-
-            val mediaItem = MediaItem.Builder()
-                .setUri(sourceUri)
-                .setClippingConfiguration(clippingConfig)
-                .build()
-
-            val editedMediaItem = EditedMediaItem.Builder(mediaItem)
-                .setRemoveVideo(true)
-                .setDurationUs(totalDurationUs)
-                .setEffects(audioEffects)
-                .build()
-
-            val composition = Composition.Builder(
-                listOf(EditedMediaItemSequence.Builder(listOf(editedMediaItem)).build())
-            ).build()
-
-            // Run Transformer
-            val result = transformAudio(composition, tempFile.absolutePath)
-
-            if (result != null) {
-                // Move to cache - with fallback to copy if rename fails
-                val renameSuccess = tempFile.renameTo(cacheFile)
-                if (!renameSuccess) {
-                    // Fallback: copy + delete (handles cross-filesystem moves)
-                    Log.d(TAG, "Rename failed, using copy fallback")
-                    tempFile.copyTo(cacheFile, overwrite = true)
-                    tempFile.delete()
+            return if (measuredDurationMs != null && measuredDurationMs > 0) {
+                val availableMusicMs = (measuredDurationMs - trimStartMs).coerceAtLeast(0)
+                val plan = ExportAudioLoopPlanner.plan(availableMusicMs, totalDurationMs)
+                Log.d(TAG, "Loop check: available=${availableMusicMs}ms, video=${totalDurationMs}ms, shouldLoop=${plan.shouldLoop}")
+                if (plan.shouldLoop) {
+                    processWithLoop(sourceUri, trimStartMs, totalDurationMs, fadeoutDurationMs, measuredDurationMs, cacheFile)
+                } else {
+                    processWithoutLoop(sourceUri, trimStartMs, totalDurationMs, fadeoutDurationMs, cacheFile)
                 }
-
-                Log.d(TAG, "✅ Audio preprocessed successfully: ${cacheFile.name} (${cacheFile.length() / 1024}KB)")
-
-                // Cleanup old cache files
-                cleanupCache()
-
-                return Uri.fromFile(cacheFile)
             } else {
-                tempFile.delete()
-                Log.e(TAG, "Audio preprocessing failed")
-                return null
+                Log.w(TAG, "Could not measure audio duration, skipping loop check")
+                processWithoutLoop(sourceUri, trimStartMs, totalDurationMs, fadeoutDurationMs, cacheFile)
             }
 
         } catch (e: Exception) {
             Log.e(TAG, "Audio preprocessing error: ${e.message}", e)
+            return null
+        }
+    }
+
+    /**
+     * No looping needed — single Transformer pass: trim + fadeout.
+     */
+    private suspend fun processWithoutLoop(
+        sourceUri: Uri,
+        trimStartMs: Long,
+        totalDurationMs: Long,
+        fadeoutDurationMs: Long,
+        cacheFile: File
+    ): Uri? {
+        val tempFile = File.createTempFile("audio_preprocessing_", ".m4a", context.cacheDir)
+        val totalDurationUs = totalDurationMs * 1000L
+        val fadeoutDurationUs = fadeoutDurationMs * 1000L
+
+        val clippingConfig = MediaItem.ClippingConfiguration.Builder()
+            .setStartPositionMs(trimStartMs)
+            .setEndPositionMs(trimStartMs + totalDurationMs)
+            .build()
+
+        val mediaItem = MediaItem.Builder()
+            .setUri(sourceUri)
+            .setClippingConfiguration(clippingConfig)
+            .build()
+
+        val editedMediaItem = EditedMediaItem.Builder(mediaItem)
+            .setRemoveVideo(true)
+            .setDurationUs(totalDurationUs)
+            .setEffects(Effects(listOf(FadeoutAudioProcessor(totalDurationUs, fadeoutDurationUs)), emptyList()))
+            .build()
+
+        val composition = Composition.Builder(
+            listOf(EditedMediaItemSequence.Builder(listOf(editedMediaItem)).build())
+        ).build()
+
+        val result = transformAudio(composition, tempFile.absolutePath)
+        return moveToCacheOrNull(tempFile, cacheFile, result)
+    }
+
+    /**
+     * Looping needed — single Transformer pass:
+     * Concatenates clipped segments into a sequence and applies fadeout at composition level.
+     * Transformer handles MP3/AAC/etc. decoding and HTTP sources natively.
+     */
+    private suspend fun processWithLoop(
+        sourceUri: Uri,
+        trimStartMs: Long,
+        totalDurationMs: Long,
+        fadeoutDurationMs: Long,
+        songDurationMs: Long,
+        cacheFile: File
+    ): Uri? {
+        val segmentDurationMs = (songDurationMs - trimStartMs).coerceAtLeast(1)
+        val fullLoops = (totalDurationMs / segmentDurationMs).toInt()
+        val remainingMs = totalDurationMs % segmentDurationMs
+
+        Log.d(TAG, "Looping via Transformer (single pass): segment=${segmentDurationMs}ms x $fullLoops full loops + ${remainingMs}ms remainder")
+
+        val tempFile = File.createTempFile("audio_preprocessing_", ".m4a", context.cacheDir)
+        val totalDurationUs = totalDurationMs * 1000L
+        val fadeoutDurationUs = fadeoutDurationMs * 1000L
+
+        val fullClip = MediaItem.ClippingConfiguration.Builder()
+            .setStartPositionMs(trimStartMs)
+            .setEndPositionMs(songDurationMs)
+            .build()
+
+        val fullLoopItem = EditedMediaItem.Builder(
+            MediaItem.Builder().setUri(sourceUri).setClippingConfiguration(fullClip).build()
+        ).setRemoveVideo(true).build()
+
+        val items = mutableListOf<EditedMediaItem>()
+        repeat(fullLoops) { items.add(fullLoopItem) }
+
+        if (remainingMs > 0) {
+            val partialClip = MediaItem.ClippingConfiguration.Builder()
+                .setStartPositionMs(trimStartMs)
+                .setEndPositionMs(trimStartMs + remainingMs)
+                .build()
+            val partialItem = EditedMediaItem.Builder(
+                MediaItem.Builder().setUri(sourceUri).setClippingConfiguration(partialClip).build()
+            ).setRemoveVideo(true).build()
+            items.add(partialItem)
+        }
+
+        // Single pass: concatenate segments + apply fadeout at composition level
+        val composition = Composition.Builder(
+            listOf(EditedMediaItemSequence.Builder(items).build())
+        )
+            .setEffects(Effects(listOf(FadeoutAudioProcessor(totalDurationUs, fadeoutDurationUs)), emptyList()))
+            .build()
+
+        val result = transformAudio(composition, tempFile.absolutePath)
+        if (result == null) {
+            tempFile.delete()
+            // Fall back to no-loop
+            return processWithoutLoop(sourceUri, trimStartMs, totalDurationMs, fadeoutDurationMs, cacheFile)
+        }
+
+        return moveToCacheOrNull(tempFile, cacheFile, result)
+    }
+
+    /**
+     * Move temp file to cache on success, delete on failure.
+     */
+    private suspend fun moveToCacheOrNull(tempFile: File, cacheFile: File, result: ExportResult?): Uri? {
+        if (result != null) {
+            val renameSuccess = tempFile.renameTo(cacheFile)
+            if (!renameSuccess) {
+                Log.d(TAG, "Rename failed, using copy fallback")
+                tempFile.copyTo(cacheFile, overwrite = true)
+                tempFile.delete()
+            }
+            Log.d(TAG, "Audio preprocessed successfully: ${cacheFile.name} (${cacheFile.length() / 1024}KB)")
+            cleanupCache()
+            return Uri.fromFile(cacheFile)
+        } else {
+            tempFile.delete()
+            Log.e(TAG, "Audio preprocessing failed")
             return null
         }
     }
@@ -198,8 +291,47 @@ class AudioPreprocessingService(
      * Filename includes parameters to ensure cache invalidation when settings change.
      */
     private fun getCacheFile(songId: Long, trimStartMs: Long, totalDurationMs: Long, fadeoutDurationMs: Long): File {
-        val filename = "${songId}_trim${trimStartMs}_dur${totalDurationMs}_fade${fadeoutDurationMs}.m4a"
+        val filename = "${songId}_trim${trimStartMs}_dur${totalDurationMs}_fade${fadeoutDurationMs}_v${CACHE_VERSION}.m4a"
         return File(cacheDir, filename)
+    }
+
+    /**
+     * Measure the actual audio duration of a source URI using MediaExtractor.
+     * Returns duration in milliseconds, or null if measurement fails.
+     * Must be called on IO thread for file:// URIs with ContentResolver.
+     */
+    private fun getAudioDurationMs(sourceUri: Uri): Long? {
+        val extractor = MediaExtractor()
+        return try {
+            when (sourceUri.scheme) {
+                "http", "https" -> extractor.setDataSource(sourceUri.toString())
+                "content", "file" -> {
+                    context.contentResolver.openFileDescriptor(sourceUri, "r")?.use { pfd ->
+                        extractor.setDataSource(pfd.fileDescriptor)
+                    } ?: return null
+                }
+                else -> {
+                    // Try as file path (Uri.fromFile produces "file" scheme)
+                    val path = sourceUri.path ?: return null
+                    extractor.setDataSource(path)
+                }
+            }
+
+            for (i in 0 until extractor.trackCount) {
+                val format = extractor.getTrackFormat(i)
+                val mime = format.getString(MediaFormat.KEY_MIME) ?: continue
+                if (mime.startsWith("audio/")) {
+                    val durationUs = format.getLong(MediaFormat.KEY_DURATION)
+                    return durationUs / 1000
+                }
+            }
+            null
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to measure audio duration: ${e.message}")
+            null
+        } finally {
+            extractor.release()
+        }
     }
 
     /**
