@@ -15,6 +15,7 @@ import androidx.media3.datasource.cache.CacheDataSource
 import androidx.media3.datasource.cache.SimpleCache
 import androidx.work.WorkManager
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
+import com.videomaker.aimusic.core.ads.AdPlacementConfigService
 import com.videomaker.aimusic.core.ads.VideoMakerNativeAdLayoutProvider
 import com.videomaker.aimusic.core.cache.VideoCacheManager
 import com.videomaker.aimusic.core.data.local.ApiCacheManager
@@ -93,6 +94,7 @@ import com.videomaker.aimusic.domain.usecase.UpdateProjectSettingsUseCase
 import com.videomaker.aimusic.media.audio.AudioPreviewCache
 import com.videomaker.aimusic.media.composition.CompositionFactory
 import com.videomaker.aimusic.modules.editor.EditorViewModel
+import com.videomaker.aimusic.modules.editor.TextOverlayViewModel
 import com.videomaker.aimusic.modules.export.ExportViewModel
 import com.videomaker.aimusic.modules.gallery.GalleryViewModel
 import com.videomaker.aimusic.modules.language.domain.usecase.ApplyLanguageUseCase
@@ -574,9 +576,7 @@ class EditorViewModelFactory(
     private val projectRepository: ProjectRepository,
     private val adsLoaderService: AdsLoaderService,
     private val audioPreprocessingService: com.videomaker.aimusic.media.audio.AudioPreprocessingService,
-    private val adPlacementConfigService: com.videomaker.aimusic.core.ads.AdPlacementConfigService,
-    private val textRepository: TextRepository,
-    private val regionProvider: RegionProvider
+    private val adPlacementConfigService: AdPlacementConfigService
 ) {
     fun create(
         projectId: String?,
@@ -599,9 +599,7 @@ class EditorViewModelFactory(
             projectRepository = projectRepository,
             adsLoaderService = adsLoaderService,
             audioPreprocessingService = audioPreprocessingService,
-            adPlacementConfigService = adPlacementConfigService,
-            textRepository = textRepository,
-            regionProvider = regionProvider
+            adPlacementConfigService = adPlacementConfigService
         )
     }
 }
@@ -995,6 +993,16 @@ val presentationModule = module {
         )
     }
 
+    // Text Overlay ViewModel
+    viewModel {
+        TextOverlayViewModel(
+            context = androidContext().applicationContext,
+            textRepository = get(),
+            regionProvider = get(),
+            adsLoaderService = get()
+        )
+    }
+
     // Asset Picker ViewModel factory (needs projectId parameter)
     single {
         AssetPickerViewModelFactory(
@@ -1026,9 +1034,7 @@ val presentationModule = module {
             beatSyncRepository = get(),
             adsLoaderService = get(),
             audioPreprocessingService = get(),
-            adPlacementConfigService = get(),
-            textRepository = get(),
-            regionProvider = get()
+            adPlacementConfigService = get()
         )
     }
 

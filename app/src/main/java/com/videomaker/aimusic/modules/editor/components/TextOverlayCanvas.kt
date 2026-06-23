@@ -43,51 +43,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.domain.model.TextFontPreset
 import com.videomaker.aimusic.domain.model.TextOverlay
 import com.videomaker.aimusic.domain.model.mockFontPresets
-import com.videomaker.aimusic.modules.editor.EditorViewModel
 import kotlin.math.atan2
 import kotlin.math.hypot
 import kotlin.math.roundToInt
-
-/**
- * TextOverlayCanvas - Displays and manages interactive text overlays over the player preview.
- */
-@Composable
-fun TextOverlayCanvas(
-    viewModel: EditorViewModel,
-    onDoubleTapText: ((String) -> Unit)? = null,
-    modifier: Modifier = Modifier
-) {
-    val textOverlays by viewModel.textOverlays.collectAsStateWithLifecycle()
-    val selectedId by viewModel.selectedTextOverlayId.collectAsStateWithLifecycle()
-    val fontPresets by viewModel.fontPresets.collectAsStateWithLifecycle()
-    val downloadedFontIds by viewModel.downloadedFontIds.collectAsStateWithLifecycle()
-
-    TextOverlayCanvasContent(
-        textOverlays = textOverlays,
-        selectedId = selectedId,
-        fontPresets = fontPresets,
-        downloadedFontIds = downloadedFontIds,
-        onLoadFont = viewModel::downloadFontIfNeeded,
-        onSelectText = viewModel::setSelectedTextOverlayId,
-        onUpdateText = { id, x, y, rot, sc ->
-            viewModel.updateTextOverlay(
-                id = id,
-                xPercentage = x,
-                yPercentage = y,
-                rotation = rot,
-                scale = sc
-            )
-        },
-        onRemoveText = viewModel::removeTextOverlay,
-        onDoubleTapText = onDoubleTapText,
-        modifier = modifier
-    )
-}
 
 /**
  * TextOverlayCanvasContent - Stateless layout for text items inside the preview viewport.
