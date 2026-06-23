@@ -397,8 +397,10 @@ private fun StickerCard(
             error = { ShimmerPlaceholder(modifier = Modifier.fillMaxSize(), cornerRadius = 12.dp) }
         )
 
-        // NEW badge (top-start)
-        if (sticker.isNew && downloadState is DownloadState.NotDownloaded) {
+        // NEW badge (top-start) — driven purely by the data's `isNew` flag.
+        // It is NOT cleared once the sticker is downloaded/used; only the backend
+        // turning `is_new` off removes it.
+        if (sticker.isNew) {
             Image(
                 painter = painterResource(id = R.drawable.ic_new_item),
                 contentDescription = null,

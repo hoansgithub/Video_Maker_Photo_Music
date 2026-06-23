@@ -50,12 +50,15 @@ class StickerOverlay(
 
         val frame = decoded.frames.first().bitmap
         val bw = frame.width.coerceAtLeast(1)
-        val vw = videoWidth
+        // Size is anchored to the frame's SHORT side (the 1080 video dimension in every aspect
+        // ratio), so a sticker keeps the same absolute size across ratios — matching the editor
+        // preview ([StickerOverlayLayer]) and behaving like text's ratio-invariant font size.
+        val sizeRefPx = minOf(videoWidth, videoHeight)
 
-        // Width-driven uniform scale (matches the editor: box width = widthFractionOfVideo,
-        // height follows the sticker's aspect ratio). overlayWidthPx = bw * scale = box width.
-        val scale = if (vw > 0) {
-            val boxWidthPx = placement.widthFractionOfVideo * vw
+        // Width-driven uniform scale (box width = widthFractionOfVideo * shortSide, height
+        // follows the sticker's aspect ratio). overlayWidthPx = bw * scale = box width.
+        val scale = if (sizeRefPx > 0) {
+            val boxWidthPx = placement.widthFractionOfVideo * sizeRefPx
             (boxWidthPx / bw).coerceAtLeast(0.001f)
         } else {
             1f
