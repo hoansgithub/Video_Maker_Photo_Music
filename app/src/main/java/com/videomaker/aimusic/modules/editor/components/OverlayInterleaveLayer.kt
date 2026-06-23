@@ -7,7 +7,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.videomaker.aimusic.domain.model.StickerPlacement
-import com.videomaker.aimusic.modules.editor.EditorViewModel
+import com.videomaker.aimusic.modules.editor.TextOverlayViewModel
 import com.videomaker.aimusic.modules.editor.overlay.OverlayRun
 import com.videomaker.aimusic.modules.editor.overlay.buildOverlayRuns
 
@@ -24,7 +24,7 @@ import com.videomaker.aimusic.modules.editor.overlay.buildOverlayRuns
  */
 @Composable
 fun OverlayInterleaveLayer(
-    editorViewModel: EditorViewModel,
+    textOverlayViewModel: TextOverlayViewModel,
     stickers: List<StickerPlacement>,
     selectedStickerId: String?,
     onStickerSelect: (String?) -> Unit,
@@ -39,10 +39,10 @@ fun OverlayInterleaveLayer(
     onTextTapped: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    val textOverlays by editorViewModel.textOverlays.collectAsStateWithLifecycle()
-    val selectedTextId by editorViewModel.selectedTextOverlayId.collectAsStateWithLifecycle()
-    val fontPresets by editorViewModel.fontPresets.collectAsStateWithLifecycle()
-    val downloadedFontIds by editorViewModel.downloadedFontIds.collectAsStateWithLifecycle()
+    val textOverlays by textOverlayViewModel.textOverlays.collectAsStateWithLifecycle()
+    val selectedTextId by textOverlayViewModel.selectedTextOverlayId.collectAsStateWithLifecycle()
+    val fontPresets by textOverlayViewModel.fontPresets.collectAsStateWithLifecycle()
+    val downloadedFontIds by textOverlayViewModel.downloadedFontIds.collectAsStateWithLifecycle()
 
     val runs = buildOverlayRuns(textOverlays, stickers)
 
@@ -55,13 +55,13 @@ fun OverlayInterleaveLayer(
                         selectedId = selectedTextId,
                         fontPresets = fontPresets,
                         downloadedFontIds = downloadedFontIds,
-                        onLoadFont = editorViewModel::downloadFontIfNeeded,
+                        onLoadFont = textOverlayViewModel::downloadFontIfNeeded,
                         onSelectText = { id ->
-                            editorViewModel.setSelectedTextOverlayId(id)
+                            textOverlayViewModel.setSelectedTextOverlayId(id)
                             if (id != null) onTextTapped(id)
                         },
                         onUpdateText = { id, x, y, rot, sc ->
-                            editorViewModel.updateTextOverlay(
+                            textOverlayViewModel.updateTextOverlay(
                                 id = id,
                                 xPercentage = x,
                                 yPercentage = y,
@@ -69,7 +69,7 @@ fun OverlayInterleaveLayer(
                                 scale = sc
                             )
                         },
-                        onRemoveText = editorViewModel::removeTextOverlay,
+                        onRemoveText = textOverlayViewModel::removeTextOverlay,
                         onDoubleTapText = onDoubleTapText,
                         modifier = Modifier.fillMaxSize()
                     )

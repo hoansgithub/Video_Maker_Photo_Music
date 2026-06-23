@@ -12,6 +12,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -51,9 +52,6 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInWindow
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
@@ -74,7 +72,7 @@ import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.domain.model.TextFontPreset
 import com.videomaker.aimusic.domain.model.TextOverlay
 import com.videomaker.aimusic.domain.model.mockFontPresets
-import com.videomaker.aimusic.modules.editor.EditorViewModel
+import com.videomaker.aimusic.modules.editor.TextOverlayViewModel
 import com.videomaker.aimusic.ui.theme.EffectUnselectedBg
 import com.videomaker.aimusic.ui.theme.Primary
 import com.videomaker.aimusic.ui.theme.SplashBackground
@@ -91,7 +89,7 @@ import com.videomaker.aimusic.core.analytics.Analytics
  */
 @Composable
 fun TextBottomSheet(
-    viewModel: EditorViewModel,
+    viewModel: TextOverlayViewModel,
     onDismiss: () -> Unit,
     onConfirm: () -> Unit,
     focusTrigger: Long = 0L,
@@ -117,7 +115,8 @@ fun TextBottomSheet(
         val id = selectedId ?: return
         val overlay = textOverlays.find { it.id == id } ?: return
         val isDefaultColor = overlay.color == 0xFFFFFFFFL
-        val isDefaultFont = overlay.fontId == "system_default" || overlay.fontId == "neue_haas_regular"
+        val defaultFontId = fontPresets.firstOrNull()?.id ?: "neue_haas_regular"
+        val isDefaultFont = overlay.fontId == defaultFontId
         val isDefaultScaleRotation = overlay.scale == 1.0f && overlay.rotation == 0.0f
 
         if (overlay.text.trim().isEmpty() ||
@@ -217,16 +216,13 @@ fun TextBottomSheetContent(
         }
     }
 
-    var sheetYInScreen by remember { mutableStateOf(0f) }
-
-    Box(
+    BoxWithConstraints(
         modifier = modifier
             .fillMaxWidth()
             .background(SplashBackground)
-            .onGloballyPositioned { coords ->
-                sheetYInScreen = coords.positionInWindow().y
-            }
     ) {
+        val sheetHeight = maxHeight
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -256,20 +252,12 @@ fun TextBottomSheetContent(
                 }
 
                 val density = LocalDensity.current
-                val configuration = LocalConfiguration.current
-                val screenHeightDp = configuration.screenHeightDp.dp
                 val keyboardHeight = WindowInsets.ime.asPaddingValues().calculateBottomPadding()
 
-                val translationYPx = remember(keyboardHeight, sheetYInScreen, screenHeightDp) {
-                    if (sheetYInScreen > 0f) {
-                        val sheetYInScreenDp = with(density) { sheetYInScreen.toDp() }
-                        val distanceFromBottom = screenHeightDp - sheetYInScreenDp
-                        val requiredShift = keyboardHeight - distanceFromBottom + 8.dp
-                        if (requiredShift > 0.dp) {
-                            with(density) { -requiredShift.toPx() }
-                        } else {
-                            0f
-                        }
+                val translationYPx = remember(keyboardHeight, sheetHeight) {
+                    val requiredShift = keyboardHeight - sheetHeight + 8.dp
+                    if (requiredShift > 0.dp) {
+                        with(density) { -requiredShift.toPx() }
                     } else {
                         0f
                     }

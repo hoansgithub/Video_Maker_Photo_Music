@@ -108,6 +108,7 @@ import com.videomaker.aimusic.modules.editor.components.AudioPreviewPlayer
 import com.videomaker.aimusic.modules.editor.components.EffectSetPanel
 import com.videomaker.aimusic.modules.editor.components.ImagesBottomSheet
 import com.videomaker.aimusic.modules.editor.components.MusicSearchBottomSheet
+import com.videomaker.aimusic.modules.editor.components.OverlayInterleaveLayer
 import com.videomaker.aimusic.modules.editor.components.PlayMusicSlider
 import com.videomaker.aimusic.modules.editor.components.RatioPanel
 import com.videomaker.aimusic.modules.editor.components.SettingsTabBar
@@ -168,6 +169,24 @@ fun EditorScreen(
     val currentPositionMs by viewModel.currentPositionMs.collectAsStateWithLifecycle()
     val durationMs by viewModel.durationMs.collectAsStateWithLifecycle()
 
+    val textOverlayViewModel: TextOverlayViewModel = koinViewModel()
+
+    // Sync TextOverlayViewModel overlays -> EditorViewModel (ProjectSettings)
+    val successState = uiState as? EditorUiState.Success
+    LaunchedEffect(successState) {
+        if (successState != null && !textOverlayViewModel.isInitialized) {
+            textOverlayViewModel.initialize(successState.project.settings.textOverlays)
+        }
+    }
+
+    LaunchedEffect(textOverlayViewModel) {
+        textOverlayViewModel.textOverlays.collect { overlays ->
+            if (textOverlayViewModel.isInitialized) {
+                viewModel.updateTextOverlays(overlays)
+            }
+        }
+    }
+
     // Pause playback when screen pauses, resume when screen resumes
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
@@ -209,9 +228,9 @@ fun EditorScreen(
     var hasTrackedExitPopupShow by remember { mutableStateOf(false) }
     var ratioBeforePanel by remember { mutableStateOf<AspectRatio?>(null) }
     val scope = rememberCoroutineScope()
-    LaunchedEffect(viewModel) {
+    LaunchedEffect(textOverlayViewModel) {
         var lastId: String? = null
-        viewModel.selectedTextOverlayId.collect { id ->
+        textOverlayViewModel.selectedTextOverlayId.collect { id ->
             if (id != null) {
                 if (lastId == null) {
                     Analytics.trackTextEdit()
@@ -553,7 +572,7 @@ fun EditorScreen(
                 onTextClick = {
                     val state = currentState() ?: return@EditorMainContent
                     val defaultText = context.getString(R.string.text_overlay_placeholder)
-                    viewModel.addTextOverlay(defaultText)
+                    textOverlayViewModel.addTextOverlay(defaultText, state.displaySettings.stickers)
                     showTextSheet = true
                 },
                 onRatioClick = {
@@ -708,7 +727,7 @@ fun EditorScreen(
                     // Switching from the text panel: commit text edits (live-applied) and just
                     // hide its panel so only the sticker panel shows.
                     if (showTextSheet) {
-                        viewModel.setSelectedTextOverlayId(null)
+                        textOverlayViewModel.setSelectedTextOverlayId(null)
                         showTextSheet = false
                     }
                     Analytics.trackStickerEdit()
@@ -753,9 +772,9 @@ fun EditorScreen(
                 },
                 showTextPanel = showTextSheet,
                 textFocusTrigger = textFocusTrigger,
-                editorViewModel = viewModel,
+                textOverlayViewModel = textOverlayViewModel,
                 onDoubleTapText = { id ->
-                    viewModel.setSelectedTextOverlayId(id)
+                    textOverlayViewModel.setSelectedTextOverlayId(id)
                     showTextSheet = true
                     textFocusTrigger = System.currentTimeMillis()
                 },
@@ -765,28 +784,28 @@ fun EditorScreen(
                     if (showStickerSheet) {
                         showStickerSheet = false
                         selectedStickerId = null
-                        viewModel.setSelectedTextOverlayId(id)
+                        textOverlayViewModel.setSelectedTextOverlayId(id)
                         showTextSheet = true
                         textFocusTrigger = System.currentTimeMillis()
                     }
                 },
                 onTextPanelDismiss = {
-                    viewModel.setSelectedTextOverlayId(null)
+                    textOverlayViewModel.setSelectedTextOverlayId(null)
                     showTextSheet = false
                 },
                 onTextPanelConfirm = {
-                    val selectedId = viewModel.selectedTextOverlayId.value
+                    val selectedId = textOverlayViewModel.selectedTextOverlayId.value
                     if (selectedId != null) {
-                        val overlay = viewModel.textOverlays.value.find { it.id == selectedId }
+                        val overlay = textOverlayViewModel.textOverlays.value.find { it.id == selectedId }
                         if (overlay != null) {
-                            val fontPreset = viewModel.fontPresets.value.find { it.id == overlay.fontId }
+                            val fontPreset = textOverlayViewModel.fontPresets.value.find { it.id == overlay.fontId }
                             val fontName = fontPreset?.name ?: "neue_haas_regular"
                             val colorName = getColorName(overlay.color)
                             Analytics.trackTextSelect(colorName = colorName, fontName = fontName)
                             Analytics.trackTextClose()
                         }
                     }
-                    viewModel.setSelectedTextOverlayId(null)
+                    textOverlayViewModel.setSelectedTextOverlayId(null)
                     showTextSheet = false
                 },
                 topBar = {
@@ -1376,7 +1395,7 @@ internal fun EditorMainContent(
     onRatioSelected: (AspectRatio) -> Unit = {},
     showTextPanel: Boolean = false,
     textFocusTrigger: Long = 0L,
-    editorViewModel: EditorViewModel? = null,
+    textOverlayViewModel: TextOverlayViewModel? = null,
     onDoubleTapText: (String) -> Unit = {},
     onTextTapped: (String) -> Unit = {},
     onTextPanelDismiss: () -> Unit = {},
@@ -1493,9 +1512,9 @@ internal fun EditorMainContent(
 
                 // Unified overlay layer: text + stickers interleaved by shared z-order (add
                 // order). Text stays tappable while stickers are present (see OverlayInterleaveLayer).
-                if (editorViewModel != null && currentState == EditorScreenState.READY) {
-                    com.videomaker.aimusic.modules.editor.components.OverlayInterleaveLayer(
-                        editorViewModel = editorViewModel,
+                if (textOverlayViewModel != null && currentState == EditorScreenState.READY) {
+                    OverlayInterleaveLayer(
+                        textOverlayViewModel = textOverlayViewModel,
                         stickers = stickers,
                         selectedStickerId = selectedStickerId,
                         onStickerSelect = onStickerSelect,
@@ -1923,7 +1942,7 @@ internal fun EditorMainContent(
         }
     }
 
-    if (showTextPanel && editorViewModel != null) {
+    if (showTextPanel && textOverlayViewModel != null) {
         Column(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
@@ -1989,7 +2008,7 @@ internal fun EditorMainContent(
 
             // Inline TextBottomSheet
             TextBottomSheet(
-                viewModel = editorViewModel,
+                viewModel = textOverlayViewModel,
                 onDismiss = onTextPanelDismiss,
                 onConfirm = onTextPanelConfirm,
                 focusTrigger = textFocusTrigger,
