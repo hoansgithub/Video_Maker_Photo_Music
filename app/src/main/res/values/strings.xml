@@ -199,6 +199,7 @@
     <string name="editor_keep_editing">Keep Editing</string>
     <string name="editor_discard">Discard</string>
     <string name="editor_effect_sets">Effect Sets</string>
+    <string name="editor_sticker">Sticker</string>
     <string name="editor_retry">Retry</string>
     <string name="editor_no_music_selected">No music selected</string>
     <string name="editor_images_title">Tap to Edit • Hold to Rearrange</string>

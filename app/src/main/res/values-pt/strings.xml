@@ -180,6 +180,7 @@
     <string name="editor_keep_editing">Continuar Editando</string>
     <string name="editor_discard">Descartar</string>
     <string name="editor_effect_sets">Conjuntos de Efeitos</string>
+    <string name="editor_sticker">Adesivo</string>
     <string name="editor_retry">Tentar Novamente</string>
     <string name="editor_no_music_selected">Nenhuma música selecionada</string>
     <string name="editor_images_title">Toque para Editar • Segure para Reorganizar</string>

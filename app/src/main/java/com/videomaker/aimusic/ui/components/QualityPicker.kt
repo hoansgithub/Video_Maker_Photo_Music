@@ -197,7 +197,7 @@ fun QualityPickerV2(
             Text(
                 text = selectedQuality.displayName,
                 color = Neutral_N600,
-                fontSize = 12.sp,
+                fontSize = 10.sp,
                 fontWeight = FontWeight.SemiBold
             )
             Spacer(modifier = Modifier.width(1.5.dp))
@@ -205,7 +205,7 @@ fun QualityPickerV2(
                 painter = painterResource(R.drawable.ic_arrow_down),
                 contentDescription = stringResource(R.string.editor_select_quality),
                 tint = Neutral_N600,
-                modifier = Modifier.size(18.dp)
+                modifier = Modifier.size(12.dp)
             )
         }
 

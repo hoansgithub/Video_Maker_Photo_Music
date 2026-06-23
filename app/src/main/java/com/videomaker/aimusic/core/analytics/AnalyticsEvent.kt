@@ -306,6 +306,19 @@ object AnalyticsEvent {
     const val TEXT_CLOSE = "text_close"
 
     // ============================================
+    // STICKER OVERLAY EVENTS
+    // ============================================
+    const val STICKER_EDIT = "sticker_edit"
+    const val STICKER_SET_CLICK = "sticker_set_click"
+    const val STICKER_CLICK = "sticker_click"
+    const val STICKER_SELECT = "sticker_select"
+    const val STICKER_CLOSE = "sticker_close"
+
+    // Shared box-manipulation events (type_tool = text | sticker)
+    const val EDIT_BOX_DRAG = "edit_box_drag"
+    const val EDIT_BOX_DELETE = "edit_box_delete"
+
+    // ============================================
     // PARAMETER KEYS
     // ============================================
     object Param {
@@ -400,6 +413,10 @@ object AnalyticsEvent {
         const val STEP = "step"
         const val COLOR_NAME = "color_name"
         const val FONT_NAME = "font_name"
+
+        const val SET_NAME = "set_name"
+        const val STICKER_NAME = "sticker_name"
+        const val TYPE_TOOL = "type_tool"
     }
 
     // ============================================
@@ -416,6 +433,12 @@ object AnalyticsEvent {
         object Type {
             const val ADS = "ads"
             const val FREE = "free"
+        }
+
+        /** Which overlay tool an [EDIT_BOX_DRAG]/[EDIT_BOX_DELETE] event refers to. */
+        object TypeTool {
+            const val TEXT = "text"
+            const val STICKER = "sticker"
         }
 
         object TabName {

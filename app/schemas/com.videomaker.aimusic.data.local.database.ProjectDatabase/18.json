@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 18,
-    "identityHash": "58cae450ad12c49630e757c0717eaca6",
+    "identityHash": "d44cbf72636d8c05476be3c36353c44e",
     "entities": [
       {
         "tableName": "projects",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, `thumbnailUri` TEXT, `totalDurationMs` INTEGER NOT NULL, `effectSetId` TEXT, `templateId` TEXT, `overlayFrameId` TEXT, `aspectRatio` TEXT NOT NULL, `audioNodesJson` TEXT, `textOverlaysJson` TEXT, `isWatermarkFree` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, `thumbnailUri` TEXT, `totalDurationMs` INTEGER NOT NULL, `effectSetId` TEXT, `templateId` TEXT, `overlayFrameId` TEXT, `aspectRatio` TEXT NOT NULL, `audioNodesJson` TEXT, `textOverlaysJson` TEXT, `stickersJson` TEXT, `isWatermarkFree` INTEGER NOT NULL, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -72,6 +72,11 @@
           {
             "fieldPath": "textOverlaysJson",
             "columnName": "textOverlaysJson",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "stickersJson",
+            "columnName": "stickersJson",
             "affinity": "TEXT"
           },
           {
@@ -295,7 +300,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '58cae450ad12c49630e757c0717eaca6')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'd44cbf72636d8c05476be3c36353c44e')"
     ]
   }
 }

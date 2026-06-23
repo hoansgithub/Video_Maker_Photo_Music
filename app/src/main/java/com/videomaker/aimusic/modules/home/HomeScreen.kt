@@ -54,6 +54,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
@@ -494,6 +495,7 @@ fun HomeScreen(
     LaunchedEffect(projectsSelectedSong?.id) {
         if (projectsSelectedSong != null) isProjectsCtaVisible = true
     }
+    var bottomSectionHeight by remember { mutableStateOf(0) }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -628,6 +630,7 @@ fun HomeScreen(
                 val isGalleryTab = pagerState.currentPage == 0
                 HomeFabOverlay(
                     isGalleryTab = isGalleryTab,
+                    isShowPaddingBottom = bottomSectionHeight == 0,
                     collapseProgress = if (isGalleryTab) galleryCollapseProgressProvider else ZeroProgress,
                     refreshVisible = isNewIdeasVisible,
                     onCreateClick = onCreateClick,
@@ -669,25 +672,33 @@ fun HomeScreen(
             }
         }
 
-            // Ad below tab content (at bottom of screen)
-            // Remote Config toggle: native ad (default) or standard banner
-            if (adPlacementConfigService.bannerUseNative) {
-                NativeAdView(
-                    placement = AdPlacement.NATIVE_HOME_BANNER,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(100.dp),
-                    isDebug = BuildConfig.DEBUG,
-                    onAdClicked = { adClickDetector.onAdClick(it) }
-                )
-            } else {
-                BannerAdView(
-                    placement = AdPlacement.BANNER_HOME,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(50.dp),
-                    onAdClicked = { adClickDetector.onAdClick(it) }
-                )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onSizeChanged { size ->
+                        bottomSectionHeight = size.height  // Measure actual height dynamically!
+                    }
+            ) {
+                // Ad below tab content (at bottom of screen)
+                // Remote Config toggle: native ad (default) or standard banner
+                if (adPlacementConfigService.bannerUseNative) {
+                    NativeAdView(
+                        placement = AdPlacement.NATIVE_HOME_BANNER,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(100.dp),
+                        isDebug = BuildConfig.DEBUG,
+                        onAdClicked = { adClickDetector.onAdClick(it) }
+                    )
+                } else {
+                    BannerAdView(
+                        placement = AdPlacement.BANNER_HOME,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp),
+                        onAdClicked = { adClickDetector.onAdClick(it) }
+                    )
+                }
             }
         }
 
@@ -1100,6 +1111,7 @@ private fun HomeScreenPreviewContent(
                 val isGalleryTab = pagerState.currentPage == 0
                 HomeFabOverlay(
                     isGalleryTab = isGalleryTab,
+                    isShowPaddingBottom = false,
                     collapseProgress = { if (isGalleryTab && collapsed) 1f else 0f },
                     refreshVisible = isNewIdeasVisible,
                     onCreateClick = {},

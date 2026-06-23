@@ -185,6 +185,7 @@
     <string name="editor_keep_editing">Weiter bearbeiten</string>
     <string name="editor_discard">Verwerfen</string>
     <string name="editor_effect_sets">Effektsets</string>
+    <string name="editor_sticker">Sticker</string>
     <string name="editor_retry">Erneut versuchen</string>
     <string name="editor_no_music_selected">Keine Musik ausgewählt</string>
     <string name="editor_images_title">Tippen zum Bearbeiten • Halten zum Neu Anordnen</string>

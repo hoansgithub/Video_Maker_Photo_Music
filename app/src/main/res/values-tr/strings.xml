@@ -180,6 +180,7 @@
     <string name="editor_keep_editing">Düzenlemeye Devam Et</string>
     <string name="editor_discard">At</string>
     <string name="editor_effect_sets">Efekt Setleri</string>
+    <string name="editor_sticker">Çıkartma</string>
     <string name="editor_retry">Tekrar Dene</string>
     <string name="editor_no_music_selected">Müzik seçilmedi</string>
     <string name="editor_images_title">Düzenlemek için Dokun • Yeniden Düzenlemek için Basılı Tut</string>

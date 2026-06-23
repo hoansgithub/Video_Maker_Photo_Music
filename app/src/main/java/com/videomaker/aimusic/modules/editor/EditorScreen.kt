@@ -98,6 +98,7 @@ import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.domain.model.AspectRatio
 import com.videomaker.aimusic.domain.model.EffectSet
+import com.videomaker.aimusic.domain.model.StickerPlacement
 import com.videomaker.aimusic.domain.model.Project
 import com.videomaker.aimusic.domain.model.VideoQuality
 import com.videomaker.aimusic.media.renderer.PlaybackClock
@@ -107,11 +108,12 @@ import com.videomaker.aimusic.modules.editor.components.AudioPreviewPlayer
 import com.videomaker.aimusic.modules.editor.components.EffectSetPanel
 import com.videomaker.aimusic.modules.editor.components.ImagesBottomSheet
 import com.videomaker.aimusic.modules.editor.components.MusicSearchBottomSheet
+import com.videomaker.aimusic.modules.editor.components.OverlayInterleaveLayer
 import com.videomaker.aimusic.modules.editor.components.PlayMusicSlider
 import com.videomaker.aimusic.modules.editor.components.RatioPanel
 import com.videomaker.aimusic.modules.editor.components.SettingsTabBar
 import com.videomaker.aimusic.modules.editor.components.TextBottomSheet
-import com.videomaker.aimusic.modules.editor.components.TextOverlayCanvas
+import com.videomaker.aimusic.modules.editor.components.StickerPanel
 import com.videomaker.aimusic.modules.editor.components.VolumeBottomSheet
 import com.videomaker.aimusic.ui.components.AppAsyncImage
 import com.videomaker.aimusic.ui.components.EditorErrorDialog
@@ -167,6 +169,24 @@ fun EditorScreen(
     val currentPositionMs by viewModel.currentPositionMs.collectAsStateWithLifecycle()
     val durationMs by viewModel.durationMs.collectAsStateWithLifecycle()
 
+    val textOverlayViewModel: TextOverlayViewModel = koinViewModel()
+
+    // Sync TextOverlayViewModel overlays -> EditorViewModel (ProjectSettings)
+    val successState = uiState as? EditorUiState.Success
+    LaunchedEffect(successState) {
+        if (successState != null && !textOverlayViewModel.isInitialized) {
+            textOverlayViewModel.initialize(successState.project.settings.textOverlays)
+        }
+    }
+
+    LaunchedEffect(textOverlayViewModel) {
+        textOverlayViewModel.textOverlays.collect { overlays ->
+            if (textOverlayViewModel.isInitialized) {
+                viewModel.updateTextOverlays(overlays)
+            }
+        }
+    }
+
     // Pause playback when screen pauses, resume when screen resumes
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
@@ -189,6 +209,13 @@ fun EditorScreen(
     var showEffectSetSheet by remember { mutableStateOf(false) }
     var showTextSheet by remember { mutableStateOf(false) }
     var textFocusTrigger by remember { mutableStateOf(0L) }
+    var showStickerSheet by remember { mutableStateOf(false) }
+    var selectedStickerId by remember { mutableStateOf<String?>(null) }
+    // Last sticker picked while the panel is open — reported by sticker_select on confirm.
+    var lastPickedStickerName by remember { mutableStateOf<String?>(null) }
+    var lastPickedStickerSetName by remember { mutableStateOf<String?>(null) }
+    // Snapshot of stickers when the panel opens — restored on cancel (dismiss), like effects.
+    var stickersBeforePanel by remember { mutableStateOf<List<StickerPlacement>>(emptyList()) }
     var effectSetIdBeforePanel by remember { mutableStateOf<String?>(null) }
     var showMusicSearchSheet by remember { mutableStateOf(false) }
     var showVolumeSheet by remember { mutableStateOf(false) }
@@ -201,9 +228,9 @@ fun EditorScreen(
     var hasTrackedExitPopupShow by remember { mutableStateOf(false) }
     var ratioBeforePanel by remember { mutableStateOf<AspectRatio?>(null) }
     val scope = rememberCoroutineScope()
-    LaunchedEffect(viewModel) {
+    LaunchedEffect(textOverlayViewModel) {
         var lastId: String? = null
-        viewModel.selectedTextOverlayId.collect { id ->
+        textOverlayViewModel.selectedTextOverlayId.collect { id ->
             if (id != null) {
                 if (lastId == null) {
                     Analytics.trackTextEdit()
@@ -228,6 +255,9 @@ fun EditorScreen(
 
     // Effect Set ViewModel - created once and reused
     val effectSetViewModel: EffectSetViewModel = koinViewModel()
+
+    // Sticker ViewModel - created once and reused
+    val stickerViewModel: StickerViewModel = koinViewModel()
 
     // Song Search ViewModel - created once and reused
     val songSearchViewModel: com.videomaker.aimusic.modules.songsearch.SongSearchViewModel =
@@ -542,7 +572,7 @@ fun EditorScreen(
                 onTextClick = {
                     val state = currentState() ?: return@EditorMainContent
                     val defaultText = context.getString(R.string.text_overlay_placeholder)
-                    viewModel.addTextOverlay(defaultText)
+                    textOverlayViewModel.addTextOverlay(defaultText, state.displaySettings.stickers)
                     showTextSheet = true
                 },
                 onRatioClick = {
@@ -666,36 +696,121 @@ fun EditorScreen(
                         )
                     }
                 },
+                stickers = successState?.displaySettings?.stickers ?: emptyList(),
+                selectedStickerId = selectedStickerId,
+                onStickerTabClick = {
+                    Analytics.trackStickerEdit()
+                    lastPickedStickerName = null
+                    lastPickedStickerSetName = null
+                    stickersBeforePanel = currentState()?.displaySettings?.stickers ?: emptyList()
+                    showStickerSheet = true
+                },
+                onStickerSelect = { id -> selectedStickerId = id },
+                onStickerTransform = { placement ->
+                    Analytics.trackEditBoxDrag(AnalyticsEvent.Value.TypeTool.STICKER)
+                    viewModel.updateStickerPlacement(placement)
+                },
+                onStickerDelete = { instanceId ->
+                    Analytics.trackEditBoxDelete(AnalyticsEvent.Value.TypeTool.STICKER)
+                    viewModel.removeSticker(instanceId)
+                    if (selectedStickerId == instanceId) selectedStickerId = null
+                },
+                onStickerDoubleTapTopMost = {
+                    val top = currentState()?.displaySettings?.stickers?.maxByOrNull { it.zIndex }
+                    if (top != null) {
+                        viewModel.bringStickerToFront(top.instanceId)
+                        selectedStickerId = top.instanceId
+                    }
+                },
+                // Tap a committed sticker → select it and re-open the picker (like text editing).
+                onStickerRequestEdit = { id ->
+                    // Switching from the text panel: commit text edits (live-applied) and just
+                    // hide its panel so only the sticker panel shows.
+                    if (showTextSheet) {
+                        textOverlayViewModel.setSelectedTextOverlayId(null)
+                        showTextSheet = false
+                    }
+                    Analytics.trackStickerEdit()
+                    lastPickedStickerName = null
+                    lastPickedStickerSetName = null
+                    stickersBeforePanel = currentState()?.displaySettings?.stickers ?: emptyList()
+                    selectedStickerId = id
+                    showStickerSheet = true
+                },
+                showStickerPanel = showStickerSheet,
+                stickerViewModel = stickerViewModel,
+                // Closing the picker (Done/Close) commits the stickers: drop the selection so
+                // the box/handles disappear and touches stop editing the sticker.
+                onStickerPanelDismiss = {
+                    Analytics.trackStickerClose()
+                    // Cancel → revert any stickers added/changed while the panel was open.
+                    viewModel.setStickers(stickersBeforePanel)
+                    showStickerSheet = false
+                    selectedStickerId = null
+                },
+                onStickerPanelConfirm = {
+                    // (v) icon → report the last sticker picked during this session.
+                    lastPickedStickerName?.let { name ->
+                        Analytics.trackStickerSelect(
+                            setName = lastPickedStickerSetName ?: "",
+                            stickerName = name
+                        )
+                    }
+                    showStickerSheet = false
+                    selectedStickerId = null
+                },
+                onAddSticker = { sticker ->
+                    // Auto-select the newly added sticker so its handles show immediately.
+                    selectedStickerId = viewModel.addSticker(sticker)
+                    // Remember for sticker_select (set name resolved from the active category).
+                    lastPickedStickerName = sticker.name
+                    lastPickedStickerSetName = (stickerViewModel.categoriesState.value
+                        as? StickerCategoriesState.Success)
+                        ?.categories
+                        ?.find { it.id == stickerViewModel.selectedCategoryId.value }
+                        ?.name
+                },
                 showTextPanel = showTextSheet,
                 textFocusTrigger = textFocusTrigger,
-                editorViewModel = viewModel,
+                textOverlayViewModel = textOverlayViewModel,
                 onDoubleTapText = { id ->
-                    viewModel.setSelectedTextOverlayId(id)
+                    textOverlayViewModel.setSelectedTextOverlayId(id)
                     showTextSheet = true
                     textFocusTrigger = System.currentTimeMillis()
                 },
+                // Tapping a text while the sticker panel is open → switch to editing that text:
+                // commit/keep the stickers, hide the sticker panel, show only the text panel.
+                onTextTapped = { id ->
+                    if (showStickerSheet) {
+                        showStickerSheet = false
+                        selectedStickerId = null
+                        textOverlayViewModel.setSelectedTextOverlayId(id)
+                        showTextSheet = true
+                        textFocusTrigger = System.currentTimeMillis()
+                    }
+                },
                 onTextPanelDismiss = {
-                    viewModel.setSelectedTextOverlayId(null)
+                    textOverlayViewModel.setSelectedTextOverlayId(null)
                     showTextSheet = false
                 },
                 onTextPanelConfirm = {
-                    val selectedId = viewModel.selectedTextOverlayId.value
+                    val selectedId = textOverlayViewModel.selectedTextOverlayId.value
                     if (selectedId != null) {
-                        val overlay = viewModel.textOverlays.value.find { it.id == selectedId }
+                        val overlay = textOverlayViewModel.textOverlays.value.find { it.id == selectedId }
                         if (overlay != null) {
-                            val fontPreset = viewModel.fontPresets.value.find { it.id == overlay.fontId }
+                            val fontPreset = textOverlayViewModel.fontPresets.value.find { it.id == overlay.fontId }
                             val fontName = fontPreset?.name ?: "neue_haas_regular"
                             val colorName = getColorName(overlay.color)
                             Analytics.trackTextSelect(colorName = colorName, fontName = fontName)
                             Analytics.trackTextClose()
                         }
                     }
-                    viewModel.setSelectedTextOverlayId(null)
+                    textOverlayViewModel.setSelectedTextOverlayId(null)
                     showTextSheet = false
                 },
                 topBar = {
                     androidx.compose.animation.AnimatedVisibility(
-                        visible = !showEffectSetSheet && !showRatioSheet && !showTextSheet,
+                        visible = !showEffectSetSheet && !showRatioSheet && !showTextSheet  && !showStickerSheet,
                         enter = slideInVertically(initialOffsetY = { -it }) + fadeIn(),
                         exit = slideOutVertically(targetOffsetY = { -it }) + fadeOut()
                     ) {
@@ -1146,7 +1261,7 @@ internal fun EditorTopBar(
 
             // Done button - disabled during processing
             Text(
-                text = stringResource(R.string.done),
+                text = stringResource(R.string.editor_export),
                 fontSize = 14.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = Neutral_N100,
@@ -1288,10 +1403,25 @@ internal fun EditorMainContent(
     onRatioSelected: (AspectRatio) -> Unit = {},
     showTextPanel: Boolean = false,
     textFocusTrigger: Long = 0L,
-    editorViewModel: EditorViewModel? = null,
+    textOverlayViewModel: TextOverlayViewModel? = null,
     onDoubleTapText: (String) -> Unit = {},
+    onTextTapped: (String) -> Unit = {},
     onTextPanelDismiss: () -> Unit = {},
     onTextPanelConfirm: () -> Unit = {},
+    // Stickers
+    stickers: List<com.videomaker.aimusic.domain.model.StickerPlacement> = emptyList(),
+    selectedStickerId: String? = null,
+    onStickerTabClick: () -> Unit = {},
+    onStickerSelect: (String?) -> Unit = {},
+    onStickerTransform: (com.videomaker.aimusic.domain.model.StickerPlacement) -> Unit = {},
+    onStickerDelete: (String) -> Unit = {},
+    onStickerDoubleTapTopMost: () -> Unit = {},
+    onStickerRequestEdit: (String) -> Unit = {},
+    showStickerPanel: Boolean = false,
+    stickerViewModel: StickerViewModel? = null,
+    onStickerPanelDismiss: () -> Unit = {},
+    onStickerPanelConfirm: () -> Unit = {},
+    onAddSticker: (com.videomaker.aimusic.domain.model.Sticker) -> Unit = {},
     topBar: @Composable () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
@@ -1309,8 +1439,8 @@ internal fun EditorMainContent(
     val maxHeight = 620.dp
     var currentPanelHeight by remember(minHeight) { mutableStateOf(minHeight) }
 
-    LaunchedEffect(showEffectSetPanel, showTextPanel, showRatioPanel, minHeight) {
-        if (showEffectSetPanel || showTextPanel || showRatioPanel) {
+    LaunchedEffect(showEffectSetPanel, showTextPanel, showRatioPanel, showStickerPanel, minHeight) {
+        if (showEffectSetPanel || showTextPanel || showRatioPanel || showStickerPanel) {
             currentPanelHeight = minHeight
         }
     }
@@ -1367,7 +1497,7 @@ internal fun EditorMainContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
-                .padding(top = 8.dp),
+                .padding(top = 2.dp),
             contentAlignment = Alignment.Center
         ) {
             // GL renderer — always mounted. AndroidEmbeddedExternalSurface (TextureView)
@@ -1388,10 +1518,21 @@ internal fun EditorMainContent(
                     modifier = Modifier.fillMaxSize()
                 )
 
-                if (editorViewModel != null) {
-                    TextOverlayCanvas(
-                        viewModel = editorViewModel,
+                // Unified overlay layer: text + stickers interleaved by shared z-order (add
+                // order). Text stays tappable while stickers are present (see OverlayInterleaveLayer).
+                if (textOverlayViewModel != null && currentState == EditorScreenState.READY) {
+                    OverlayInterleaveLayer(
+                        textOverlayViewModel = textOverlayViewModel,
+                        stickers = stickers,
+                        selectedStickerId = selectedStickerId,
+                        onStickerSelect = onStickerSelect,
+                        onStickerTransform = onStickerTransform,
+                        onStickerDelete = onStickerDelete,
+                        onStickerDoubleTapTopMost = onStickerDoubleTapTopMost,
+                        onStickerRequestEdit = onStickerRequestEdit,
+                        stickerInteractive = showStickerPanel,
                         onDoubleTapText = onDoubleTapText,
+                        onTextTapped = onTextTapped,
                         modifier = Modifier.fillMaxSize()
                     )
                 }
@@ -1418,10 +1559,12 @@ internal fun EditorMainContent(
                     modifier = Modifier.fillMaxSize()
                 )
             }
+
+            // (Stickers are now rendered by OverlayInterleaveLayer above, interleaved with text.)
         }
 
 
-        if (showEffectSetPanel || showTextPanel) {
+        if (showEffectSetPanel || showTextPanel|| showStickerPanel) {
             Spacer(modifier = Modifier.height(minHeight))
         } else if (showRatioPanel) {
             Spacer(modifier = Modifier.height(210.dp))
@@ -1542,7 +1685,7 @@ internal fun EditorMainContent(
                                     ?: stringResource(R.string.editor_no_music_selected),
                                 contentScale = ContentScale.Crop,
                                 modifier = Modifier
-                                    .size(64.dp)
+                                    .size(40.dp)
                                     .clip(RoundedCornerShape(8.dp))
                             )
 
@@ -1553,7 +1696,7 @@ internal fun EditorMainContent(
                                 Text(
                                     text = project?.settings?.primaryAudioNode?.songName
                                         ?: stringResource(R.string.editor_no_music_selected),
-                                    fontSize = 17.sp,
+                                    fontSize = 14.sp,
                                     fontWeight = FontWeight.W500,
                                     color = TextPrimary,
                                     maxLines = 2,
@@ -1564,7 +1707,7 @@ internal fun EditorMainContent(
                                 if (!songArtist.isNullOrBlank()) {
                                     Text(
                                         text = songArtist,
-                                        fontSize = 13.sp,
+                                        fontSize = 10.sp,
                                         fontWeight = FontWeight.W400,
                                         color = TextPrimary,
                                         maxLines = 1,
@@ -1580,7 +1723,7 @@ internal fun EditorMainContent(
                                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                                 contentDescription = null,
                                 tint = TextPrimary,
-                                modifier = Modifier.size(32.dp)
+                                modifier = Modifier.size(26.dp)
                             )
                         }
 
@@ -1603,6 +1746,7 @@ internal fun EditorMainContent(
                             onImagesClick = onImagesClick,
                             onEffectClick = onEffectClick,
                             onTextClick = onTextClick,
+                            onStickerClick = onStickerTabClick,
                             onRatioClick = onRatioClick,
                             onVolumeClick = onVolumeClick,
                             modifier = Modifier.fillMaxWidth()
@@ -1732,7 +1876,81 @@ internal fun EditorMainContent(
         }
     }
 
-    if (showTextPanel && editorViewModel != null) {
+    if (showStickerPanel && stickerViewModel != null) {
+        Column(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .height(currentPanelHeight)
+                .background(SplashBackground)
+                .nestedScroll(nestedScrollConnection)
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null
+                ) { /* consume clicks */ }
+        ) {
+            // Drag handle area
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .pointerInput(Unit) {
+                        detectDragGestures { change, dragAmount ->
+                            change.consume()
+                            val dragDp = with(density) { -dragAmount.y.toDp() }
+                            currentPanelHeight = (currentPanelHeight + dragDp).coerceIn(minHeight, maxHeight)
+                        }
+                    }
+                    .padding(vertical = 12.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(width = 36.dp, height = 4.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(Color.Gray)
+                )
+            }
+
+            // Player Controls — hidden when user swipes the panel up
+            androidx.compose.animation.AnimatedVisibility(
+                visible = currentPanelHeight <= minHeight + 30.dp,
+                enter = fadeIn() + androidx.compose.animation.expandVertically(),
+                exit = fadeOut() + androidx.compose.animation.shrinkVertically()
+            ) {
+                EditorPlayerControls(
+                    currentPositionMs = currentPositionMs,
+                    durationMs = durationMs,
+                    isPlaying = isPlaying,
+                    onSeek = { position ->
+                        if (durationMs > 0) {
+                            onSeek((position * durationMs).toLong())
+                        }
+                    },
+                    onScrub = { position ->
+                        if (durationMs > 0) {
+                            onScrub((position * durationMs).toLong())
+                        }
+                    },
+                    onSeekStart = onSeekStart,
+                    onSeekEnd = onSeekEnd,
+                    onPlayPauseClick = onPlayPauseClick,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+
+            StickerPanel(
+                viewModel = stickerViewModel,
+                onAddSticker = onAddSticker,
+                onDismiss = onStickerPanelDismiss,
+                onConfirm = onStickerPanelConfirm,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+            )
+        }
+    }
+
+    if (showTextPanel && textOverlayViewModel != null) {
         Column(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
@@ -1798,7 +2016,7 @@ internal fun EditorMainContent(
 
             // Inline TextBottomSheet
             TextBottomSheet(
-                viewModel = editorViewModel,
+                viewModel = textOverlayViewModel,
                 onDismiss = onTextPanelDismiss,
                 onConfirm = onTextPanelConfirm,
                 focusTrigger = textFocusTrigger,

@@ -42,6 +42,11 @@ data class ProjectSettings(
     val aspectRatio: AspectRatio = AspectRatio.RATIO_9_16,
 
     // ============================================
+    // STICKERS (overlaid on the video, persisted + exported)
+    // ============================================
+    val stickers: List<StickerPlacement> = emptyList(),
+
+    // ============================================
     // MULTI-TRACK AUDIO (single source of truth)
     // ============================================
     val audioNodes: List<AudioNode> = emptyList(),

@@ -11,6 +11,7 @@ import com.videomaker.aimusic.domain.model.AudioNode
 import com.videomaker.aimusic.domain.model.Project
 import com.videomaker.aimusic.domain.model.ProjectSettings
 import com.videomaker.aimusic.domain.model.TextOverlay
+import com.videomaker.aimusic.domain.model.StickerPlacement
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 
@@ -61,6 +62,15 @@ object ProjectMapper {
             }
         } ?: emptyList()
 
+        val stickers = entity.stickersJson?.let { jsonStr ->
+            try {
+                json.decodeFromString(ListSerializer(StickerPlacement.serializer()), jsonStr)
+            } catch (e: Exception) {
+                android.util.Log.w("ProjectMapper", "Failed to deserialize stickersJson: ${e.message}")
+                emptyList()
+            }
+        } ?: emptyList()
+
         return ProjectSettings(
             totalDurationMs = entity.totalDurationMs,
             effectSetId = entity.effectSetId,
@@ -68,6 +78,7 @@ object ProjectMapper {
             overlayFrameId = entity.overlayFrameId,
             aspectRatio = AspectRatio.fromString(entity.aspectRatio),
             audioNodes = audioNodes,
+            stickers = stickers,
             textOverlays = textOverlays
         )
     }
@@ -100,6 +111,12 @@ object ProjectMapper {
             null
         }
 
+        val stickersJson = if (project.settings.stickers.isNotEmpty()) {
+            json.encodeToString(ListSerializer(StickerPlacement.serializer()), project.settings.stickers)
+        } else {
+            null
+        }
+
         return ProjectEntity(
             id = project.id,
             name = project.name,
@@ -113,6 +130,7 @@ object ProjectMapper {
             aspectRatio = project.settings.aspectRatio.name,
             audioNodesJson = audioNodesJson,
             textOverlaysJson = textOverlaysJson,
+            stickersJson = stickersJson,
             isWatermarkFree = project.isWatermarkFree
         )
     }

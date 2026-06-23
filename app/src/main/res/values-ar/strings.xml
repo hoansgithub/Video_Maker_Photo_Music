@@ -180,6 +180,7 @@
     <string name="editor_keep_editing">متابعة التعديل</string>
     <string name="editor_discard">تجاهل</string>
     <string name="editor_effect_sets">مجموعات التأثيرات</string>
+    <string name="editor_sticker">ملصق</string>
     <string name="editor_retry">إعادة المحاولة</string>
     <string name="editor_no_music_selected">لم يتم اختيار موسيقى</string>
     <string name="editor_images_title">انقر للتحرير • اضغط مع الاستمرار لإعادة الترتيب</string>
