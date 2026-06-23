@@ -40,6 +40,7 @@ internal fun SettingsTabBar(
     onImagesClick: () -> Unit,
     onEffectClick: () -> Unit,
     onTextClick: () -> Unit,
+    onStickerClick: () -> Unit,
     onRatioClick: () -> Unit,
     onVolumeClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -64,6 +65,12 @@ internal fun SettingsTabBar(
             icon = R.drawable.img_replace_gallery,
             label = stringResource(R.string.editor_photos_label),
             onClick = onImagesClick,
+        )
+        // Sticker button - opens the sticker picker panel
+        SettingsTabButton(
+            icon = R.drawable.ic_edit_sticker,
+            label = stringResource(R.string.editor_sticker),
+            onClick = onStickerClick,
         )
 
         // Ratio button - shows current ratio

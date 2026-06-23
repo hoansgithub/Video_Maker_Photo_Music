@@ -48,9 +48,11 @@ import com.videomaker.aimusic.data.repository.LikedSongRepositoryImpl
 import com.videomaker.aimusic.data.repository.LikedTemplateRepositoryImpl
 import com.videomaker.aimusic.data.repository.ProjectRepositoryImpl
 import com.videomaker.aimusic.data.repository.SongRepositoryImpl
+import com.videomaker.aimusic.data.repository.StickerRepositoryImpl
 import com.videomaker.aimusic.data.repository.TemplateRepositoryImpl
 import com.videomaker.aimusic.domain.repository.BeatSyncRepository
 import com.videomaker.aimusic.domain.repository.EffectSetRepository
+import com.videomaker.aimusic.domain.repository.StickerRepository
 import com.videomaker.aimusic.domain.repository.ExportRepository
 import com.videomaker.aimusic.domain.repository.TransitionRepository
 import com.videomaker.aimusic.domain.repository.FeedbackRepository
@@ -71,6 +73,8 @@ import com.videomaker.aimusic.domain.usecase.GetGenresUseCase
 import com.videomaker.aimusic.domain.usecase.GetProjectUseCase
 import com.videomaker.aimusic.domain.usecase.GetSongsByGenreUseCase
 import com.videomaker.aimusic.domain.usecase.GetStationSongsUseCase
+import com.videomaker.aimusic.domain.usecase.GetStickerCategoriesUseCase
+import com.videomaker.aimusic.domain.usecase.GetStickersByCategoryUseCase
 import com.videomaker.aimusic.domain.usecase.GetSuggestedSongsUseCase
 import com.videomaker.aimusic.domain.usecase.GetWeeklyRankingSongsUseCase
 import com.videomaker.aimusic.domain.usecase.LikeSongUseCase
@@ -144,6 +148,7 @@ val dataModule = module {
     single { PreferencesManager(androidContext()) }
     single { LanguageManager(androidContext()) }
     single { com.videomaker.aimusic.core.storage.UnlockedEffectSetsManager(androidContext()) }
+    single { com.videomaker.aimusic.core.storage.UnlockedStickersManager(androidContext()) }
     single { com.videomaker.aimusic.core.storage.UnlockedTemplatesManager(androidContext()) }
     single { com.videomaker.aimusic.core.storage.UnlockedSongsManager(androidContext()) }
     single { com.videomaker.aimusic.core.playback.MusicPlaybackSessionManager() }
@@ -265,6 +270,7 @@ val dataModule = module {
     single<BeatSyncRepository> { BeatSyncRepositoryImpl(androidContext(), get()) }
     single<TemplateRepository> { TemplateRepositoryImpl(get(), get(), regionProvider = get(), languageManager = get()) }
     single<EffectSetRepository> { EffectSetRepositoryImpl(get(), get(), get()) }
+    single<StickerRepository> { StickerRepositoryImpl(get(), get(), get()) }
     single<TransitionRepository> { TransitionRepositoryImpl(androidContext(), get()) }
     single<LikedSongRepository> { LikedSongRepositoryImpl(get()) }
     single<LikedTemplateRepository> { LikedTemplateRepositoryImpl(get()) }
@@ -475,6 +481,8 @@ val domainModule = module {
 
     // Effect Set use cases
     single { GetEffectSetsPagedUseCase(get()) }
+    single { GetStickerCategoriesUseCase(get()) }
+    single { GetStickersByCategoryUseCase(get()) }
 
     // Liked song use cases
     factory { LikeSongUseCase(get()) }
@@ -973,6 +981,17 @@ val presentationModule = module {
             unlockedEffectSetsManager = get(),
             adsLoaderService = get(),
             transitionRepository = get()
+        )
+    }
+
+    // Sticker ViewModel
+    viewModel {
+        com.videomaker.aimusic.modules.editor.StickerViewModel(
+            appContext = androidContext(),
+            getStickerCategoriesUseCase = get(),
+            getStickersByCategoryUseCase = get(),
+            unlockedStickersManager = get(),
+            adsLoaderService = get()
         )
     }
 

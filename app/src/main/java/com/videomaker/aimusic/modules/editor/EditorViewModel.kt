@@ -264,10 +264,15 @@ class EditorViewModel(
 
     fun addTextOverlay(text: String = "Enter Text") {
         val defaultFontId = _fontPresets.value.firstOrNull()?.id ?: "neue_haas_regular"
-        val newOverlay = TextOverlay(text = text, fontId = defaultFontId)
-        _textOverlays.update { it + newOverlay }
-        _selectedTextOverlayId.value = newOverlay.id
-        updatePendingSettingsAudioOnly { it.copy(textOverlays = _textOverlays.value) }
+        updatePendingSettingsAudioOnly { settings ->
+            // Shared stacking counter across text + stickers so overlays interleave by add order.
+            val nextZ = com.videomaker.aimusic.modules.editor.overlay
+                .combinedMaxZIndex(_textOverlays.value, settings.stickers) + 1
+            val newOverlay = TextOverlay(text = text, fontId = defaultFontId, zIndex = nextZ)
+            _textOverlays.update { it + newOverlay }
+            _selectedTextOverlayId.value = newOverlay.id
+            settings.copy(textOverlays = _textOverlays.value)
+        }
     }
 
     fun updateTextOverlay(
@@ -1608,6 +1613,79 @@ class EditorViewModel(
         updatePendingSettings { it.copy(aspectRatio = ratio) }
         // Restart from beginning so user sees the new aspect ratio from the start
         restartPlaybackFromStart()
+    }
+
+    // ============================================
+    // STICKER CRUD
+    // ============================================
+    // Stickers are drawn as a Compose overlay (not via the GL renderer), so these
+    // mutate pending settings WITHOUT a GL refresh. They are persisted with the
+    // project and read by the export pipeline.
+
+    /**
+     * Add a sticker centered on the video, 1:1, width = 1/3 of the video.
+     * Each call adds a NEW instance (stacking on top).
+     */
+    fun addSticker(sticker: com.videomaker.aimusic.domain.model.Sticker): String {
+        val instanceId = java.util.UUID.randomUUID().toString()
+        updatePendingSettingsAudioOnly { settings ->
+            val nextZ = com.videomaker.aimusic.modules.editor.overlay
+                .combinedMaxZIndex(settings.textOverlays, settings.stickers) + 1
+            val placement = com.videomaker.aimusic.domain.model.StickerPlacement(
+                instanceId = instanceId,
+                stickerId = sticker.id,
+                // 512px original on the video (preview + export); grid uses the 128px thumbnail.
+                assetUrl = sticker.fullUrl,
+                centerXNorm = 0.5f,
+                centerYNorm = 0.5f,
+                widthFractionOfVideo = 1f / 3f,
+                rotationDeg = 0f,
+                opacity = 1f,
+                zIndex = nextZ
+            )
+            settings.copy(stickers = settings.stickers + placement)
+        }
+        return instanceId
+    }
+
+    /** Replace a sticker placement (drag / zoom / rotate result). */
+    fun updateStickerPlacement(placement: com.videomaker.aimusic.domain.model.StickerPlacement) {
+        updatePendingSettingsAudioOnly { settings ->
+            settings.copy(
+                stickers = settings.stickers.map {
+                    if (it.instanceId == placement.instanceId) placement else it
+                }
+            )
+        }
+    }
+
+    /** Remove a sticker instance. */
+    fun removeSticker(instanceId: String) {
+        updatePendingSettingsAudioOnly { settings ->
+            settings.copy(stickers = settings.stickers.filter { it.instanceId != instanceId })
+        }
+    }
+
+    /**
+     * Replace the entire sticker list. Used to revert to the pre-panel snapshot when the
+     * sticker picker is cancelled (dismiss), mirroring the effect-set cancel behavior.
+     */
+    fun setStickers(stickers: List<com.videomaker.aimusic.domain.model.StickerPlacement>) {
+        updatePendingSettingsAudioOnly { settings ->
+            settings.copy(stickers = stickers)
+        }
+    }
+
+    /** Raise a sticker above all others (used when selecting it for editing). */
+    fun bringStickerToFront(instanceId: String) {
+        updatePendingSettingsAudioOnly { settings ->
+            val maxZ = settings.stickers.maxOfOrNull { it.zIndex } ?: 0
+            settings.copy(
+                stickers = settings.stickers.map {
+                    if (it.instanceId == instanceId && it.zIndex != maxZ) it.copy(zIndex = maxZ + 1) else it
+                }
+            )
+        }
     }
 
     // ============================================

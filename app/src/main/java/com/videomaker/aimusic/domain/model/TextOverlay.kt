@@ -20,7 +20,8 @@ data class TextOverlay(
     val xPercentage: Float = 0.5f, // Center X position on video preview (0f to 1f)
     val yPercentage: Float = 0.5f, // Center Y position on video preview (0f to 1f)
     val scale: Float = 1.0f,
-    val rotation: Float = 0.0f // Rotation angle in degrees
+    val rotation: Float = 0.0f, // Rotation angle in degrees
+    val zIndex: Int = 0 // Shared stacking order across text + stickers (higher draws on top)
 )
 
 /**

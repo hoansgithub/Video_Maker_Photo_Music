@@ -187,6 +187,7 @@ abstract class ProjectDatabase : RoomDatabase() {
 
         internal val MIGRATION_17_18 = object : Migration(17, 18) {
             override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE projects ADD COLUMN stickersJson TEXT")
                 db.execSQL("ALTER TABLE projects ADD COLUMN textOverlaysJson TEXT")
             }
         }

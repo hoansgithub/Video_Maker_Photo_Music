@@ -10,6 +10,7 @@ import com.videomaker.aimusic.domain.model.AudioNode
 import com.videomaker.aimusic.domain.model.Project
 import com.videomaker.aimusic.domain.model.ProjectSettings
 import com.videomaker.aimusic.domain.model.TextOverlay
+import com.videomaker.aimusic.domain.model.StickerPlacement
 import com.videomaker.aimusic.domain.repository.ProjectRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -80,6 +81,13 @@ class ProjectRepositoryImpl(
             null
         }
 
+        // Serialize stickers (persist + read by export pipeline)
+        val stickersJson = if (settings.stickers.isNotEmpty()) {
+            json.encodeToString(ListSerializer(StickerPlacement.serializer()), settings.stickers)
+        } else {
+            null
+        }
+
         // Create project entity with settings
         val projectEntity = ProjectEntity(
             id = projectId,
@@ -93,7 +101,8 @@ class ProjectRepositoryImpl(
             overlayFrameId = settings.overlayFrameId,
             aspectRatio = settings.aspectRatio.name,
             audioNodesJson = audioNodesJson,
-            textOverlaysJson = textOverlaysJson
+            textOverlaysJson = textOverlaysJson,
+            stickersJson = stickersJson
         )
 
         // Create asset entities
@@ -154,6 +163,13 @@ class ProjectRepositoryImpl(
             null
         }
 
+        // Serialize stickers (so they persist and are read by the export pipeline)
+        val stickersJson = if (settings.stickers.isNotEmpty()) {
+            json.encodeToString(ListSerializer(StickerPlacement.serializer()), settings.stickers)
+        } else {
+            null
+        }
+
         // Update entity with new settings
         val updatedEntity = existingEntity.copy(
             totalDurationMs = settings.totalDurationMs,
@@ -163,6 +179,7 @@ class ProjectRepositoryImpl(
             aspectRatio = settings.aspectRatio.name,
             audioNodesJson = audioNodesJson,
             textOverlaysJson = textOverlaysJson,
+            stickersJson = stickersJson,
             updatedAt = System.currentTimeMillis()
         )
 
