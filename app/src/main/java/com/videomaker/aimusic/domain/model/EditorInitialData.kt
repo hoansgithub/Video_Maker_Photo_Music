@@ -22,5 +22,12 @@ data class EditorInitialData(
     val musicSongId: Long?,
     val musicSongName: String? = null, // Pass song name to avoid extra network request
     val aspectRatio: AspectRatio,
-    val analyticsVideoId: String? = null
+    val analyticsVideoId: String? = null,
+    // Pre-fetched song data from picker — eliminates redundant network fetch in Editor
+    val musicSongUrl: String? = null,
+    val musicSongCoverUrl: String? = null,
+    val musicSongArtist: String? = null,
+    val musicSongDurationMs: Long? = null,
+    val musicSongBeatsUrl: String? = null,
+    val musicSongHookStartTimes: List<Long> = emptyList(),
 ) : Parcelable

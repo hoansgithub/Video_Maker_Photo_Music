@@ -1017,9 +1017,9 @@ class AssetPickerViewModel(
                         val songId = if (overrideSongId >= 0L) overrideSongId
                                     else template.songId.takeIf { it > 0L }
 
-                        // Fetch song name (avoid extra network request in Editor)
-                        val songName = songId?.let { id ->
-                            songRepository.getSongById(id).getOrNull()?.name
+                        // Fetch full song data (avoids redundant network fetch in Editor)
+                        val song = songId?.let { id ->
+                            songRepository.getSongById(id).getOrNull()
                         }
 
                         val initialData = EditorInitialData(
@@ -1027,9 +1027,15 @@ class AssetPickerViewModel(
                             effectSetId = template.effectSetId,
                             templateId = template.id,
                             musicSongId = songId,
-                            musicSongName = songName,
+                            musicSongName = song?.name,
                             aspectRatio = aspectRatio ?: AspectRatio.fromString(template.aspectRatio),
-                            analyticsVideoId = analyticsVideoId
+                            analyticsVideoId = analyticsVideoId,
+                            musicSongUrl = song?.mp3Url,
+                            musicSongCoverUrl = song?.coverUrl,
+                            musicSongArtist = song?.artist,
+                            musicSongDurationMs = song?.durationMs?.toLong(),
+                            musicSongBeatsUrl = song?.beatsUrl,
+                            musicSongHookStartTimes = song?.hookStartTimes ?: emptyList(),
                         )
 
                         _navigationEvent.send(AssetPickerNavigationEvent.NavigateToEditorWithData(initialData))
@@ -1045,6 +1051,8 @@ class AssetPickerViewModel(
                 // PRIORITY 2: Song-to-video mode WITHOUT template selected
                 // Navigate directly to Editor - effect set will be fetched from Supabase
                 isSongToVideoMode -> {
+                    // Pre-fetch song data to avoid redundant fetch in Editor
+                    val song = songRepository.getSongById(overrideSongId).getOrNull()
                     _navigationEvent.send(
                         AssetPickerNavigationEvent.NavigateToEditorWithData(
                             initialData = EditorInitialData(
@@ -1052,9 +1060,15 @@ class AssetPickerViewModel(
                                 effectSetId = null,  // Editor will fetch first effect set from Supabase
                                 templateId = null,
                                 musicSongId = overrideSongId,
-                                musicSongName = null,  // Will be loaded by editor
+                                musicSongName = song?.name,
                                 aspectRatio = AspectRatio.RATIO_9_16,
-                                analyticsVideoId = analyticsVideoId
+                                analyticsVideoId = analyticsVideoId,
+                                musicSongUrl = song?.mp3Url,
+                                musicSongCoverUrl = song?.coverUrl,
+                                musicSongArtist = song?.artist,
+                                musicSongDurationMs = song?.durationMs?.toLong(),
+                                musicSongBeatsUrl = song?.beatsUrl,
+                                musicSongHookStartTimes = song?.hookStartTimes ?: emptyList(),
                             )
                         )
                     )

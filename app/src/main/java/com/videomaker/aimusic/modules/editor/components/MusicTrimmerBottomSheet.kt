@@ -186,6 +186,13 @@ fun MusicSettingsBottomSheet(
 
     // Playback position polling (updates playhead)
     LaunchedEffect(isPlaying) {
+        // Song ended before reaching trimEnd (audio shorter than trim range) — loop back
+        if (!isPlaying && !isDragging && musicPlayer.playbackState == Player.STATE_ENDED) {
+            musicPlayer.seekTo(trimStartMs)
+            musicPlayer.play()
+            return@LaunchedEffect
+        }
+
         while (isPlaying && isActive) {
             currentPositionMs = musicPlayer.currentPosition
 

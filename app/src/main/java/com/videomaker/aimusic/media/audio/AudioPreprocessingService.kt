@@ -72,7 +72,8 @@ class AudioPreprocessingService(
         trimStartMs: Long,
         totalDurationMs: Long,
         fadeoutDurationMs: Long,
-        songDurationMs: Long? = null
+        songDurationMs: Long? = null,
+        measuredDurationMs: Long? = null
     ): Uri? {
         try {
             // Check cache first
@@ -84,18 +85,18 @@ class AudioPreprocessingService(
 
             Log.d(TAG, "Preprocessing audio: songId=$songId, trimStart=${trimStartMs}ms, duration=${totalDurationMs}ms, fadeout=${fadeoutDurationMs}ms")
 
-            // Measure actual audio duration (MediaExtractor reads from HTTP headers without full download)
-            val measuredDurationMs = withContext(Dispatchers.IO) {
+            // Use pre-measured duration if available, otherwise measure (MediaExtractor reads from HTTP headers without full download)
+            val actualDurationMs = measuredDurationMs ?: withContext(Dispatchers.IO) {
                 getAudioDurationMs(sourceUri)
             }
-            Log.d(TAG, "Measured audio duration: ${measuredDurationMs}ms")
+            Log.d(TAG, "Audio duration: ${actualDurationMs}ms (pre-measured=${measuredDurationMs != null})")
 
-            return if (measuredDurationMs != null && measuredDurationMs > 0) {
-                val availableMusicMs = (measuredDurationMs - trimStartMs).coerceAtLeast(0)
+            return if (actualDurationMs != null && actualDurationMs > 0) {
+                val availableMusicMs = (actualDurationMs - trimStartMs).coerceAtLeast(0)
                 val plan = ExportAudioLoopPlanner.plan(availableMusicMs, totalDurationMs)
                 Log.d(TAG, "Loop check: available=${availableMusicMs}ms, video=${totalDurationMs}ms, shouldLoop=${plan.shouldLoop}")
                 if (plan.shouldLoop) {
-                    processWithLoop(sourceUri, trimStartMs, totalDurationMs, fadeoutDurationMs, measuredDurationMs, cacheFile)
+                    processWithLoop(sourceUri, trimStartMs, totalDurationMs, fadeoutDurationMs, actualDurationMs, cacheFile)
                 } else {
                     processWithoutLoop(sourceUri, trimStartMs, totalDurationMs, fadeoutDurationMs, cacheFile)
                 }
@@ -300,7 +301,7 @@ class AudioPreprocessingService(
      * Returns duration in milliseconds, or null if measurement fails.
      * Must be called on IO thread for file:// URIs with ContentResolver.
      */
-    private fun getAudioDurationMs(sourceUri: Uri): Long? {
+    internal fun getAudioDurationMs(sourceUri: Uri): Long? {
         val extractor = MediaExtractor()
         return try {
             when (sourceUri.scheme) {
