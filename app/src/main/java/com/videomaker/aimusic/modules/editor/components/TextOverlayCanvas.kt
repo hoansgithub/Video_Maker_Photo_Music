@@ -127,6 +127,7 @@ fun TextOverlayCanvasContent(
                     var startScale by remember { mutableStateOf(1f) }
 
                     var centerCoordinates by remember { mutableStateOf<LayoutCoordinates?>(null) }
+                    var visualCoordinates by remember { mutableStateOf<LayoutCoordinates?>(null) }
                     var handleCoordinates by remember { mutableStateOf<LayoutCoordinates?>(null) }
 
                     // Inverse scale factor for control buttons — keeps them constant size
@@ -147,6 +148,14 @@ fun TextOverlayCanvasContent(
                             }
                             .onGloballyPositioned { coords ->
                                 centerCoordinates = coords
+                            }
+                            .graphicsLayer {
+                                rotationZ = overlay.rotation
+                                scaleX = overlay.scale
+                                scaleY = overlay.scale
+                            }
+                            .onGloballyPositioned { coords ->
+                                visualCoordinates = coords
                             }
                             .pointerInput(overlay.id) {
                                 // NOTE: graphicsLayer is placed AFTER this pointerInput in the chain.
@@ -234,8 +243,7 @@ fun TextOverlayCanvasContent(
                                                     val p2 = pressedChanges[1]
                                                     val p1Pos = p1.position
                                                     val p2Pos = p2.position
-
-                                                    val currentCoords = centerCoordinates
+                                                    val currentCoords = visualCoordinates
                                                     val p1Window = currentCoords?.localToWindow(p1Pos) ?: p1Pos
                                                     val p2Window = currentCoords?.localToWindow(p2Pos) ?: p2Pos
 
@@ -301,7 +309,7 @@ fun TextOverlayCanvasContent(
 
                                                 if (hasDragged) {
                                                     change.consume()
-                                                    val currentCoords = centerCoordinates
+                                                    val currentCoords = visualCoordinates
                                                     val currentPosWindow = currentCoords?.localToWindow(change.position) ?: change.position
                                                     val previousPosWindow = currentCoords?.localToWindow(change.previousPosition) ?: change.previousPosition
                                                     val dragDeltaWindow = currentPosWindow - previousPosWindow
@@ -323,13 +331,6 @@ fun TextOverlayCanvasContent(
                                     }
                                 }
                             }
-                            .graphicsLayer {
-                                // graphicsLayer AFTER pointerInput — visual transform only.
-                                // Touch coordinates in pointerInput above are unaffected by rotation/scale.
-                                rotationZ = overlay.rotation
-                                scaleX = overlay.scale
-                                scaleY = overlay.scale
-                            }
                             .padding(24.dp) // Larger padding for control badges + bigger touch target
                     ) {
                         // Text Box with dashed border when selected
@@ -338,16 +339,16 @@ fun TextOverlayCanvasContent(
                                 .drawBehind {
                                     if (isSelected) {
                                         val dashEffect = PathEffect.dashPathEffect(
-                                            intervals = floatArrayOf(12f, 12f),
+                                            intervals = floatArrayOf(12f / overlay.scale, 12f / overlay.scale),
                                             phase = 0f
                                         )
                                         drawRoundRect(
                                             color = Color.White,
                                             style = Stroke(
-                                                width = 1.5.dp.toPx(),
+                                                width = (1.5.dp / overlay.scale).toPx(),
                                                 pathEffect = dashEffect
                                             ),
-                                            cornerRadius = CornerRadius(6.dp.toPx())
+                                            cornerRadius = CornerRadius((6.dp / overlay.scale).toPx())
                                         )
                                     }
                                 }
@@ -369,7 +370,10 @@ fun TextOverlayCanvasContent(
                             Box(
                                 modifier = Modifier
                                     .align(Alignment.TopStart)
-                                    .offset(x = (-18).dp, y = (-18).dp)
+                                    .offset(
+                                        x = 2.dp / overlay.scale - 20.dp,
+                                        y = 2.dp / overlay.scale - 20.dp
+                                    )
                                     .graphicsLayer {
                                         scaleX = inverseScale
                                         scaleY = inverseScale
@@ -380,39 +384,42 @@ fun TextOverlayCanvasContent(
                                         onRemoveText(overlay.id)
                                     },
                                 contentAlignment = Alignment.Center
-                            ) {
-                                // Visual button inside touch target
-                                Box(
-                                    modifier = Modifier
-                                        .size(18.dp)
-                                        .clip(CircleShape)
-                                        .background(Color.White),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Image(
-                                        painter = painterResource(id = R.drawable.ic_close_red),
-                                        contentDescription = stringResource(R.string.text_overlay_desc_delete),
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                }
-                            }
+                              ) {
+                                  // Visual button inside touch target
+                                  Box(
+                                      modifier = Modifier
+                                          .size(18.dp)
+                                          .clip(CircleShape)
+                                          .background(Color.White),
+                                      contentAlignment = Alignment.Center
+                                  ) {
+                                      Image(
+                                          painter = painterResource(id = R.drawable.ic_close_red),
+                                          contentDescription = stringResource(R.string.text_overlay_desc_delete),
+                                          modifier = Modifier.size(18.dp)
+                                      )
+                                  }
+                              }
 
-                            // Bottom-Right: Scale and Rotation Anchor Handle
-                            // Uses inverse scale so handle stays constant size
-                            Box(
-                                modifier = Modifier
-                                    .align(Alignment.BottomEnd)
-                                    .offset(x = 12.dp, y = 12.dp)
-                                    .graphicsLayer {
-                                        scaleX = inverseScale
-                                        scaleY = inverseScale
-                                    }
-                                    .size(40.dp) // 40dp touch target
-                                    .clip(CircleShape)
-                                    .onGloballyPositioned { coords ->
-                                        handleCoordinates = coords
-                                    }
-                                    .pointerInput(overlay.id) {
+                              // Bottom-Right: Scale and Rotation Anchor Handle
+                              // Uses inverse scale so handle stays constant size
+                              Box(
+                                  modifier = Modifier
+                                      .align(Alignment.BottomEnd)
+                                      .offset(
+                                          x = 20.dp - 8.dp / overlay.scale,
+                                          y = 20.dp - 8.dp / overlay.scale
+                                      )
+                                      .graphicsLayer {
+                                          scaleX = inverseScale
+                                          scaleY = inverseScale
+                                      }
+                                      .size(40.dp) // 40dp touch target
+                                      .clip(CircleShape)
+                                      .onGloballyPositioned { coords ->
+                                          handleCoordinates = coords
+                                      }
+                                      .pointerInput(overlay.id) {
                                         awaitPointerEventScope {
                                             while (true) {
                                                 val down = awaitFirstDown(requireUnconsumed = false)

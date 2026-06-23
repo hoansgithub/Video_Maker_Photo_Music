@@ -4,6 +4,7 @@ import androidx.compose.foundation.Image
 import coil.compose.AsyncImage
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.wrapContentHeight
 import com.videomaker.aimusic.ui.components.ProvideShimmerEffect
 import com.videomaker.aimusic.ui.components.ShimmerPlaceholder
 import androidx.compose.foundation.background
@@ -57,6 +58,9 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextRange
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
@@ -223,9 +227,14 @@ fun TextBottomSheetContent(
     ) {
         val sheetHeight = maxHeight
 
+        val isKeyboardOpen = WindowInsets.ime.asPaddingValues().calculateBottomPadding() > 0.dp
+
         Column(
             modifier = Modifier
-                .fillMaxSize()
+                .fillMaxWidth()
+                .then(
+                    if (isKeyboardOpen) Modifier.wrapContentHeight() else Modifier.fillMaxSize()
+                )
                 .padding(horizontal = 16.dp)
         ) {
             if (selectedOverlay != null) {
@@ -254,12 +263,16 @@ fun TextBottomSheetContent(
                 val density = LocalDensity.current
                 val keyboardHeight = WindowInsets.ime.asPaddingValues().calculateBottomPadding()
 
-                val translationYPx = remember(keyboardHeight, sheetHeight) {
-                    val requiredShift = keyboardHeight - sheetHeight + 8.dp
-                    if (requiredShift > 0.dp) {
-                        with(density) { -requiredShift.toPx() }
-                    } else {
+                val translationYPx = remember(keyboardHeight, sheetHeight, isKeyboardOpen) {
+                    if (isKeyboardOpen) {
                         0f
+                    } else {
+                        val requiredShift = keyboardHeight - sheetHeight + 8.dp
+                        if (requiredShift > 0.dp) {
+                            with(density) { -requiredShift.toPx() }
+                        } else {
+                            0f
+                        }
                     }
                 }
 
@@ -291,6 +304,14 @@ fun TextBottomSheetContent(
                             )
                         },
                         maxLines = 1,
+                        keyboardOptions = KeyboardOptions(
+                            imeAction = ImeAction.Done
+                        ),
+                        keyboardActions = KeyboardActions(
+                            onDone = {
+                                focusManager.clearFocus()
+                            }
+                        ),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedTextColor = TextPrimary,
                             unfocusedTextColor = TextPrimary,
@@ -352,111 +373,131 @@ fun TextBottomSheetContent(
                     }
                 }
 
-                Spacer(Modifier.height(14.dp))
+                if (!isKeyboardOpen) {
+                    Spacer(Modifier.height(14.dp))
 
-                // Color picker section
-                Text(
-                    text = stringResource(R.string.text_overlay_color_header),
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = TextSecondary
-                )
+                    // Color picker section
+                    Text(
+                        text = stringResource(R.string.text_overlay_color_header),
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = TextSecondary
+                    )
 
-                Spacer(Modifier.height(8.dp))
+                    Spacer(Modifier.height(8.dp))
 
-                val neutralColors = listOf(
-                    0xFFFFFFFFL, // White
-                    0xFF2979FFL, // Blue
-                    0xFFFF80ABL, // Pink
-                    0xFF404040L, // Charcoal
-                    0xFF00E676L, // Green
-                    0xFFFFD600L, // Yellow
-                    0xFFAB47BCL, // Purple
-                    0xFFE8D5B7L, // Beige
-                    0xFF1A1A1AL, // Near Black
-                    0xFF29B6F6L, // Light Blue
-                    0xFFFF1744L, // Red
-                    0xFFC6FF00L, // Lime
-                    0xFFD4A57AL, // Tan
-                    0xFF5C6BC0L, // Indigo
-                    0xFFFF9100L, // Orange
-                    0xFFE8E8E8L, // Light Gray
-                    0xFF69F0AEL, // Mint
-                    0xFFFF4081L, // Hot Pink
-                    0xFFB0B0B0L, // Gray
-                    0xFFCE93D8L, // Lavender
-                    0xFFFFE57FL, // Gold
-                    0xFF00E5FFL, // Cyan
-                    0xFF787878L, // Dark Gray
-                    0xFFE67E22L, // Amber
-                    0xFFFF6D00L, // Deep Orange
-                    0xFFF5F0E8L, // Cream
-                    0xFF1DE9B6L, // Teal
-                    0xFFFF5252L, // Coral Red
-                    0xFF000000L, // Black
-                    0xFFFFF176L, // Light Yellow
-                )
+                    val neutralColors = listOf(
+                        0xFFFFFFFFL, // White
+                        0xFF2979FFL, // Blue
+                        0xFFFF80ABL, // Pink
+                        0xFF404040L, // Charcoal
+                        0xFF00E676L, // Green
+                        0xFFFFD600L, // Yellow
+                        0xFFAB47BCL, // Purple
+                        0xFFE8D5B7L, // Beige
+                        0xFF1A1A1AL, // Near Black
+                        0xFF29B6F6L, // Light Blue
+                        0xFFFF1744L, // Red
+                        0xFFC6FF00L, // Lime
+                        0xFFD4A57AL, // Tan
+                        0xFF5C6BC0L, // Indigo
+                        0xFFFF9100L, // Orange
+                        0xFFE8E8E8L, // Light Gray
+                        0xFF69F0AEL, // Mint
+                        0xFFFF4081L, // Hot Pink
+                        0xFFB0B0B0L, // Gray
+                        0xFFCE93D8L, // Lavender
+                        0xFFFFE57FL, // Gold
+                        0xFF00E5FFL, // Cyan
+                        0xFF787878L, // Dark Gray
+                        0xFFE67E22L, // Amber
+                        0xFFFF6D00L, // Deep Orange
+                        0xFFF5F0E8L, // Cream
+                        0xFF1DE9B6L, // Teal
+                        0xFFFF5252L, // Coral Red
+                        0xFF000000L, // Black
+                        0xFFFFF176L, // Light Yellow
+                    )
 
-                val colorGroups = listOf(neutralColors)
+                    val colorGroups = listOf(neutralColors)
 
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    colorGroups.forEach { group ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .horizontalScroll(rememberScrollState()),
-                            horizontalArrangement = Arrangement.spacedBy(10.dp)
-                        ) {
-                            group.forEach { colorValue ->
-                                val color = Color(colorValue)
-                                val isColorSelected = selectedOverlay.color == colorValue
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        colorGroups.forEach { group ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .horizontalScroll(rememberScrollState()),
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                group.forEach { colorValue ->
+                                    val color = Color(colorValue)
+                                    val isColorSelected = selectedOverlay.color == colorValue
 
-                                Box(
-                                    modifier = Modifier
-                                        .size(34.dp)
-                                        .clip(CircleShape)
-                                        .background(color)
-                                        .border(
-                                            width = if (isColorSelected) 2.5.dp else 1.dp,
-                                            color = if (isColorSelected) {
-                                                if (color == Color.White || color == Color(
-                                                        0xFFF5F0E8L
-                                                    ) || color == Color(0xFFE8E8E8L)
-                                                ) Color.Black else Color.White
-                                            } else {
-                                                Color.White.copy(alpha = 0.2f)
-                                            },
-                                            shape = CircleShape
-                                        )
-                                        .clickable {
-                                            val currentFont = fontPresets.find { it.id == selectedOverlay.fontId }
-                                            val isPremium = currentFont?.isPremium ?: false
-                                            val fontType = if (isPremium) "ads" else "free"
-                                            val colorName = getColorName(colorValue)
-                                            Analytics.trackTextColorClick(type = fontType, colorName = colorName)
-                                            onUpdateColor(selectedOverlay.id, colorValue)
-                                        }
-                                )
+                                    Box(
+                                        modifier = Modifier
+                                            .size(34.dp)
+                                            .clip(CircleShape)
+                                            .background(color)
+                                            .border(
+                                                width = if (isColorSelected) 2.5.dp else 1.dp,
+                                                color = if (isColorSelected) {
+                                                    if (color == Color.White || color == Color(
+                                                            0xFFF5F0E8L
+                                                        ) || color == Color(0xFFE8E8E8L)
+                                                    ) Color.Black else Color.White
+                                                } else {
+                                                    Color.White.copy(alpha = 0.2f)
+                                                },
+                                                shape = CircleShape
+                                            )
+                                            .clickable {
+                                                val currentFont = fontPresets.find { it.id == selectedOverlay.fontId }
+                                                val isPremium = currentFont?.isPremium ?: false
+                                                val fontType = if (isPremium) "ads" else "free"
+                                                val colorName = getColorName(colorValue)
+                                                Analytics.trackTextColorClick(type = fontType, colorName = colorName)
+                                                onUpdateColor(selectedOverlay.id, colorValue)
+                                            }
+                                    )
+                                }
                             }
                         }
                     }
-                }
 
+                    Spacer(Modifier.height(14.dp))
 
-                Spacer(Modifier.height(14.dp))
+                    // Font selection section
+                    Text(
+                        text = stringResource(R.string.text_overlay_font_header),
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = TextSecondary
+                    )
 
-                // Font selection section
-                Text(
-                    text = stringResource(R.string.text_overlay_font_header),
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = TextSecondary
-                )
+                    Spacer(Modifier.height(8.dp))
 
-                Spacer(Modifier.height(8.dp))
-
-                if (isFontsLoading) {
-                    ProvideShimmerEffect {
+                    if (isFontsLoading) {
+                        ProvideShimmerEffect {
+                            LazyVerticalGrid(
+                                columns = GridCells.Fixed(2),
+                                contentPadding = PaddingValues(bottom = 16.dp),
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                verticalArrangement = Arrangement.spacedBy(10.dp),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .weight(1f)
+                            ) {
+                                items(6) {
+                                    ShimmerPlaceholder(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(44.dp),
+                                        cornerRadius = 12.dp
+                                    )
+                                }
+                            }
+                        }
+                    } else {
                         LazyVerticalGrid(
                             columns = GridCells.Fixed(2),
                             contentPadding = PaddingValues(bottom = 16.dp),
@@ -466,148 +507,130 @@ fun TextBottomSheetContent(
                                 .fillMaxWidth()
                                 .weight(1f)
                         ) {
-                            items(6) {
-                                ShimmerPlaceholder(
+                            items(
+                                items = fontPresets,
+                                key = { it.id }
+                            ) { fontPreset ->
+                                val isFirstFont = fontPresets.firstOrNull()?.id == fontPreset.id
+                                val isFontSelected = selectedOverlay.fontId == fontPreset.id ||
+                                        (selectedOverlay.fontId == "system_default" && fontPreset.id == (fontPresets.firstOrNull()?.id ?: "neue_haas_regular"))
+                                val isLocked = !isFirstFont &&
+                                    fontPreset.isPremium && !unlockedFontIds.contains(fontPreset.id)
+                                val showDownloadLabel = !fontPreset.isNew &&
+                                        !isLocked &&
+                                        fontPreset.fontResId == null &&
+                                        !downloadedFontIds.contains(fontPreset.id)
+
+                                Box(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .height(44.dp),
-                                    cornerRadius = 12.dp
-                                )
-                            }
-                        }
-                    }
-                } else {
-                    LazyVerticalGrid(
-                        columns = GridCells.Fixed(2),
-                        contentPadding = PaddingValues(bottom = 16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        verticalArrangement = Arrangement.spacedBy(10.dp),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f)
-                    ) {
-                        items(
-                            items = fontPresets,
-                            key = { it.id }
-                        ) { fontPreset ->
-                            val isFontSelected = selectedOverlay?.fontId == fontPreset.id ||
-                                    (selectedOverlay?.fontId == "system_default" && fontPreset.id == (fontPresets.firstOrNull()?.id ?: "neue_haas_regular"))
-                            val isLocked =
-                                fontPreset.isPremium && !unlockedFontIds.contains(fontPreset.id)
-                            val showDownloadLabel = !fontPreset.isNew &&
-                                    !isLocked &&
-                                    fontPreset.fontResId == null &&
-                                    !downloadedFontIds.contains(fontPreset.id)
-
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(44.dp)
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .background(if (isFontSelected) Color.Transparent else EffectUnselectedBg)
-                                    .border(
-                                        width = if (isFontSelected) 2.dp else 1.dp,
-                                        color = if (isFontSelected) Color.White else EffectUnselectedBg,
-                                        shape = RoundedCornerShape(12.dp)
-                                    )
-                                    .clickable {
-                                        val fontType = if (fontPreset.isPremium) "ads" else "free"
-                                        if (showDownloadLabel) {
-                                            Analytics.trackTextFontDownload(type = fontType, fontName = fontPreset.name)
-                                        } else {
-                                            Analytics.trackTextFontClick(type = fontType, fontName = fontPreset.name)
-                                        }
-                                        onFontClick(fontPreset) {
-                                            onUpdateFont(selectedOverlay.id, fontPreset.id)
-                                        }
-                                    },
-                                contentAlignment = Alignment.Center
-                            ) {
-                                val fullThumbnailUrl = remember(fontPreset) {
-                                    if (fontPreset.thumbnailUrl != null && fontPreset.thumbnailPath != null) {
-                                        fontPreset.thumbnailUrl + fontPreset.thumbnailPath
-                                    } else null
-                                }
-
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .padding(horizontal = 16.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.SpaceBetween
+                                        .height(44.dp)
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(if (isFontSelected) Color.Transparent else EffectUnselectedBg)
+                                        .border(
+                                            width = if (isFontSelected) 2.dp else 1.dp,
+                                            color = if (isFontSelected) Color.White else EffectUnselectedBg,
+                                            shape = RoundedCornerShape(12.dp)
+                                        )
+                                        .clickable {
+                                            val fontType = if (fontPreset.isPremium && !isFirstFont) "ads" else "free"
+                                            if (showDownloadLabel) {
+                                                Analytics.trackTextFontDownload(type = fontType, fontName = fontPreset.name)
+                                            } else {
+                                                Analytics.trackTextFontClick(type = fontType, fontName = fontPreset.name)
+                                            }
+                                            onFontClick(fontPreset) {
+                                                onUpdateFont(selectedOverlay.id, fontPreset.id)
+                                            }
+                                        },
+                                    contentAlignment = Alignment.Center
                                 ) {
-                                    if (fullThumbnailUrl != null) {
-                                        Box(
-                                            modifier = Modifier
-                                                .weight(1f)
-                                                .height(32.dp),
-                                            contentAlignment = Alignment.CenterStart
-                                        ) {
-                                            AsyncImage(
-                                                model = fullThumbnailUrl,
-                                                contentDescription = fontPreset.name,
-                                                contentScale = ContentScale.Fit,
-                                                modifier = Modifier.fillMaxHeight()
-                                            )
-                                        }
-                                    } else {
-                                        Text(
-                                            text = fontPreset.name,
-                                            fontFamily = fontPreset.fontFamily,
-                                            fontSize = 15.sp,
-                                            fontWeight = FontWeight.W500,
-                                            color = if (isFontSelected) Color.White else TextPrimary,
-                                            textAlign = TextAlign.Start,
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis,
-                                            modifier = Modifier.weight(1f)
-                                        )
+                                    val fullThumbnailUrl = remember(fontPreset) {
+                                        if (fontPreset.thumbnailUrl != null && fontPreset.thumbnailPath != null) {
+                                            fontPreset.thumbnailUrl + fontPreset.thumbnailPath
+                                        } else null
                                     }
 
-                                    if (isFontSelected) {
-                                        Box(
-                                            modifier = Modifier
-                                                .size(20.dp)
-                                                .background(Primary, CircleShape),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Default.Check,
-                                                contentDescription = null,
-                                                tint = TextOnPrimary,
-                                                modifier = Modifier.size(14.dp)
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .padding(horizontal = 16.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        if (fullThumbnailUrl != null) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .weight(1f)
+                                                    .height(32.dp),
+                                                contentAlignment = Alignment.CenterStart
+                                            ) {
+                                                AsyncImage(
+                                                    model = fullThumbnailUrl,
+                                                    contentDescription = fontPreset.name,
+                                                    contentScale = ContentScale.Fit,
+                                                    modifier = Modifier.fillMaxHeight()
+                                                )
+                                            }
+                                        } else {
+                                            Text(
+                                                text = fontPreset.name,
+                                                fontFamily = fontPreset.fontFamily,
+                                                fontSize = 15.sp,
+                                                fontWeight = FontWeight.W500,
+                                                color = if (isFontSelected) Color.White else TextPrimary,
+                                                textAlign = TextAlign.Start,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis,
+                                                modifier = Modifier.weight(1f)
                                             )
                                         }
-                                    } else if (showDownloadLabel) {
+
+                                        if (isFontSelected) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(20.dp)
+                                                    .background(Primary, CircleShape),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Check,
+                                                    contentDescription = null,
+                                                    tint = TextOnPrimary,
+                                                    modifier = Modifier.size(14.dp)
+                                                )
+                                            }
+                                        } else if (showDownloadLabel) {
+                                            Image(
+                                                painter = painterResource(id = R.drawable.ic_download),
+                                                contentDescription = "Download",
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                        }
+                                    }
+
+                                    // Badges
+                                    if (fontPreset.isNew) {
                                         Image(
-                                            painter = painterResource(id = R.drawable.ic_download),
-                                            contentDescription = "Download",
-                                            modifier = Modifier.size(16.dp)
+                                            painter = painterResource(id = R.drawable.ic_new_item),
+                                            contentDescription = stringResource(R.string.text_overlay_desc_new_item),
+                                            modifier = Modifier
+                                                .align(Alignment.TopStart)
+                                                .padding(top = 4.dp, start = 4.dp)
+                                                .size(18.dp)
                                         )
                                     }
-                                }
 
-                                // Badges
-                                if (fontPreset.isNew) {
-                                    Image(
-                                        painter = painterResource(id = R.drawable.ic_new_item),
-                                        contentDescription = stringResource(R.string.text_overlay_desc_new_item),
-                                        modifier = Modifier
-                                            .align(Alignment.TopStart)
-                                            .padding(top = 4.dp, start = 4.dp)
-                                            .size(18.dp)
-                                    )
-                                }
-
-                                if (isLocked) {
-                                    Image(
-                                        painter = painterResource(id = R.drawable.ic_ads),
-                                        contentDescription = stringResource(R.string.text_overlay_desc_ad_required),
-                                        modifier = Modifier
-                                            .align(Alignment.BottomEnd)
-                                            .padding(bottom = 4.dp, end = 4.dp)
-                                            .size(18.dp)
-                                    )
+                                    if (isLocked) {
+                                        Image(
+                                            painter = painterResource(id = R.drawable.ic_ads),
+                                            contentDescription = stringResource(R.string.text_overlay_desc_ad_required),
+                                            modifier = Modifier
+                                                .align(Alignment.BottomEnd)
+                                                .padding(bottom = 4.dp, end = 4.dp)
+                                                .size(18.dp)
+                                        )
+                                    }
                                 }
                             }
                         }
