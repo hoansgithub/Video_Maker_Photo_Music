@@ -1660,6 +1660,16 @@ class EditorViewModel(
         }
     }
 
+    /**
+     * Replace the entire sticker list. Used to revert to the pre-panel snapshot when the
+     * sticker picker is cancelled (dismiss), mirroring the effect-set cancel behavior.
+     */
+    fun setStickers(stickers: List<com.videomaker.aimusic.domain.model.StickerPlacement>) {
+        updatePendingSettingsAudioOnly { settings ->
+            settings.copy(stickers = stickers)
+        }
+    }
+
     /** Raise a sticker above all others (used when selecting it for editing). */
     fun bringStickerToFront(instanceId: String) {
         updatePendingSettingsAudioOnly { settings ->

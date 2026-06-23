@@ -98,6 +98,7 @@ import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.domain.model.AspectRatio
 import com.videomaker.aimusic.domain.model.EffectSet
+import com.videomaker.aimusic.domain.model.StickerPlacement
 import com.videomaker.aimusic.domain.model.Project
 import com.videomaker.aimusic.domain.model.VideoQuality
 import com.videomaker.aimusic.media.renderer.PlaybackClock
@@ -192,6 +193,11 @@ fun EditorScreen(
     var textFocusTrigger by remember { mutableStateOf(0L) }
     var showStickerSheet by remember { mutableStateOf(false) }
     var selectedStickerId by remember { mutableStateOf<String?>(null) }
+    // Last sticker picked while the panel is open — reported by sticker_select on confirm.
+    var lastPickedStickerName by remember { mutableStateOf<String?>(null) }
+    var lastPickedStickerSetName by remember { mutableStateOf<String?>(null) }
+    // Snapshot of stickers when the panel opens — restored on cancel (dismiss), like effects.
+    var stickersBeforePanel by remember { mutableStateOf<List<StickerPlacement>>(emptyList()) }
     var effectSetIdBeforePanel by remember { mutableStateOf<String?>(null) }
     var showMusicSearchSheet by remember { mutableStateOf(false) }
     var showVolumeSheet by remember { mutableStateOf(false) }
@@ -675,13 +681,19 @@ fun EditorScreen(
                 stickers = successState?.displaySettings?.stickers ?: emptyList(),
                 selectedStickerId = selectedStickerId,
                 onStickerTabClick = {
+                    Analytics.trackStickerEdit()
+                    lastPickedStickerName = null
+                    lastPickedStickerSetName = null
+                    stickersBeforePanel = currentState()?.displaySettings?.stickers ?: emptyList()
                     showStickerSheet = true
                 },
                 onStickerSelect = { id -> selectedStickerId = id },
                 onStickerTransform = { placement ->
+                    Analytics.trackEditBoxDrag(AnalyticsEvent.Value.TypeTool.STICKER)
                     viewModel.updateStickerPlacement(placement)
                 },
                 onStickerDelete = { instanceId ->
+                    Analytics.trackEditBoxDelete(AnalyticsEvent.Value.TypeTool.STICKER)
                     viewModel.removeSticker(instanceId)
                     if (selectedStickerId == instanceId) selectedStickerId = null
                 },
@@ -692,13 +704,47 @@ fun EditorScreen(
                         selectedStickerId = top.instanceId
                     }
                 },
+                // Tap a committed sticker → select it and re-open the picker (like text editing).
+                onStickerRequestEdit = { id ->
+                    Analytics.trackStickerEdit()
+                    lastPickedStickerName = null
+                    lastPickedStickerSetName = null
+                    stickersBeforePanel = currentState()?.displaySettings?.stickers ?: emptyList()
+                    selectedStickerId = id
+                    showStickerSheet = true
+                },
                 showStickerPanel = showStickerSheet,
                 stickerViewModel = stickerViewModel,
-                onStickerPanelDismiss = { showStickerSheet = false },
-                onStickerPanelConfirm = { showStickerSheet = false },
+                // Closing the picker (Done/Close) commits the stickers: drop the selection so
+                // the box/handles disappear and touches stop editing the sticker.
+                onStickerPanelDismiss = {
+                    Analytics.trackStickerClose()
+                    // Cancel → revert any stickers added/changed while the panel was open.
+                    viewModel.setStickers(stickersBeforePanel)
+                    showStickerSheet = false
+                    selectedStickerId = null
+                },
+                onStickerPanelConfirm = {
+                    // (v) icon → report the last sticker picked during this session.
+                    lastPickedStickerName?.let { name ->
+                        Analytics.trackStickerSelect(
+                            setName = lastPickedStickerSetName ?: "",
+                            stickerName = name
+                        )
+                    }
+                    showStickerSheet = false
+                    selectedStickerId = null
+                },
                 onAddSticker = { sticker ->
                     // Auto-select the newly added sticker so its handles show immediately.
                     selectedStickerId = viewModel.addSticker(sticker)
+                    // Remember for sticker_select (set name resolved from the active category).
+                    lastPickedStickerName = sticker.name
+                    lastPickedStickerSetName = (stickerViewModel.categoriesState.value
+                        as? StickerCategoriesState.Success)
+                        ?.categories
+                        ?.find { it.id == stickerViewModel.selectedCategoryId.value }
+                        ?.name
                 },
                 showTextPanel = showTextSheet,
                 textFocusTrigger = textFocusTrigger,
@@ -1326,6 +1372,7 @@ internal fun EditorMainContent(
     onStickerTransform: (com.videomaker.aimusic.domain.model.StickerPlacement) -> Unit = {},
     onStickerDelete: (String) -> Unit = {},
     onStickerDoubleTapTopMost: () -> Unit = {},
+    onStickerRequestEdit: (String) -> Unit = {},
     showStickerPanel: Boolean = false,
     stickerViewModel: StickerViewModel? = null,
     onStickerPanelDismiss: () -> Unit = {},
@@ -1468,6 +1515,10 @@ internal fun EditorMainContent(
                     onTransform = onStickerTransform,
                     onDelete = onStickerDelete,
                     onDoubleTapTopMost = onStickerDoubleTapTopMost,
+                    // Tapping a committed sticker re-opens the picker for editing (like text).
+                    onRequestEdit = onStickerRequestEdit,
+                    // Only editable while the sticker picker is open; committed otherwise.
+                    interactive = showStickerPanel,
                     modifier = Modifier.aspectRatio(previewAspectRatio)
                 )
             }
@@ -1818,6 +1869,33 @@ internal fun EditorMainContent(
                         .size(width = 36.dp, height = 4.dp)
                         .clip(RoundedCornerShape(2.dp))
                         .background(Color.Gray)
+                )
+            }
+
+            // Player Controls — hidden when user swipes the panel up
+            androidx.compose.animation.AnimatedVisibility(
+                visible = currentPanelHeight <= minHeight + 30.dp,
+                enter = fadeIn() + androidx.compose.animation.expandVertically(),
+                exit = fadeOut() + androidx.compose.animation.shrinkVertically()
+            ) {
+                EditorPlayerControls(
+                    currentPositionMs = currentPositionMs,
+                    durationMs = durationMs,
+                    isPlaying = isPlaying,
+                    onSeek = { position ->
+                        if (durationMs > 0) {
+                            onSeek((position * durationMs).toLong())
+                        }
+                    },
+                    onScrub = { position ->
+                        if (durationMs > 0) {
+                            onScrub((position * durationMs).toLong())
+                        }
+                    },
+                    onSeekStart = onSeekStart,
+                    onSeekEnd = onSeekEnd,
+                    onPlayPauseClick = onPlayPauseClick,
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
 

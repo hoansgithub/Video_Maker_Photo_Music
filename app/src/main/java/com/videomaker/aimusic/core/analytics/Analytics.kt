@@ -2710,6 +2710,66 @@ object Analytics {
     fun trackTextClose() {
         track(AnalyticsEvent.TEXT_CLOSE)
     }
+
+    // ============================================
+    // STICKER OVERLAY
+    // ============================================
+
+    /** User opens the sticker edit panel. */
+    fun trackStickerEdit() {
+        track(AnalyticsEvent.STICKER_EDIT)
+    }
+
+    /** User taps a sticker set (category) and the grid switches to that set. */
+    fun trackStickerSetClick(setName: String) {
+        track(
+            AnalyticsEvent.STICKER_SET_CLICK,
+            mapOf(AnalyticsEvent.Param.SET_NAME to setName)
+        )
+    }
+
+    /** User taps a sticker in the grid. [isPremium] -> type ads/free. */
+    fun trackStickerClick(stickerName: String, isPremium: Boolean) {
+        track(
+            AnalyticsEvent.STICKER_CLICK,
+            mapOf(
+                AnalyticsEvent.Param.STICKER_NAME to stickerName,
+                AnalyticsEvent.Param.TYPE to premiumType(isPremium)
+            )
+        )
+    }
+
+    /** User confirms the sticker selection by tapping the (v) icon. */
+    fun trackStickerSelect(setName: String, stickerName: String) {
+        track(
+            AnalyticsEvent.STICKER_SELECT,
+            mapOf(
+                AnalyticsEvent.Param.SET_NAME to setName,
+                AnalyticsEvent.Param.STICKER_NAME to stickerName
+            )
+        )
+    }
+
+    /** User closes the sticker edit panel via the (x) icon. */
+    fun trackStickerClose() {
+        track(AnalyticsEvent.STICKER_CLOSE)
+    }
+
+    /** User holds an overlay box and moves or resizes it. [typeTool] = text | sticker. */
+    fun trackEditBoxDrag(typeTool: String) {
+        track(
+            AnalyticsEvent.EDIT_BOX_DRAG,
+            mapOf(AnalyticsEvent.Param.TYPE_TOOL to typeTool)
+        )
+    }
+
+    /** User deletes an overlay box via its delete handle. [typeTool] = text | sticker. */
+    fun trackEditBoxDelete(typeTool: String) {
+        track(
+            AnalyticsEvent.EDIT_BOX_DELETE,
+            mapOf(AnalyticsEvent.Param.TYPE_TOOL to typeTool)
+        )
+    }
 }
 
 /**

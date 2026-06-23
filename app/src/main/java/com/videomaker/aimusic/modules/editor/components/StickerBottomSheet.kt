@@ -56,6 +56,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
 import coil.compose.SubcomposeAsyncImage
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.ads.RewardedAdPresenter
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.domain.model.Sticker
@@ -67,6 +68,7 @@ import com.videomaker.aimusic.modules.editor.StickerViewModel
 import com.videomaker.aimusic.ui.components.AppAsyncImage
 import com.videomaker.aimusic.ui.components.ShimmerPlaceholder
 import com.videomaker.aimusic.ui.theme.EffectUnselectedBg
+import com.videomaker.aimusic.ui.theme.Neutral_Black
 import com.videomaker.aimusic.ui.theme.Primary
 import com.videomaker.aimusic.ui.theme.SplashBackground
 import com.videomaker.aimusic.ui.theme.TextOnPrimary
@@ -134,7 +136,6 @@ fun StickerPanel(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = 8.dp)
         ) {
             // Header
             Row(
@@ -182,16 +183,22 @@ fun StickerPanel(
                 }
             }
 
-            Spacer(Modifier.height(8.dp))
-
             // Category row
-            CategoryRow(
-                state = categoriesState,
-                selectedId = selectedCategoryId,
-                onCategoryClick = { viewModel.selectCategory(it) }
-            )
+            Box(modifier = Modifier.fillMaxWidth()) {
+                Spacer(
+                    Modifier
+                        .height(1.dp)
+                        .fillMaxWidth()
+                        .background(Neutral_Black)
+                        .align(Alignment.BottomCenter)
+                )
+                CategoryRow(
+                    state = categoriesState,
+                    selectedId = selectedCategoryId,
+                    onCategoryClick = { viewModel.selectCategory(it) }
+                )
+            }
 
-            Spacer(Modifier.height(12.dp))
 
             // Sticker grid
             Box(
@@ -212,6 +219,10 @@ fun StickerPanel(
                         isLoadingMore = state.isLoadingMore,
                         gridState = gridState,
                         onStickerClick = { sticker ->
+                            Analytics.trackStickerClick(
+                                stickerName = sticker.name,
+                                isPremium = sticker.isPremium
+                            )
                             viewModel.onStickerClick(sticker, onReady = onAddSticker)
                         }
                     )
@@ -241,7 +252,7 @@ private fun CategoryRow(
                     .padding(horizontal = 12.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                repeat(7) {
+                repeat(5) {
                     ShimmerPlaceholder(
                         modifier = Modifier.size(46.dp),
                         cornerRadius = 12.dp
@@ -284,11 +295,10 @@ private fun CategoryItem(
             modifier = Modifier
                 .size(46.dp)
                 .clip(RoundedCornerShape(12.dp))
-                .then(
-                    if (isSelected) Modifier.border(2.dp, Primary, RoundedCornerShape(12.dp))
-                    else Modifier
-                )
-                .clickable(onClick = onClick),
+                .clickable {
+                    Analytics.trackStickerSetClick(category.name)
+                    onClick()
+                },
             contentAlignment = Alignment.Center
         ) {
             AppAsyncImage(
@@ -327,7 +337,7 @@ private fun StickerGrid(
     LazyVerticalGrid(
         columns = GridCells.Fixed(4),
         state = gridState,
-        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+        contentPadding = PaddingValues(12.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
         modifier = Modifier.fillMaxWidth()
@@ -449,7 +459,7 @@ private fun StickerCard(
 private fun StickerGridSkeleton() {
     LazyVerticalGrid(
         columns = GridCells.Fixed(4),
-        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+        contentPadding = PaddingValues(12.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
         modifier = Modifier.fillMaxWidth(),
@@ -465,7 +475,7 @@ private fun StickerGridSkeleton() {
 }
 
 @Composable
-private fun StickerError(message: String, onRetry: () -> Unit) {
+private fun     StickerError(message: String, onRetry: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()

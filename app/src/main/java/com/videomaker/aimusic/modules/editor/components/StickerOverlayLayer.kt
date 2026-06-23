@@ -1,6 +1,7 @@
 package com.videomaker.aimusic.modules.editor.components
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -15,7 +16,6 @@ import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
@@ -27,11 +27,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.isSpecified
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChanged
@@ -47,7 +50,6 @@ import coil.compose.AsyncImagePainter
 import coil.request.ImageRequest
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.domain.model.StickerPlacement
-import com.videomaker.aimusic.ui.theme.Primary
 import kotlin.math.abs
 import kotlin.math.atan2
 import kotlin.math.cos
@@ -77,6 +79,13 @@ fun StickerOverlayLayer(
     onTransform: (StickerPlacement) -> Unit,
     onDelete: (String) -> Unit,
     onDoubleTapTopMost: () -> Unit,
+    // Tapping a sticker while committed (picker closed) requests re-opening the picker for it,
+    // like tapping a text overlay re-enters text editing. Receives the tapped instanceId.
+    onRequestEdit: (String) -> Unit,
+    // When false the layer is "committed": stickers still render (and still clip to the video)
+    // and a tap re-opens the picker via [onRequestEdit], but there is no selection box and no
+    // drag/zoom. Driven by the sticker picker being open.
+    interactive: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     var rectSize by remember { mutableStateOf(Size.Zero) }
@@ -97,6 +106,7 @@ fun StickerOverlayLayer(
     val onTransformState by rememberUpdatedState(onTransform)
     val onDeleteState by rememberUpdatedState(onDelete)
     val onDoubleTapState by rememberUpdatedState(onDoubleTapTopMost)
+    val onRequestEditState by rememberUpdatedState(onRequestEdit)
 
     val density = LocalDensity.current
 
@@ -106,7 +116,9 @@ fun StickerOverlayLayer(
             // the video, but only the part inside the video is shown — anything outside is hidden.
             .clipToBounds()
             .onSizeChanged { rectSize = Size(it.width.toFloat(), it.height.toFloat()) }
-            .pointerInput(rectSize) {
+            // Re-keyed on `interactive` so toggling it cancels any in-flight gesture and
+            // detaches the handler entirely when the picker is closed.
+            .pointerInput(rectSize, interactive) {
                 if (rectSize == Size.Zero) return@pointerInput
                 val rectW = rectSize.width
                 val rectH = rectSize.height
@@ -144,6 +156,25 @@ fun StickerOverlayLayer(
                         if (abs(lx) <= halfW && abs(ly) <= halfH) return p
                     }
                     return null
+                }
+
+                // COMMITTED state (picker closed): the only interaction is a tap on a sticker,
+                // which re-opens the picker for that sticker (like re-entering text editing).
+                // No drag/zoom/selection box here.
+                if (!interactive) {
+                    awaitEachGesture {
+                        val down = awaitFirstDown(requireUnconsumed = false)
+                        val start = down.position
+                        var moved = false
+                        do {
+                            val e = awaitPointerEvent()
+                            e.changes.forEach { ch ->
+                                if ((ch.position - start).getDistance() > touchSlop) moved = true
+                            }
+                        } while (e.changes.any { it.pressed })
+                        if (!moved) hitTest(start)?.let { onRequestEditState(it.instanceId) }
+                    }
+                    return@pointerInput
                 }
 
                 awaitEachGesture {
@@ -202,10 +233,10 @@ fun StickerOverlayLayer(
                         return@awaitEachGesture
                     }
 
-                    // 3) Manipulate the sticker under the finger; or, if one is already selected,
-                    //    the selected one — so a selected sticker "catches" drag/pinch from
-                    //    anywhere in the video even when most of it was dragged/zoomed off-frame.
-                    val active = hitTest(start) ?: selected
+                    // 3) Manipulate ONLY the sticker whose box is under the finger. Touching
+                    //    outside every sticker's box never drags the selected one — you must
+                    //    grab the sticker inside its box (selection panel) to move/zoom it.
+                    val active = hitTest(start)
                     if (active != null) {
                         onSelectState(active.instanceId)
                         var cx = active.centerXNorm
@@ -310,9 +341,10 @@ fun StickerOverlayLayer(
         }
 
         // Layer 2: selection chrome (dashed box, delete, resize handle) — purely visual,
-        // positioned from the placement so it always tracks the sticker's corners.
+        // positioned from the placement so it always tracks the sticker's corners. Only shown
+        // while the layer is interactive (picker open); hidden once stickers are committed.
         ordered.forEach { placement ->
-            if (placement.instanceId == selectedInstanceId) {
+            if (interactive && placement.instanceId == selectedInstanceId) {
                 StickerSelectionChrome(
                     placement = placement,
                     rectW = rectW,
@@ -496,27 +528,32 @@ private fun StickerSelectionChrome(
         return Offset(centerXpx + (lx * cosT - ly * sinT), centerYpx + (lx * sinT + ly * cosT))
     }
 
-    val topLeft = corner(-1f, -1f)
-    val topRight = corner(1f, -1f)
-    val bottomRight = corner(1f, 1f)
-    val bottomLeft = corner(-1f, 1f)
+    val deleteAt = corner(-1f, -1f)
+    val handleAt = corner(1f, 1f)
 
-    // Dashed bounding box drawn directly in video-rect space (constant stroke + dash, so the
-    // border stays thin at any zoom — scaling it via graphicsLayer would thicken the line and
-    // a giant scaled layer would re-introduce the buffer/relayout jank).
-    val strokePx = with(density) { 2.dp.toPx() }
-    val dashPx = with(density) { 6.dp.toPx() }
+    // Dashed bounding box — matches the text overlay's selection style (white, thin 1.5dp
+    // stroke, 12/12 dash, 6dp rounded corners). Drawn in video-rect pixel space via
+    // rotate + drawRoundRect so the stroke stays thin at any zoom and never allocates a
+    // giant scaled layer.
+    val strokePx = with(density) { 1.5.dp.toPx() }
+    val cornerPx = with(density) { 6.dp.toPx() }
     Canvas(modifier = Modifier.fillMaxSize()) {
-        val effect = PathEffect.dashPathEffect(floatArrayOf(dashPx, dashPx), 0f)
-        drawLine(Color.White, topLeft, topRight, strokePx, pathEffect = effect)
-        drawLine(Color.White, topRight, bottomRight, strokePx, pathEffect = effect)
-        drawLine(Color.White, bottomRight, bottomLeft, strokePx, pathEffect = effect)
-        drawLine(Color.White, bottomLeft, topLeft, strokePx, pathEffect = effect)
+        rotate(degrees = placement.rotationDeg, pivot = Offset(centerXpx, centerYpx)) {
+            drawRoundRect(
+                color = Color.White,
+                topLeft = Offset(centerXpx - boxW / 2f, centerYpx - boxH / 2f),
+                size = Size(boxW, boxH),
+                cornerRadius = CornerRadius(cornerPx, cornerPx),
+                style = Stroke(
+                    width = strokePx,
+                    pathEffect = PathEffect.dashPathEffect(floatArrayOf(12f, 12f), 0f)
+                )
+            )
+        }
     }
 
-    val deleteAt = topLeft
-    val handleAt = bottomRight
-    val btn = 28.dp
+    // Control badges — same size + icons as the text overlay (18dp white circle).
+    val btn = 18.dp
     val btnPx = with(density) { btn.toPx() }
 
     // Delete (top-left corner)
@@ -530,14 +567,13 @@ private fun StickerSelectionChrome(
             }
             .size(btn)
             .clip(CircleShape)
-            .background(Color.Red)
+            .background(Color.White)
     ) {
-        Icon(
-            painter = painterResource(id = R.drawable.ic_close),
+        Image(
+            painter = painterResource(id = R.drawable.ic_close_red),
             contentDescription = null,
-            tint = Color.White,
             modifier = Modifier
-                .size(16.dp)
+                .size(btn)
                 .align(Alignment.Center)
         )
     }
@@ -555,12 +591,11 @@ private fun StickerSelectionChrome(
             .clip(CircleShape)
             .background(Color.White)
     ) {
-        Icon(
-            painter = painterResource(id = R.drawable.ic_edit_sticker),
+        Image(
+            painter = painterResource(id = R.drawable.ic_zoom),
             contentDescription = null,
-            tint = Primary,
             modifier = Modifier
-                .size(16.dp)
+                .size(btn)
                 .align(Alignment.Center)
         )
     }
