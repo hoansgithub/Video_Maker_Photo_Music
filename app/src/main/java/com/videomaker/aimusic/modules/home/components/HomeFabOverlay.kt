@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -103,6 +104,7 @@ private val SongsRefreshExit: ExitTransition =
 @Composable
 fun HomeFabOverlay(
     isGalleryTab: Boolean,
+    isShowPaddingBottom: Boolean,
     collapseProgress: () -> Float,
     refreshVisible: Boolean,
     onCreateClick: () -> Unit,
@@ -112,6 +114,10 @@ fun HomeFabOverlay(
     Box(
         modifier = modifier
             .fillMaxSize()
+            .then(
+                if (isShowPaddingBottom) Modifier.navigationBarsPadding()
+                else Modifier
+            )
             .padding(bottom = 16.dp, start = 16.dp, end = 16.dp),
         contentAlignment = Alignment.BottomCenter
     ) {
