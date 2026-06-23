@@ -185,6 +185,7 @@
     <string name="editor_keep_editing">সম্পাদনা চালিয়ে যান</string>
     <string name="editor_discard">বাতিল করুন</string>
     <string name="editor_effect_sets">ইফেক্ট সেট</string>
+    <string name="editor_sticker">স্টিকার</string>
     <string name="editor_retry">আবার চেষ্টা করুন</string>
     <string name="editor_no_music_selected">কোনো সঙ্গীত নির্বাচিত নেই</string>
     <string name="editor_images_title">সম্পাদনা করতে ট্যাপ করুন • পুনর্বিন্যাস করতে ধরে রাখুন</string>

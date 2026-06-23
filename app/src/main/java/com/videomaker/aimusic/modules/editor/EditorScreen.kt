@@ -1253,7 +1253,7 @@ internal fun EditorTopBar(
 
             // Done button - disabled during processing
             Text(
-                text = "Export",
+                text = stringResource(R.string.editor_export),
                 fontSize = 14.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = Neutral_N100,
