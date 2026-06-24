@@ -340,7 +340,19 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
                         }
                     }
 
-                    android.util.Log.d("VideoMakerApp", "🔄 Initializing AdMob SDK...")
+                    // Step 3.5: Pass consent to Moloco SDK (required for bidding)
+                    // Without this, Moloco will not bid and won't appear in ad inspector
+                    try {
+                        val canRequest = adMobMediator.canRequestAds
+                        com.moloco.sdk.publisher.privacy.MolocoPrivacy.setPrivacy(
+                            com.moloco.sdk.publisher.privacy.MolocoPrivacy.PrivacySettings(canRequest, null, null)
+                        )
+                        android.util.Log.d("VideoMakerApp", "Moloco privacy set: canRequestAds=$canRequest")
+                    } catch (e: Exception) {
+                        android.util.Log.w("VideoMakerApp", "Moloco privacy setup failed: ${e.message}")
+                    }
+
+                    android.util.Log.d("VideoMakerApp", "Initializing AdMob SDK...")
 
                     // Step 4: Initialize AdMob SDK - PRODUCTION MODE (no test devices)
                     // ✅ Runs on IO thread - this is where DEX loading happens (ANR fix)

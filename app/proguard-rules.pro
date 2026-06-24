@@ -113,6 +113,27 @@
 -keep class com.google.ads.mediation.mintegral.** { *; }
 -dontwarn com.mbridge.**
 
+# Unity Ads SDK
+# https://developers.google.com/admob/android/mediation/unity
+-keep class com.unity3d.ads.** { *; }
+-keep class com.unity3d.services.** { *; }
+-dontwarn com.unity3d.ads.**
+-dontwarn com.unity3d.services.**
+-keep class com.google.ads.mediation.unity.** { *; }
+-keep class com.google.unity.ads.** { *; }
+
+# Moloco SDK
+# https://developers.google.com/admob/android/mediation/moloco
+-keep class com.moloco.** { *; }
+-keep class com.google.ads.mediation.moloco.** { *; }
+-dontwarn com.moloco.**
+
+# InMobi SDK
+# https://developers.google.com/admob/android/mediation/inmobi
+-keep class com.inmobi.** { *; }
+-keep class com.google.ads.mediation.inmobi.** { *; }
+-dontwarn com.inmobi.**
+
 # ========== ACCDI (AlcheClub Custom DI) ==========
 # ACCDI resolves dependencies via reified inline functions (inlined at compile time).
 # Keep the public API and any annotation-driven injection points.
