@@ -410,4 +410,11 @@ class EffectSetViewModel(
     fun onRetry() {
         loadFirstPage()
     }
+
+    override fun onCleared() {
+        super.onCleared()
+        loadMoreJob?.cancel()
+        loadMoreJob = null
+        onUnlockSuccessCallback = null
+    }
 }
