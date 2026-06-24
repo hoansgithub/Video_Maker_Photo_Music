@@ -21,6 +21,7 @@ import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -37,7 +38,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -79,6 +79,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
@@ -515,6 +516,8 @@ fun EditorScreen(
     val previewAspectRatio =
         (uiState as? EditorUiState.Success)?.displaySettings?.aspectRatio?.ratio
             ?: lastAspectRatio.ratio
+
+
 
     Column(
         modifier = Modifier
@@ -1445,6 +1448,7 @@ internal fun EditorMainContent(
     val maxHeight = 620.dp
     var currentPanelHeight by remember(minHeight) { mutableStateOf(minHeight) }
 
+
     LaunchedEffect(showEffectSetPanel, showTextPanel, showRatioPanel, showStickerPanel, minHeight) {
         if (showEffectSetPanel || showTextPanel || showRatioPanel || showStickerPanel) {
             currentPanelHeight = minHeight
@@ -1964,103 +1968,148 @@ internal fun EditorMainContent(
     }
 
     if (showTextPanel && textOverlayViewModel != null) {
-        val isKeyboardOpen = WindowInsets.ime.asPaddingValues().calculateBottomPadding() > 0.dp
-
-        Column(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .then(
-                    if (isKeyboardOpen) {
-                        val adPlacementConfigService: AdPlacementConfigService = koinInject()
-                        val keyboardHeight = WindowInsets.ime.asPaddingValues().calculateBottomPadding()
-                        val navigationBarsHeight = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-                        val bannerHeight = if (adPlacementConfigService.bannerUseNative) 100.dp else 50.dp
-                        val bottomOffset = navigationBarsHeight + bannerHeight
-                        val dynamicPadding = (keyboardHeight - bottomOffset + 8.dp).coerceAtLeast(0.dp)
-
-                        Modifier
-                            .padding(bottom = dynamicPadding)
-                            .wrapContentHeight()
-                    } else {
-                        Modifier.height(currentPanelHeight)
-                    }
-                )
-                .background(SplashBackground)
-                .then(
-                    if (isKeyboardOpen) Modifier else Modifier.nestedScroll(nestedScrollConnection)
-                )
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null
-                ) { /* consume clicks */ }
-        ) {
-            if (!isKeyboardOpen) {
-                // Drag handle area
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .pointerInput(Unit) {
-                            detectDragGestures { change, dragAmount ->
-                                change.consume()
-                                val dragDp = with(density) { -dragAmount.y.toDp() }
-                                currentPanelHeight = (currentPanelHeight + dragDp).coerceIn(minHeight, maxHeight)
-                            }
-                        }
-                        .padding(vertical = 12.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(width = 36.dp, height = 4.dp)
-                            .clip(RoundedCornerShape(2.dp))
-                            .background(Color.Gray)
-                    )
-                }
-            }
-
-            // Player Controls — hidden when user swipes the panel up or keyboard is open
-            AnimatedVisibility(
-                visible = currentPanelHeight <= minHeight + 30.dp && !isKeyboardOpen,
-                enter = fadeIn() + expandVertically(),
-                exit = fadeOut() + shrinkVertically()
-            ) {
-                EditorPlayerControls(
-                    currentPositionMs = currentPositionMs,
-                    durationMs = durationMs,
-                    isPlaying = isPlaying,
-                    onSeek = { position ->
-                        if (durationMs > 0) {
-                            onSeek((position * durationMs).toLong())
-                        }
-                    },
-                    onScrub = { position ->
-                        if (durationMs > 0) {
-                            onScrub((position * durationMs).toLong())
-                        }
-                    },
-                    onSeekStart = onSeekStart,
-                    onSeekEnd = onSeekEnd,
-                    onPlayPauseClick = onPlayPauseClick,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-
-            // Inline TextBottomSheet
-            TextBottomSheet(
-                viewModel = textOverlayViewModel,
-                onDismiss = onTextPanelDismiss,
-                onConfirm = onTextPanelConfirm,
-                focusTrigger = textFocusTrigger,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .then(
-                        if (isKeyboardOpen) Modifier else Modifier.weight(1f)
-                    )
-            )
-        }
+        TextPanelWrapper(
+            textOverlayViewModel = textOverlayViewModel,
+            currentPanelHeight = currentPanelHeight,
+            minHeight = minHeight,
+            maxHeight = maxHeight,
+            density = density,
+            nestedScrollConnection = nestedScrollConnection,
+            currentPositionMs = currentPositionMs,
+            durationMs = durationMs,
+            isPlaying = isPlaying,
+            onSeek = onSeek,
+            onScrub = onScrub,
+            onSeekStart = onSeekStart,
+            onSeekEnd = onSeekEnd,
+            onPlayPauseClick = onPlayPauseClick,
+            textFocusTrigger = textFocusTrigger,
+            onTextPanelDismiss = onTextPanelDismiss,
+            onTextPanelConfirm = onTextPanelConfirm,
+            onHeightChange = { currentPanelHeight = it }
+        )
     }
 }
+}
+
+@Composable
+private fun BoxScope.TextPanelWrapper(
+    textOverlayViewModel: TextOverlayViewModel,
+    currentPanelHeight: Dp,
+    minHeight: Dp,
+    maxHeight: Dp,
+    density: androidx.compose.ui.unit.Density,
+    nestedScrollConnection: NestedScrollConnection,
+    currentPositionMs: Long,
+    durationMs: Long,
+    isPlaying: Boolean,
+    onSeek: (Long) -> Unit,
+    onScrub: (Long) -> Unit,
+    onSeekStart: () -> Unit,
+    onSeekEnd: () -> Unit,
+    onPlayPauseClick: () -> Unit,
+    textFocusTrigger: Long,
+    onTextPanelDismiss: () -> Unit,
+    onTextPanelConfirm: () -> Unit,
+    onHeightChange: (Dp) -> Unit
+) {
+    val adPlacementConfigService: AdPlacementConfigService = koinInject()
+    val keyboardHeight = WindowInsets.ime.asPaddingValues().calculateBottomPadding()
+    val navigationBarsHeight = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+    val bannerHeight = if (adPlacementConfigService.bannerUseNative) 100.dp else 50.dp
+    val bottomOffset = navigationBarsHeight + bannerHeight
+    
+    // Add extra space (12.dp) between the keyboard and the input field for a premium look
+    val dynamicPadding = if (keyboardHeight > 0.dp) {
+        (keyboardHeight - bottomOffset + 12.dp).coerceAtLeast(0.dp)
+    } else {
+        0.dp
+    }
+    val isKeyboardOpen = keyboardHeight > 0.dp
+
+    Column(
+        modifier = Modifier
+            .align(Alignment.BottomCenter)
+            .fillMaxWidth()
+            .height(currentPanelHeight)
+            .padding(bottom = dynamicPadding)
+            .background(SplashBackground)
+            .then(
+                if (isKeyboardOpen) Modifier else Modifier.nestedScroll(nestedScrollConnection)
+            )
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null
+            ) { /* consume clicks */ },
+        verticalArrangement = Arrangement.Bottom
+    ) {
+        AnimatedVisibility(
+            visible = !isKeyboardOpen,
+            enter = expandVertically() + fadeIn(),
+            exit = shrinkVertically() + fadeOut()
+        ) {
+            // Drag handle area
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .pointerInput(Unit) {
+                        detectDragGestures { change, dragAmount ->
+                            change.consume()
+                            val dragDp = with(density) { -dragAmount.y.toDp() }
+                            onHeightChange((currentPanelHeight + dragDp).coerceIn(minHeight, maxHeight))
+                        }
+                    }
+                    .padding(vertical = 12.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(width = 36.dp, height = 4.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(Color.Gray)
+                )
+            }
+        }
+
+        // Player Controls — hidden when user swipes the panel up or keyboard is open
+        AnimatedVisibility(
+            visible = currentPanelHeight <= minHeight + 30.dp && !isKeyboardOpen,
+            enter = fadeIn() + expandVertically(),
+            exit = fadeOut() + shrinkVertically()
+        ) {
+            EditorPlayerControls(
+                currentPositionMs = currentPositionMs,
+                durationMs = durationMs,
+                isPlaying = isPlaying,
+                onSeek = { position ->
+                    if (durationMs > 0) {
+                        onSeek((position * durationMs).toLong())
+                    }
+                },
+                onScrub = { position ->
+                    if (durationMs > 0) {
+                        onScrub((position * durationMs).toLong())
+                    }
+                },
+                onSeekStart = onSeekStart,
+                onSeekEnd = onSeekEnd,
+                onPlayPauseClick = onPlayPauseClick,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+
+        // Inline TextBottomSheet
+        TextBottomSheet(
+            viewModel = textOverlayViewModel,
+            onDismiss = onTextPanelDismiss,
+            onConfirm = onTextPanelConfirm,
+            isKeyboardOpen = isKeyboardOpen,
+            focusTrigger = textFocusTrigger,
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+        )
+    }
 }
 
 @Composable
