@@ -81,6 +81,13 @@ class AnimatedStickerDecoder(private val context: Context) {
         private const val MAX_DOWNLOAD_BYTES = 10 * 1024 * 1024 // 10 MB safety cap
         private const val CONNECT_TIMEOUT_MS = 15_000
         private const val READ_TIMEOUT_MS = 15_000
+
+        /**
+         * Global frame budget across ALL stickers in one export session.
+         * Prevents OOM when many animated stickers are decoded simultaneously
+         * (e.g. 30 stickers x 120 frames x 384x384 ARGB_8888 = ~2.1 GB).
+         */
+        private const val MAX_TOTAL_FRAMES = 360
     }
 
     /** Decode every placement; entries that fail to download/decode are dropped. */
@@ -88,22 +95,41 @@ class AnimatedStickerDecoder(private val context: Context) {
         placements: List<StickerPlacement>
     ): List<Pair<StickerPlacement, DecodedSticker>> = withContext(Dispatchers.IO) {
         // De-dupe network/decoding work by URL — many placements can share one asset.
+        // Frame budget tracks unique decoded frames only (shared URLs share bitmaps).
         val byUrl = HashMap<String, DecodedSticker?>()
+        var totalFrames = 0
+        var droppedCount = 0
         placements.mapNotNull { placement ->
-            val decoded = byUrl.getOrPut(placement.assetUrl) {
-                runCatching { decode(placement.assetUrl) }.getOrNull()
+            val cached = byUrl[placement.assetUrl]
+            if (cached != null) {
+                // Reused asset — no extra memory, always allow
+                return@mapNotNull placement to cached
             }
-            if (decoded == null) null else placement to decoded
+            val budget = (MAX_TOTAL_FRAMES - totalFrames).coerceAtLeast(1)
+            val decoded = byUrl.getOrPut(placement.assetUrl) {
+                runCatching { decode(placement.assetUrl, budget) }.getOrNull()
+            }
+            if (decoded != null) {
+                totalFrames += decoded.frames.size
+                placement to decoded
+            } else {
+                droppedCount++
+                Log.w(TAG, "Sticker dropped (decode failed): instanceId=${placement.instanceId}, url=${placement.assetUrl}")
+                null
+            }
+        }.also {
+            Log.d(TAG, "decodeAll: ${placements.size} placements, ${it.size} resolved, $droppedCount failed, $totalFrames unique frames")
         }
     }
 
-    private fun decode(url: String): DecodedSticker? {
+    private fun decode(url: String, maxFrames: Int = MAX_ANIM_FRAMES): DecodedSticker? {
         val bytes = download(url) ?: return null
+        val frameCap = maxFrames.coerceIn(1, MAX_ANIM_FRAMES)
         return when {
-            isGif(bytes) -> decodeGif(bytes) ?: decodeStatic(bytes)
+            isGif(bytes) -> decodeGif(bytes, frameCap) ?: decodeStatic(bytes)
             isAnimatedWebP(bytes) -> {
                 Log.d(TAG, "Detected animated WebP (${bytes.size} bytes)")
-                decodeAnimatedWebP(bytes) ?: decodeStatic(bytes)
+                decodeAnimatedWebP(bytes, frameCap) ?: decodeStatic(bytes)
             }
             else -> decodeStatic(bytes)
         }
@@ -175,7 +201,7 @@ class AnimatedStickerDecoder(private val context: Context) {
      * Android's native WebP decoder handles all frame types (VP8, VP8L, ALPH+VP8)
      * and compositing (blend/dispose) internally.
      */
-    private fun decodeAnimatedWebP(bytes: ByteArray): DecodedSticker? {
+    private fun decodeAnimatedWebP(bytes: ByteArray, maxFrames: Int = MAX_ANIM_FRAMES): DecodedSticker? {
         val anmfDurations = parseAnmfDurations(bytes)
 
         val source = ImageDecoder.createSource(ByteBuffer.wrap(bytes))
@@ -242,7 +268,7 @@ class AnimatedStickerDecoder(private val context: Context) {
                             frames.add(StickerFrame(prev.bitmap, duration))
                         }
 
-                        if (frames.size >= MAX_ANIM_FRAMES) {
+                        if (frames.size >= maxFrames) {
                             drawable.stop()
                             done.countDown()
                             return
@@ -295,12 +321,18 @@ class AnimatedStickerDecoder(private val context: Context) {
             }
             handler.removeCallbacksAndMessages(null)
             thread.quitSafely()
-            thread.join(2000) // Wait for thread to actually stop
+            thread.join(2000)
+            if (thread.isAlive) {
+                Log.w(TAG, "HandlerThread did not stop in time, interrupting")
+                thread.interrupt()
+            }
 
         } catch (e: Exception) {
             Log.e(TAG, "AnimatedWebP decode failed: ${e.message}")
             handler.removeCallbacksAndMessages(null)
             thread.quitSafely()
+            thread.join(1000)
+            if (thread.isAlive) thread.interrupt()
             recycleFrames(frames)
             return null
         }
@@ -391,7 +423,7 @@ class AnimatedStickerDecoder(private val context: Context) {
         return DecodedSticker(listOf(StickerFrame(argb, 0)), totalDurationMs = 0)
     }
 
-    private fun decodeGif(bytes: ByteArray): DecodedSticker? {
+    private fun decodeGif(bytes: ByteArray, maxFrames: Int = MAX_ANIM_FRAMES): DecodedSticker? {
         val movie = try {
             Movie.decodeByteArray(bytes, 0, bytes.size)
         } catch (e: Exception) {
@@ -411,7 +443,7 @@ class AnimatedStickerDecoder(private val context: Context) {
 
         val frames = ArrayList<StickerFrame>()
         var t = 0
-        while (t < duration && frames.size < MAX_ANIM_FRAMES) {
+        while (t < duration && frames.size < maxFrames) {
             val bmp = Bitmap.createBitmap(outW, outH, Bitmap.Config.ARGB_8888)
             bmp.eraseColor(Color.TRANSPARENT)
             val canvas = Canvas(bmp)

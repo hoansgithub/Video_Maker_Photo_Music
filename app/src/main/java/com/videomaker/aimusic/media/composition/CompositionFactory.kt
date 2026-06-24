@@ -26,9 +26,9 @@ import com.videomaker.aimusic.domain.repository.TextRepository
 import com.videomaker.aimusic.media.audio.VolumeAudioProcessor
 import com.videomaker.aimusic.domain.model.StickerPlacement
 import com.videomaker.aimusic.media.effects.AnimatedStickerDecoder
+import com.videomaker.aimusic.media.effects.CompositeStickerOverlay
 import com.videomaker.aimusic.media.effects.DecodedSticker
 import com.videomaker.aimusic.media.effects.FrameOverlayEffect
-import com.videomaker.aimusic.media.effects.StickerOverlay
 import com.videomaker.aimusic.media.effects.TextOverlayEffect
 import com.videomaker.aimusic.media.effects.TransitionEffect
 import com.videomaker.aimusic.media.effects.WatermarkOverlayEffect
@@ -112,31 +112,15 @@ class CompositionFactory(
      * Thread-safe - can be called from any thread.
      */
     fun recycleBitmaps() {
-        // Recycle legacy transition bitmaps
-        val bitmapPairs = lastTransitionBitmaps.getAndSet(null)
-        if (bitmapPairs != null) {
-            bitmapPairs.values.forEach { pair ->
-                if (!pair.fromBitmap.isRecycled) {
-                    pair.fromBitmap.recycle()
-                }
-                if (!pair.toBitmap.isRecycled) {
-                    pair.toBitmap.recycle()
-                }
-            }
-        }
-
-        // Recycle beat-sync dynamically loaded bitmaps
-        val beatSyncBitmaps = beatSyncLoadedBitmaps.getAndSet(null)
-        if (beatSyncBitmaps != null) {
-            beatSyncBitmaps.forEach { bitmap ->
-                if (!bitmap.isRecycled) {
-                    bitmap.recycle()
-                }
-            }
-        }
-
-        // Recycle decoded sticker frames
-        lastDecodedStickers.getAndSet(null)?.forEach { (_, decoded) -> decoded.recycle() }
+        // Clear references only — do NOT call recycle().
+        // CompositionFactory is a Koin singleton shared between preview and export.
+        // Calling recycle() here can free bitmaps that the export's GL effect thread
+        // (CompositeStickerOverlay, TransitionEffect) is still actively using,
+        // causing native SIGABRT: "cannot access an invalid/free'd bitmap".
+        // GC will reclaim native bitmap memory once all references are dropped.
+        lastTransitionBitmaps.getAndSet(null)
+        beatSyncLoadedBitmaps.getAndSet(null)
+        lastDecodedStickers.getAndSet(null)
     }
 
     /**
@@ -164,7 +148,17 @@ class CompositionFactory(
      * 3. Use cache URIs for Media3 composition
      * 4. Load TO textures from same cache files
      */
-    suspend fun createComposition(project: Project, includeAudio: Boolean = true, forExport: Boolean = false, exportQuality: VideoQuality? = null): Composition {
+    /**
+     * @param onProgress Optional callback reporting composition build progress (0..100).
+     *   Called on the IO dispatcher; safe to forward to [setProgressAsync].
+     */
+    suspend fun createComposition(
+        project: Project,
+        includeAudio: Boolean = true,
+        forExport: Boolean = false,
+        exportQuality: VideoQuality? = null,
+        onProgress: ((Int) -> Unit)? = null
+    ): Composition {
         val settings = project.settings
         val textureSize = if (forExport) getExportTextureSize(exportQuality) else PREVIEW_TEXTURE_SIZE
         val includeWatermark = shouldApplyWatermark(
@@ -177,8 +171,12 @@ class CompositionFactory(
         recycleBitmaps()
         cleanupCacheFiles()
 
-        // STEP 1: Pre-process ALL images with blur background
-        val processedImages = preProcessAllImages(project.assets, settings, textureSize)
+        onProgress?.invoke(0)
+
+        // STEP 1: Pre-process ALL images with blur background  (0→70% of composition)
+        val processedImages = preProcessAllImages(project.assets, settings, textureSize) { imgPercent ->
+            onProgress?.invoke(imgPercent * 70 / 100)
+        }
 
         // VALIDATE: Ensure ALL images were processed successfully
         if (processedImages.size != project.assets.size) {
@@ -189,9 +187,10 @@ class CompositionFactory(
             )
         }
 
-        // STEP 2: Load transition TO bitmaps from cache files
+        // STEP 2: Load transition TO bitmaps from cache files  (→75%)
         val transitionBitmaps = loadTransitionBitmapsFromCache(processedImages, settings)
         lastTransitionBitmaps.set(transitionBitmaps)
+        onProgress?.invoke(75)
 
         // STEP 2b: Decode sticker assets (incl. animated GIF frames) for overlay compositing.
         // Shared across all clips so each per-clip effect chain reuses the same frames.
@@ -201,6 +200,7 @@ class CompositionFactory(
             emptyList()
         }
         lastDecodedStickers.set(decodedStickers)
+        onProgress?.invoke(90)
 
         // STEP 3: Create video sequence - BEAT-SYNC ONLY
         val beatData = settings.beatSyncData
@@ -231,6 +231,7 @@ class CompositionFactory(
             sequences.addAll(audioSequences)
         }
 
+        onProgress?.invoke(100)
         return Composition.Builder(sequences).build()
     }
 
@@ -251,7 +252,8 @@ class CompositionFactory(
     private suspend fun preProcessAllImages(
         assets: List<Asset>,
         settings: ProjectSettings,
-        textureSize: Int
+        textureSize: Int,
+        onProgress: ((Int) -> Unit)? = null
     ): Map<Int, ProcessedImage> = withContext(Dispatchers.IO) {
         // ✅ Explicit IO dispatcher to avoid ANR during bitmap operations
         val targetAspectRatio = settings.aspectRatio.ratio
@@ -287,6 +289,7 @@ class CompositionFactory(
                     if (success) {
                         results[index] = ProcessedImage(Uri.fromFile(cacheFile), cacheFile)
                         cacheFiles.add(cacheFile)
+                        onProgress?.invoke((index + 1) * 100 / assets.size)
                     } else {
                         android.util.Log.e("CompositionFactory", "Failed to preprocess asset $index: ${asset.uri}")
                         throw IllegalStateException("GPU preprocessing failed for asset $index")
@@ -698,15 +701,19 @@ class CompositionFactory(
                     }
 
                     is com.videomaker.aimusic.modules.editor.overlay.OverlayRun.StickerRun -> {
-                        // clipStartTimeUs keeps animation continuous across per-clip Media3 items.
-                        val overlays: List<androidx.media3.effect.TextureOverlay> =
-                            overlayRun.stickers.mapNotNull { placement ->
-                                decodedById[placement.instanceId]?.let { decoded ->
-                                    StickerOverlay(placement, decoded, clipStartTimeUs)
-                                }
+                        // Composite all stickers in this run into a single BitmapOverlay
+                        // to avoid exhausting GPU texture memory (1 GL texture vs N).
+                        val resolved = overlayRun.stickers.mapNotNull { placement ->
+                            decodedById[placement.instanceId]?.let { decoded ->
+                                placement to decoded
                             }
-                        if (overlays.isNotEmpty()) {
-                            videoEffects.add(OverlayEffect(overlays))
+                        }
+                        if (resolved.isNotEmpty()) {
+                            videoEffects.add(
+                                OverlayEffect(
+                                    listOf(CompositeStickerOverlay(resolved, clipStartTimeUs))
+                                )
+                            )
                         }
                     }
                 }

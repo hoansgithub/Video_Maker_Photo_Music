@@ -185,6 +185,21 @@ class TextureManager(private val context: Context) {
                 }
             }
 
+            // Hard clamp: scale down if bitmap exceeds GL hardware limit
+            if (glMaxTextureSize > 0 && (bitmap.width > glMaxTextureSize || bitmap.height > glMaxTextureSize)) {
+                val scale = minOf(
+                    glMaxTextureSize.toFloat() / bitmap.width,
+                    glMaxTextureSize.toFloat() / bitmap.height
+                )
+                val scaledWidth = (bitmap.width * scale).toInt().coerceAtLeast(1)
+                val scaledHeight = (bitmap.height * scale).toInt().coerceAtLeast(1)
+                val scaled = Bitmap.createScaledBitmap(bitmap, scaledWidth, scaledHeight, true)
+                if (scaled != bitmap) {
+                    bitmap.recycle()
+                    bitmap = scaled
+                }
+            }
+
             // Store original aspect ratio (width / height)
             textureAspectRatios[index] = bitmap.width.toFloat() / bitmap.height.toFloat()
 
@@ -198,6 +213,10 @@ class TextureManager(private val context: Context) {
             GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE)
 
             // Upload bitmap to GPU
+            if (bitmap.isRecycled) {
+                Log.w(TAG, "Bitmap recycled before upload, skipping texture $index")
+                return
+            }
             GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0)
             bitmap.recycle()
 
@@ -238,7 +257,7 @@ class TextureManager(private val context: Context) {
         if (imageWidth > maxTextureWidth || imageHeight > maxTextureHeight) {
             val halfWidth = imageWidth / 2
             val halfHeight = imageHeight / 2
-            while ((halfWidth / inSampleSize) >= maxTextureWidth &&
+            while ((halfWidth / inSampleSize) >= maxTextureWidth ||
                 (halfHeight / inSampleSize) >= maxTextureHeight
             ) {
                 inSampleSize *= 2
