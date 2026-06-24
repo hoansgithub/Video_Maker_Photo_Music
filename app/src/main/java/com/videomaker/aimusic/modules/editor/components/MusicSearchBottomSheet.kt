@@ -308,9 +308,6 @@ internal fun MusicSearchBottomSheet(
                 )
             )
             .build()
-            .apply {
-                repeatMode = Player.REPEAT_MODE_OFF
-            }
     }
 
     // Cleanup ExoPlayer
@@ -434,6 +431,15 @@ internal fun MusicSearchBottomSheet(
         }
     }
     val songDurationMs = displaySong?.durationMs?.toLong()?.takeIf { it > 0L } ?: playerDurationMs
+
+    // Enable repeat when music is shorter than video duration
+    LaunchedEffect(songDurationMs, currentVideoDurationMs) {
+        exoPlayer.repeatMode = if (songDurationMs in 1..<currentVideoDurationMs) {
+            Player.REPEAT_MODE_ONE
+        } else {
+            Player.REPEAT_MODE_OFF
+        }
+    }
 
     // Seed the editor's current song on open and stay in Loading until it can auto-play.
     LaunchedEffect(initialSong?.id) {
