@@ -74,12 +74,14 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -231,6 +233,9 @@ fun EditorScreen(
     var hasTrackedVideoPreviewComplete by remember { mutableStateOf(false) }
     var hasTrackedExitPopupShow by remember { mutableStateOf(false) }
     var ratioBeforePanel by remember { mutableStateOf<AspectRatio?>(null) }
+    // Size of the area the preview is fit into — reported by EditorMainContent, used to keep
+    // stickers visually the same size when the user toggles aspect ratio (see rescaleStickers...).
+    var previewContainerSize by remember { mutableStateOf(IntSize.Zero) }
     val scope = rememberCoroutineScope()
     LaunchedEffect(textOverlayViewModel) {
         var lastId: String? = null
@@ -676,7 +681,17 @@ fun EditorScreen(
                     }
                     // Revert if ratio changed during preview
                     val before = ratioBeforePanel
-                    if (before != null && state?.displaySettings?.aspectRatio != before) {
+                    val current = state?.displaySettings?.aspectRatio
+                    if (before != null && current != before) {
+                        // Reverse the sticker rescale too, so cancelling restores the original
+                        // on-screen sizes (factors telescope back to the pre-panel placement).
+                        if (current != null) {
+                            val oldShort = previewShortSidePx(current.ratio, previewContainerSize)
+                            val newShort = previewShortSidePx(before.ratio, previewContainerSize)
+                            if (oldShort > 0f && newShort > 0f) {
+                                viewModel.rescaleStickersForRatioChange(oldShort / newShort)
+                            }
+                        }
                         viewModel.updateAspectRatio(before)
                     }
                     showRatioSheet = false
@@ -693,6 +708,17 @@ fun EditorScreen(
                     showRatioSheet = false
                 },
                 onRatioSelected = { selectedRatio ->
+                    // Keep stickers visually the same size across the ratio change: scale their
+                    // width fraction by oldShortSidePx / newShortSidePx (the preview rect's short
+                    // side spans different px per ratio). Only an explicit zoom should resize them.
+                    val current = currentState()?.displaySettings?.aspectRatio
+                    if (current != null && current != selectedRatio) {
+                        val oldShort = previewShortSidePx(current.ratio, previewContainerSize)
+                        val newShort = previewShortSidePx(selectedRatio.ratio, previewContainerSize)
+                        if (oldShort > 0f && newShort > 0f) {
+                            viewModel.rescaleStickersForRatioChange(oldShort / newShort)
+                        }
+                    }
                     viewModel.updateAspectRatio(selectedRatio)
                     val videoId = currentVideoId()
                     if (videoId != null) {
@@ -702,6 +728,7 @@ fun EditorScreen(
                         )
                     }
                 },
+                onPreviewContainerSized = { previewContainerSize = it },
                 stickers = successState?.displaySettings?.stickers ?: emptyList(),
                 selectedStickerId = selectedStickerId,
                 onStickerTabClick = {
@@ -1371,6 +1398,22 @@ private fun AspectRatio.toAnalyticsRatioSize(): String = when (this) {
     AspectRatio.RATIO_1_1 -> "1:1"
 }
 
+/**
+ * On-screen length (px) of the preview rect's SHORT side for a given video [ratio] (= width/height)
+ * when fit (largest, centered) into the [container] available to the preview — i.e. the same size
+ * `Modifier.aspectRatio(ratio)` produces inside that container. Sticker size is anchored to this
+ * short side, so the px ratio between two ratios is exactly how much a sticker would visually
+ * grow/shrink on a ratio toggle — and thus the factor needed to cancel it. Returns 0 if unknown.
+ */
+private fun previewShortSidePx(ratio: Float, container: IntSize): Float {
+    val w = container.width.toFloat()
+    val h = container.height.toFloat()
+    if (ratio <= 0f || w <= 0f || h <= 0f) return 0f
+    // Normalize the video to vw = ratio, vh = 1; fit scale = min(w/vw, h/vh).
+    val scale = minOf(w / ratio, h)
+    return scale * minOf(ratio, 1f)
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 // MusicSection, SettingsTabBar, and SettingsTabButton moved to components/ package
 
@@ -1412,6 +1455,9 @@ internal fun EditorMainContent(
     onRatioPanelDismiss: () -> Unit = {},
     onRatioPanelConfirm: () -> Unit = {},
     onRatioSelected: (AspectRatio) -> Unit = {},
+    // Reports the size of the area the preview is fit into (constant across ratios), so the host
+    // can compute the sticker rescale factor that keeps stickers visually put on a ratio toggle.
+    onPreviewContainerSized: (IntSize) -> Unit = {},
     showTextPanel: Boolean = false,
     textFocusTrigger: Long = 0L,
     textOverlayViewModel: TextOverlayViewModel? = null,
@@ -1509,7 +1555,10 @@ internal fun EditorMainContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
-                .padding(top = 8.dp),
+                .padding(top = 8.dp)
+                // Measured AFTER padding → the actual area the aspectRatio preview is fit into.
+                // Constant across ratios, so it's the reference for the sticker rescale factor.
+                .onSizeChanged { onPreviewContainerSized(it) },
             contentAlignment = Alignment.Center
         ) {
             // GL renderer — always mounted. AndroidEmbeddedExternalSurface (TextureView)
@@ -2020,7 +2069,7 @@ private fun BoxScope.TextPanelWrapper(
     val navigationBarsHeight = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
     val bannerHeight = if (adPlacementConfigService.bannerUseNative) 100.dp else 50.dp
     val bottomOffset = navigationBarsHeight + bannerHeight
-    
+
     // Add extra space (12.dp) between the keyboard and the input field for a premium look
     val dynamicPadding = if (keyboardHeight > 0.dp) {
         (keyboardHeight - bottomOffset + 12.dp).coerceAtLeast(0.dp)

@@ -1312,12 +1312,11 @@ class EditorViewModel(
     }
 
     fun updateAspectRatio(ratio: AspectRatio) {
-        // Only the ratio changes. Sticker placements are left untouched: both the preview
-        // (frac * rectW) and the export (frac * frameWidth) interpret widthFractionOfVideo
-        // relative to the frame, and centers are normalized — so each sticker keeps the same
-        // position and frame-relative size across ratios and stays inside the frame, exactly
-        // like text overlays (which are also not remapped). Rescaling the fraction here would
-        // grow edge stickers when switching to a narrower frame and push them outside.
+        // Only the ratio changes here. Centers are normalized so positions carry over unchanged.
+        // To keep each sticker's ON-SCREEN size put across the change (so a ratio toggle never
+        // resizes a sticker — only an explicit zoom does), the editor pairs this call with
+        // [rescaleStickersForRatioChange], which needs the preview container geometry and so lives
+        // in the UI. See that method for the math.
         updatePendingSettings { it.copy(aspectRatio = ratio) }
         // Restart from beginning so user sees the new aspect ratio from the start
         restartPlaybackFromStart()
@@ -1365,6 +1364,30 @@ class EditorViewModel(
             settings.copy(
                 stickers = settings.stickers.map {
                     if (it.instanceId == placement.instanceId) placement else it
+                }
+            )
+        }
+    }
+
+    /**
+     * Preserve each sticker's ON-SCREEN size when the editor aspect ratio changes.
+     *
+     * Sticker size is stored as [StickerPlacement.widthFractionOfVideo] of the frame's SHORT side.
+     * In the editor the preview rect is fit into a fixed container, so its short side spans a
+     * DIFFERENT number of screen pixels per ratio — which makes a sticker visually grow/shrink when
+     * the user just toggles ratios. To keep it visually put (only an explicit zoom should resize
+     * it), the caller passes [factor] = oldRatioShortSidePx / newRatioShortSidePx (computed from the
+     * preview container geometry); multiplying the fraction by it cancels the rect-size change so
+     * the sticker keeps the same on-screen size. Centers/rotation are ratio-invariant (normalized)
+     * and untouched. WYSIWYG holds: the export reads the same fraction, so it matches the preview.
+     */
+    fun rescaleStickersForRatioChange(factor: Float) {
+        if (factor <= 0f || factor == 1f) return
+        updatePendingSettingsAudioOnly { settings ->
+            if (settings.stickers.isEmpty()) return@updatePendingSettingsAudioOnly settings
+            settings.copy(
+                stickers = settings.stickers.map {
+                    it.copy(widthFractionOfVideo = (it.widthFractionOfVideo * factor).coerceAtLeast(0.05f))
                 }
             )
         }
