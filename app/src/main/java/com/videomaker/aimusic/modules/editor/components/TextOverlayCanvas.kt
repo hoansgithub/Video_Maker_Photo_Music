@@ -202,8 +202,7 @@ fun TextOverlayCanvasContent(
                                         var currentDragX = startX
                                         var currentDragY = startY
 
-                                        // Detect hold (long press) of the first finger to activate 2-finger zoom/rotate
-                                        var longPressTriggered = false
+                                        // Detect hold (long press) of the first finger to trigger haptic feedback
                                         val holdResult = withTimeoutOrNull(400L) {
                                             while (true) {
                                                 val event = awaitPointerEvent()
@@ -223,7 +222,6 @@ fun TextOverlayCanvasContent(
                                         }
                                         if (holdResult == null) {
                                             // Timeout met -> User held down without lifting/dragging past touchSlop
-                                            longPressTriggered = true
                                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                         }
 
@@ -237,8 +235,6 @@ fun TextOverlayCanvasContent(
                                             activePointers = pressedChanges.map { it.id }
 
                                             if (pressedChanges.size >= 2) {
-                                                // Handle multi-finger zoom & rotate ONLY if longPressTriggered occurred first
-                                                if (longPressTriggered) {
                                                     val p1 = pressedChanges[0]
                                                     val p2 = pressedChanges[1]
                                                     val p1Pos = p1.position
@@ -284,10 +280,6 @@ fun TextOverlayCanvasContent(
                                                         )
                                                     }
                                                     pressedChanges.forEach { it.consume() }
-                                                } else {
-                                                    // Consume touch so single finger drag doesn't jump wildly if 2nd finger placed without hold
-                                                    pressedChanges.forEach { it.consume() }
-                                                }
                                             } else {
                                                 // Handle single-finger drag
                                                 val change = pressedChanges.first()
