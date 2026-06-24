@@ -492,6 +492,14 @@ object AdPlacement {
     const val NATIVE_HOME_BANNER = "ad_native_home_banner"
 
     /**
+     * Collapsible native ad shown on Home screen on first entry and reopens.
+     * Can be closed/collapsed by the user.
+     *
+     * Remote Config key: ad_native_home_collapsible
+     */
+    const val NATIVE_HOME_COLLAPSIBLE = "ad_native_home_collapsible"
+
+    /**
      * Template previewer bottom banner native ad.
      * Replaces standard banner when ad_banner_use_native is true.
      *
@@ -1239,6 +1247,7 @@ object AdPlacement {
         NATIVE_WIDGET_BOTTOM,
         NATIVE_LIBRARY_CREATED_VIDEO,
         NATIVE_HOME_BANNER,
+        NATIVE_HOME_COLLAPSIBLE,
         NATIVE_TEMPLATE_PREVIEWER_BANNER,
         NATIVE_EDITOR_BANNER,
         NATIVE_EDITOR_LOADING,
