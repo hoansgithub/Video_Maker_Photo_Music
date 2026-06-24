@@ -1,11 +1,6 @@
 package com.videomaker.aimusic.modules.onboardingsurvey
 
-import android.content.Intent
-import android.os.Bundle
-import androidx.activity.compose.BackHandler
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.app.AppCompatActivity
+import com.videomaker.aimusic.core.ui.BaseOnboardingActivity
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.EaseInOutCubic
@@ -71,7 +66,6 @@ import com.videomaker.aimusic.modules.language.OnboardingCtaButton
 import com.videomaker.aimusic.modules.onboarding.OnboardingActivity
 import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import com.videomaker.aimusic.ui.theme.Primary
-import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -81,50 +75,29 @@ import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.compose.koinInject
 import kotlin.math.roundToInt
 
-class OnboardingSurveyActivity : AppCompatActivity() {
+class OnboardingSurveyActivity : BaseOnboardingActivity() {
 
     private val viewModel: OnboardingSurveyViewModel by viewModel()
-    private val onboardingMusicPlayer: com.videomaker.aimusic.core.playback.OnboardingMusicPlayer by inject()
     private val remoteConfig: RemoteConfig by inject()
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+    @Composable
+    override fun Content() {
+        val currentStep by viewModel.currentStep.collectAsStateWithLifecycle()
 
-        // Idempotent safety net in case the flow is entered here directly.
-        onboardingMusicPlayer.start()
+        LaunchedEffect(Unit) {
+            viewModel.navToNext.collect { navigateToOnboarding() }
+        }
 
-        setContent {
-            val currentStep by viewModel.currentStep.collectAsStateWithLifecycle()
-
-            LaunchedEffect(Unit) {
-                viewModel.navToNext.collect { navigateToOnboarding() }
-            }
-
-            VideoMakerTheme {
-                var showExitDialog by remember { mutableStateOf(false) }
-
-                BackHandler { showExitDialog = true }
-
-                if (showExitDialog) {
-                    com.videomaker.aimusic.ui.components.RetentionDialog(
-                        onClose = { finish() },
-                        onStay = { showExitDialog = false }
-                    )
-                }
-
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color(0xFF1A1A1A))
-                ) {
-                    val step = currentStep
-                    if (step != null) {
-                        // key(step) resets per-screen UI/ad state when switching FEATURE <-> PLATFORM.
-                        key(step) {
-                            SurveyStep(step = step)
-                        }
-                    }
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color(0xFF1A1A1A))
+        ) {
+            val step = currentStep
+            if (step != null) {
+                // key(step) resets per-screen UI/ad state when switching FEATURE <-> PLATFORM.
+                key(step) {
+                    SurveyStep(step = step)
                 }
             }
         }
@@ -656,7 +629,6 @@ class OnboardingSurveyActivity : AppCompatActivity() {
     }
 
     private fun navigateToOnboarding() {
-        startActivity(Intent(this, OnboardingActivity::class.java))
-        finish()
+        navigateForward(OnboardingActivity::class.java)
     }
 }

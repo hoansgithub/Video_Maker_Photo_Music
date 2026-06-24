@@ -481,6 +481,18 @@ object AdPlacement {
      */
     const val NATIVE_WELCOME_BACK = "ad_native_welcome_back"
 
+    /**
+     * Native ad shown on OnboardingWelcomeBackScreen (partial onboarding progress).
+     * Reuses NATIVE_WELCOME_BACK ad units initially.
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/9525024469
+     * - Secondary: ca-app-pub-7121075950716954/1552989505
+     *
+     * Remote Config key: ad_native_onboarding_welcome_back
+     */
+    const val NATIVE_ONBOARDING_WELCOME_BACK = "ad_native_onboarding_welcome_back"
+
     // ==========================================
     // NATIVE ADS (In-feed, Dialogs, Bottom Sheets, Banners)
     // ==========================================
@@ -1225,6 +1237,7 @@ object AdPlacement {
         BANNER_EDITOR,
         BANNER_EXPORT,
         NATIVE_WELCOME_BACK,
+        NATIVE_ONBOARDING_WELCOME_BACK,
         NATIVE_ONBOARDING_LANGUAGE,
         NATIVE_ONBOARDING_LANGUAGE_ALT,
         NATIVE_ONBOARDING_PAGE1,

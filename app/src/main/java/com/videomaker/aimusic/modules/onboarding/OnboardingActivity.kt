@@ -1,30 +1,26 @@
 package com.videomaker.aimusic.modules.onboarding
 
-import android.content.Intent
 import android.os.Bundle
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.lifecycleScope
-import org.koin.android.ext.android.inject
-import org.koin.androidx.viewmodel.ext.android.viewModel
 import co.alcheclub.lib.acccore.remoteconfig.RemoteConfig
 import com.videomaker.aimusic.VideoMakerApplication
 import com.videomaker.aimusic.core.constants.AdPlacement
-import com.videomaker.aimusic.core.data.local.RegionProvider
+import com.videomaker.aimusic.core.data.local.PreferencesManager
+import com.videomaker.aimusic.core.ui.BaseOnboardingActivity
 import com.videomaker.aimusic.modules.featureselection.FeatureSelectionActivity
 import com.videomaker.aimusic.modules.genretemplate.GenreTemplateActivity
 import com.videomaker.aimusic.modules.genretemplate.isGenreTemplateFlowAllOff
 import com.videomaker.aimusic.modules.onboarding.domain.usecase.CompleteOnboardingUseCase
-import com.videomaker.aimusic.ui.theme.VideoMakerTheme
-import kotlinx.coroutines.launch
+import com.videomaker.aimusic.ui.components.RetentionDialog
+import org.koin.android.ext.android.inject
+import org.koin.androidx.viewmodel.ext.android.viewModel
 
 /**
  * OnboardingActivity — First-time user onboarding flow
@@ -39,22 +35,17 @@ import kotlinx.coroutines.launch
  * 2. CompleteOnboardingUseCase marks onboarding as done
  * 3. Launch FeatureSelectionActivity and finish this Activity
  */
-class OnboardingActivity : AppCompatActivity() {
+class OnboardingActivity : BaseOnboardingActivity() {
+
+    override val retentionDialogEnabled: Boolean = false
 
     private val completeOnboardingUseCase: CompleteOnboardingUseCase by inject()
-    private val regionProvider: RegionProvider by inject()
+    private val preferencesManager: PreferencesManager by inject()
     private val remoteConfig: RemoteConfig by inject()
     private val onboardingViewModel: OnboardingViewModel by viewModel()
     private val onboardingContentViewModel: OnboardingContentViewModel by inject()
-    private val onboardingMusicPlayer: com.videomaker.aimusic.core.playback.OnboardingMusicPlayer by inject()
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-
-        // Idempotent safety net in case the flow is entered here directly.
-        onboardingMusicPlayer.start()
-
+    override fun onSetupComplete(savedInstanceState: Bundle?) {
         // Safety net: PAGE3 + FULLSCREEN also preloaded in LanguageSelectionActivity (2-ahead).
         // This ensures ads are loaded even if user skips language selection or deep-links.
         // Idempotent — won't re-fetch if already loaded from Language step.
@@ -66,36 +57,37 @@ class OnboardingActivity : AppCompatActivity() {
         // VideoMakerApplication.preloadNativeAd() uses appScope internally,
         // which survives Activity destruction. This prevents cancellation if user
         // quickly swipes through pages.
-        android.util.Log.d("OnboardingActivity", "🔄 Preloading PAGE3 ad + Fullscreen ad (safety net)")
+        android.util.Log.d("OnboardingActivity", "\uD83D\uDD04 Preloading PAGE3 ad + Fullscreen ad (safety net)")
         VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_PAGE3)
         VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_FULLSCREEN)
         // Independent onboarding interstitial (only shows if enabled on Firebase)
         VideoMakerApplication.preloadInterstitial(AdPlacement.INTERSTITIAL_ONBOARDING)
+    }
 
-        setContent {
-            VideoMakerTheme {
-                var showExitDialog by remember { mutableStateOf(false) }
+    @Composable
+    override fun Content() {
+        var showExitDialog by remember { mutableStateOf(false) }
 
-                Surface(modifier = Modifier.fillMaxSize()) {
-                    OnboardingScreen(
-                        viewModel = onboardingViewModel,
-                        contentViewModel = onboardingContentViewModel,
-                        onExitRequested = { showExitDialog = true },
-                        onComplete = { completeOnboardingAndNavigate() }
-                    )
-                }
+        Surface(modifier = Modifier.fillMaxSize()) {
+            OnboardingScreen(
+                viewModel = onboardingViewModel,
+                contentViewModel = onboardingContentViewModel,
+                onExitRequested = { showExitDialog = true },
+                onComplete = { completeOnboardingAndNavigate() }
+            )
+        }
 
-                if (showExitDialog) {
-                    com.videomaker.aimusic.ui.components.RetentionDialog(
-                        onClose = { finish() },
-                        onStay = { showExitDialog = false }
-                    )
-                }
-            }
+        if (showExitDialog) {
+            RetentionDialog(
+                onClose = { finish() },
+                onStay = { showExitDialog = false }
+            )
         }
     }
 
     private fun completeOnboardingAndNavigate() {
+        // Mark welcome pages as complete (checkpoint for resume-on-kill flow)
+        preferencesManager.setOnboardingWelcomeComplete(true)
         // Don't mark onboarding complete here - it's marked at the END (Feature Selection)
         // With simplified flow, onboarding is only complete after ALL steps finish
         navigateToFeatureSelection()
@@ -107,7 +99,6 @@ class OnboardingActivity : AppCompatActivity() {
         } else {
             GenreTemplateActivity::class.java
         }
-        startActivity(Intent(this, destination))
-        finish()
+        navigateForward(destination)
     }
 }

@@ -45,6 +45,10 @@ sealed interface AppRoute : NavKey {
     @Serializable
     data object FeatureSelection : AppRoute
 
+    /** Routing signal: launch OnboardingWelcomeBackActivity (partial onboarding progress) */
+    @Serializable
+    data object OnboardingWelcomeBack : AppRoute
+
     // ============================================
     // HOME LEVEL ROUTES
     // ============================================

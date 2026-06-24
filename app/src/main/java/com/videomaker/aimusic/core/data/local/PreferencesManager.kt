@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import androidx.core.content.edit
 import com.videomaker.aimusic.core.popup.TrendingPopupDailySnapshot
 import com.videomaker.aimusic.core.popup.TrendingPopupTab
+import com.videomaker.aimusic.modules.root.OnboardingResumeStep
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.encodeToString
@@ -67,6 +68,7 @@ class PreferencesManager(context: Context) {
     companion object {
         private const val PREFS_NAME = "video_maker_prefs"
         private const val KEY_ONBOARDING_COMPLETE = "onboarding_complete"
+        private const val KEY_ONBOARDING_WELCOME_COMPLETE = "onboarding_welcome_complete"
         private const val KEY_FIRST_LAUNCH = "first_launch"
         private const val KEY_RECENT_SEARCHES = "recent_searches"
         private const val KEY_PREFERRED_GENRES = "preferred_genres"
@@ -183,6 +185,33 @@ class PreferencesManager(context: Context) {
      */
     suspend fun setOnboardingComplete(complete: Boolean) = withContext(Dispatchers.IO) {
         prefs.edit().putBoolean(KEY_ONBOARDING_COMPLETE, complete).commit()
+    }
+
+    fun isOnboardingWelcomeComplete(): Boolean =
+        prefs.getBoolean(KEY_ONBOARDING_WELCOME_COMPLETE, false)
+
+    fun setOnboardingWelcomeComplete(complete: Boolean) {
+        prefs.edit { putBoolean(KEY_ONBOARDING_WELCOME_COMPLETE, complete) }
+    }
+
+    /**
+     * Determine where the user left off in onboarding.
+     * Returns null if onboarding is complete or never started.
+     *
+     * @param languageSelectionComplete whether language selection step is done
+     */
+    fun getOnboardingResumeStep(languageSelectionComplete: Boolean): OnboardingResumeStep? {
+        if (isOnboardingComplete()) return null
+        if (!languageSelectionComplete) return null  // Never started — not a "welcome back" case
+
+        val welcomeDone = isOnboardingWelcomeComplete()
+        val featureDone = isFeatureSelectionComplete()
+
+        return when {
+            !welcomeDone -> OnboardingResumeStep.WELCOME_PAGES
+            !featureDone -> OnboardingResumeStep.FEATURE_SELECTION
+            else -> null
+        }
     }
 
     /**

@@ -213,6 +213,11 @@ class RootViewActivity : AppCompatActivity() {
                 applyDefaultTransition()
                 finish()
             }
+            is AppRoute.OnboardingWelcomeBack -> {
+                startActivity(Intent(this, com.videomaker.aimusic.modules.onboarding.OnboardingWelcomeBackActivity::class.java))
+                applyDefaultTransition()
+                finish()
+            }
             is AppRoute.Home -> {
                 // Navigate to MainActivity directly (Home)
                 startActivity(Intent(this, MainActivity::class.java))

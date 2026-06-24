@@ -719,6 +719,19 @@ class AdPlacementConfigService(
             enabled = true
         )
 
+        // Onboarding Welcome Back screen native ad (shown when resuming partial onboarding)
+        // Reuses NATIVE_WELCOME_BACK ad units initially
+        // Layout: native_big_bait_reversed
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_ONBOARDING_WELCOME_BACK,
+            layoutName = "native_big_bait_reversed",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/9525024469",  // Primary (reuse welcome_back)
+                "ca-app-pub-7121075950716954/1552989505"   // Secondary (reuse welcome_back)
+            ),
+            enabled = true
+        )
+
         // Template previewer loading state native ad (shown during loading)
         // Displayed at bottom with "Building Your Feed" message
         // Timing: 2s display (preloaded at home launch, video buffers in parallel)

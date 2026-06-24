@@ -96,6 +96,10 @@ class RootViewModel(
     @Volatile
     private var onboardingComplete = false
 
+    // Non-null when user has partial onboarding progress and should see welcome-back screen
+    @Volatile
+    private var onboardingResumeStep: OnboardingResumeStep? = null
+
     // Captured once in loadInitialData() before any ad logic runs.
     // true = first ever launch → INTERSTITIAL_SPLASH; false = second+ → INTERSTITIAL_OPEN_APP
     @Volatile
@@ -244,6 +248,14 @@ class RootViewModel(
                         android.util.Log.d("RootViewModel", "   - shouldShowOnboarding (from UseCase): $shouldShowOnboarding")
                         android.util.Log.d("RootViewModel", "   - onboardingComplete (saved to class property): ${this@RootViewModel.onboardingComplete}")
 
+                        // Detect partial onboarding progress for welcome-back flow
+                        if (!this@RootViewModel.onboardingComplete) {
+                            val languageComplete = !checkLanguageSelectedUseCase()
+                            this@RootViewModel.onboardingResumeStep =
+                                preferencesManager.getOnboardingResumeStep(languageComplete)
+                            android.util.Log.d("RootViewModel", "📊 Onboarding resume step: ${this@RootViewModel.onboardingResumeStep}")
+                        }
+
                         // Step 4: Preload ads (optimized strategy)
                         // Native ads: Load in Application scope (background, survives ViewModel lifecycle)
                         // Splash interstitial: Wait for it (we show it immediately before navigation)
@@ -283,17 +295,25 @@ class RootViewModel(
 
                         // Launch native ads with delay (Application scope, survives navigation)
                         if (!this@RootViewModel.onboardingComplete) {
-                            // Onboarding not complete → Preload Language Selection ads (Step 0)
-                            // Primary: immediate (prioritize bandwidth for the ad users see first)
-                            // ALT: delayed 1s (A/B variant, lower priority)
-                            android.util.Log.d("RootViewModel", "🔄 Preloading LANGUAGE ad immediately, LANGUAGE_ALT delayed 1s")
-                            com.videomaker.aimusic.VideoMakerApplication.preloadNativeAd(
-                                placement = AdPlacement.NATIVE_ONBOARDING_LANGUAGE
-                            )
-                            com.videomaker.aimusic.VideoMakerApplication.preloadNativeAdDelayed(
-                                placement = AdPlacement.NATIVE_ONBOARDING_LANGUAGE_ALT,
-                                delayMs = 1000L
-                            )
+                            if (this@RootViewModel.onboardingResumeStep != null) {
+                                // Partial progress → Preload welcome-back ad
+                                android.util.Log.d("RootViewModel", "🔄 Preloading ONBOARDING_WELCOME_BACK ad (resume flow)")
+                                com.videomaker.aimusic.VideoMakerApplication.preloadNativeAd(
+                                    placement = AdPlacement.NATIVE_ONBOARDING_WELCOME_BACK
+                                )
+                            } else {
+                                // Fresh start → Preload Language Selection ads (Step 0)
+                                // Primary: immediate (prioritize bandwidth for the ad users see first)
+                                // ALT: delayed 1s (A/B variant, lower priority)
+                                android.util.Log.d("RootViewModel", "🔄 Preloading LANGUAGE ad immediately, LANGUAGE_ALT delayed 1s")
+                                com.videomaker.aimusic.VideoMakerApplication.preloadNativeAd(
+                                    placement = AdPlacement.NATIVE_ONBOARDING_LANGUAGE
+                                )
+                                com.videomaker.aimusic.VideoMakerApplication.preloadNativeAdDelayed(
+                                    placement = AdPlacement.NATIVE_ONBOARDING_LANGUAGE_ALT,
+                                    delayMs = 1000L
+                                )
+                            }
                         } else {
                             // Onboarding complete → Go to Home (no native ads needed)
                             android.util.Log.d("RootViewModel", "⏭️ Onboarding complete, skipping native ad preload")
@@ -361,10 +381,11 @@ class RootViewModel(
     // ============================================
 
     private fun proceedToNextScreen() {
-        // Determine destination route (simplified)
+        // Determine destination route
         val route = resolveStartupRoute(
             SetupProgress(
-                onboardingComplete = this@RootViewModel.onboardingComplete
+                onboardingComplete = this@RootViewModel.onboardingComplete,
+                resumeStep = this@RootViewModel.onboardingResumeStep
             )
         )
 

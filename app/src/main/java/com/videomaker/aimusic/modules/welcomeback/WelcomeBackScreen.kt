@@ -48,7 +48,8 @@ import org.koin.compose.koinInject
 
 @Composable
 fun WelcomeBackScreen(
-    onContinue: () -> Unit
+    onContinue: () -> Unit,
+    adPlacement: String = AdPlacement.NATIVE_WELCOME_BACK
 ) {
     val adClickDetector: AdClickDetector = koinInject()
     Box(
@@ -154,7 +155,7 @@ fun WelcomeBackScreen(
                     .heightIn(min = 150.dp)
             ) {
                 NativeAdView(
-                    placement = AdPlacement.NATIVE_WELCOME_BACK,
+                    placement = adPlacement,
                     modifier = Modifier.fillMaxWidth(),
                     isDebug = BuildConfig.DEBUG,
                     onAdClicked = { adClickDetector.onAdClick(it) }
