@@ -273,4 +273,11 @@ class TextOverlayViewModel(
         }
         downloadingFonts[fontId] = downloadJob
     }
+
+    override fun onCleared() {
+        super.onCleared()
+        onFontUnlockCallback = null
+        pendingUnlockFontId = null
+        downloadingFonts.clear()
+    }
 }

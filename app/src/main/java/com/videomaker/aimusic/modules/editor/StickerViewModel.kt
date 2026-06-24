@@ -294,4 +294,10 @@ class StickerViewModel(
     fun onRetryStickers() {
         _selectedCategoryId.value?.let { selectCategory(it) }
     }
+
+    override fun onCleared() {
+        super.onCleared()
+        onUnlockSuccessCallback = null
+        stickerCache.clear()
+    }
 }
