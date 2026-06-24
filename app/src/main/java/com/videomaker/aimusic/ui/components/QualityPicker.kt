@@ -198,7 +198,8 @@ fun QualityPickerV2(
                 text = selectedQuality.displayName,
                 color = Neutral_N600,
                 fontSize = 10.sp,
-                fontWeight = FontWeight.SemiBold
+                lineHeight = 14.sp,
+                fontWeight = FontWeight.W500,
             )
             Spacer(modifier = Modifier.width(1.5.dp))
             Icon(

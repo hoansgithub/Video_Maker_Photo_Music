@@ -52,7 +52,7 @@ class StickerOverlay(
         val bw = frame.width.coerceAtLeast(1)
         // Size is anchored to the frame's SHORT side (the 1080 video dimension in every aspect
         // ratio), so a sticker keeps the same absolute size across ratios — matching the editor
-        // preview ([StickerOverlayLayer]) and behaving like text's ratio-invariant font size.
+        // preview ([StickerImagesLayer]) and behaving like text's ratio-invariant font size.
         val sizeRefPx = minOf(videoWidth, videoHeight)
 
         // Width-driven uniform scale (box width = widthFractionOfVideo * shortSide, height

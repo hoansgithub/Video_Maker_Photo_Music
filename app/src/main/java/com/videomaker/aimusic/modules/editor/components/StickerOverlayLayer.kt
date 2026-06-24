@@ -18,11 +18,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -58,45 +58,60 @@ import kotlin.math.roundToInt
 import kotlin.math.sin
 
 /**
- * StickerOverlayLayer - Draws + edits stickers on top of the video preview.
+ * Sticker editing on top of the video preview is split into THREE stacked, single-purpose layers
+ * (composed by [OverlayInterleaveLayer]) instead of one full-screen layer per z-run:
  *
- * Gestures are handled on the FIXED-SIZE root layer (in stable video-frame coordinates),
- * NOT on the per-sticker views — so pinch zooms around the focal point and never drifts,
- * and the selection handles stay glued to the corners. Everything is clipped to the video
- * rect, so anything dragged/zoomed outside the video is hidden (CapCut-style).
+ *  1. [StickerGestureLayer] — ONE full-screen [pointerInput] for ALL stickers (bottom of the
+ *     overlay stack). It draws nothing, so it never blocks the layers above it.
+ *  2. [StickerImagesLayer] — DRAW-ONLY sticker images, emitted once per z-run so they interleave
+ *     with text in correct z order (matching the export). No pointerInput → never blocks.
+ *  3. [StickerChromeLayer] — DRAW-ONLY selection box + handles for the selected sticker, on top.
  *
- * Interactions:
- * - One-finger drag a sticker = move (a sliver must stay inside, can't be lost)
- * - Two-finger pinch = zoom + rotate around the pinch focal point (aspect preserved)
- * - Bottom-right handle = drag to resize + rotate; top-left = delete
+ * WHY split: overlapping full-screen `pointerInput` siblings do NOT let taps fall through to the
+ * sibling beneath (a top non-consuming layer still swallows the touch). So a per-z-run sticker
+ * layer on top blocked every older sticker run AND the text beneath it. With a SINGLE gesture
+ * layer at the bottom and only draw-only layers above it, every sticker stays tappable and text
+ * (whose own touch nodes are small) keeps working too.
+ *
+ * Coordinates are in stable video-frame space (the layers are sized by the caller to the video
+ * rect via [fillMaxSize]); pinch zooms around the focal point without drift and handles stay
+ * glued to the corners. Everything is clipped to the video rect (CapCut-style).
+ */
+
+// ============================================
+// 1) GESTURE LAYER (no drawing)
+// ============================================
+
+/**
+ * Full-screen gesture handler for ALL stickers. Reports the in-progress transform via
+ * [onLiveChange] so the (separate) image/chrome layers can preview it without committing to the
+ * ViewModel 60x/second.
+ *
+ * Interactions (when [interactive]):
+ * - One/two-finger on a sticker = move / pinch-zoom + rotate around the focal point
+ * - Bottom-right handle of the selected sticker = drag to resize + rotate; top-left = delete
  * - Single tap empty = deselect; double tap empty = select the top-most sticker
+ *
+ * When NOT [interactive] (picker committed): a tap on a sticker re-opens the picker for it via
+ * [onRequestEdit]; no drag/zoom/selection.
  */
 @Composable
-fun StickerOverlayLayer(
+fun StickerGestureLayer(
     stickers: List<StickerPlacement>,
     selectedInstanceId: String?,
+    // Shared aspect-ratio cache (filled by [StickerImagesLayer] as images load) — read here for
+    // correct box geometry during hit-testing and handle placement.
+    aspectRatios: SnapshotStateMap<String, Float>,
     onSelect: (String?) -> Unit,
     onTransform: (StickerPlacement) -> Unit,
     onDelete: (String) -> Unit,
     onDoubleTapTopMost: () -> Unit,
-    // Tapping a sticker while committed (picker closed) requests re-opening the picker for it,
-    // like tapping a text overlay re-enters text editing. Receives the tapped instanceId.
     onRequestEdit: (String) -> Unit,
-    // When false the layer is "committed": stickers still render (and still clip to the video)
-    // and a tap re-opens the picker via [onRequestEdit], but there is no selection box and no
-    // drag/zoom. Driven by the sticker picker being open.
+    onLiveChange: (StickerPlacement?) -> Unit,
     interactive: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     var rectSize by remember { mutableStateOf(Size.Zero) }
-    // sticker aspect ratio (width / height), captured when each image loads; default square.
-    val aspectRatios = remember { mutableStateMapOf<String, Float>() }
-    // Live transform of the sticker currently being manipulated. Updated every pointer event
-    // (cheap, local — only the overlay recomposes) and committed to the ViewModel once on
-    // release, so we don't recompose the whole editor 60x/second (was the source of jank).
-    var live by remember { mutableStateOf<StickerPlacement?>(null) }
-    // Stable callback so sticker images that aren't being manipulated can skip recomposition.
-    val onAspect = remember { { url: String, ratio: Float -> aspectRatios[url] = ratio } }
 
     // Latest values read inside the long-lived gesture coroutine (so it isn't re-keyed on
     // every transform, which would cancel the in-progress gesture).
@@ -107,14 +122,12 @@ fun StickerOverlayLayer(
     val onDeleteState by rememberUpdatedState(onDelete)
     val onDoubleTapState by rememberUpdatedState(onDoubleTapTopMost)
     val onRequestEditState by rememberUpdatedState(onRequestEdit)
+    val onLiveChangeState by rememberUpdatedState(onLiveChange)
 
     val density = LocalDensity.current
 
     Box(
         modifier = modifier
-            // Clip EVERYTHING (image + dashed box + icons) to the video rect: zoom can exceed
-            // the video, but only the part inside the video is shown — anything outside is hidden.
-            .clipToBounds()
             .onSizeChanged { rectSize = Size(it.width.toFloat(), it.height.toFloat()) }
             // Re-keyed on `interactive` so toggling it cancels any in-flight gesture and
             // detaches the handler entirely when the picker is closed.
@@ -124,8 +137,7 @@ fun StickerOverlayLayer(
                 val rectH = rectSize.height
                 // Sticker SIZE is anchored to the frame's SHORT side (which maps to the 1080
                 // video dimension in every aspect ratio), so a sticker keeps the same absolute
-                // size across ratios — like text's fixed font size — instead of growing/shrinking
-                // with the frame width. POSITION still uses rectW/rectH (normalized centers).
+                // size across ratios — like text's fixed font size. POSITION uses rectW/rectH.
                 val sizeRefPx = minOf(rectW, rectH)
                 val handleRadiusPx = with(density) { 24.dp.toPx() }
                 val minVisiblePx = with(density) { 2.dp.toPx() }
@@ -165,7 +177,6 @@ fun StickerOverlayLayer(
 
                 // COMMITTED state (picker closed): the only interaction is a tap on a sticker,
                 // which re-opens the picker for that sticker (like re-entering text editing).
-                // No drag/zoom/selection box here.
                 if (!interactive) {
                     awaitEachGesture {
                         val down = awaitFirstDown(requireUnconsumed = false)
@@ -213,13 +224,13 @@ fun StickerOverlayLayer(
                                     rectW, rectH, aspectOf(selected), minVisiblePx
                                 )
                                 result = clamped
-                                live = clamped         // local preview, no editor recompose
+                                onLiveChangeState(clamped)   // local preview, no editor recompose
                                 ch.consume()
                             }
                         } while (e.changes.any { it.pressed })
                         result?.let { onTransformState(it) }   // commit once on release
-                        live = null   // clear the live preview so later recompositions (e.g. an
-                                      // aspect-ratio remap) render the committed placement, not a stale one
+                        onLiveChangeState(null) // clear the live preview so later recompositions
+                                                // render the committed placement, not a stale one
                         return@awaitEachGesture
                     }
 
@@ -241,8 +252,7 @@ fun StickerOverlayLayer(
                     }
 
                     // 3) Manipulate ONLY the sticker whose box is under the finger. Touching
-                    //    outside every sticker's box never drags the selected one — you must
-                    //    grab the sticker inside its box (selection panel) to move/zoom it.
+                    //    outside every sticker's box never drags the selected one.
                     val active = hitTest(start)
                     if (active != null) {
                         onSelectState(active.instanceId)
@@ -260,9 +270,7 @@ fun StickerOverlayLayer(
                             if (zoom != 1f || rotation != 0f || pan != Offset.Zero) {
                                 val centroid = e.calculateCentroid(useCurrent = true)
                                 // Clamp the width FIRST and use the ACTUAL applied zoom for the
-                                // focal-center scaling. Otherwise, when width is at the cap, the
-                                // center would still get scaled by the requested zoom → the
-                                // sticker drifts while size doesn't change (hard to move/pinch).
+                                // focal-center scaling, so a capped width doesn't drift the center.
                                 val newW = (w * zoom).coerceIn(MIN_WIDTH_FRACTION, maxWidthFraction(sizeRefPx, aspect))
                                 val effZoom = if (w > 0f) newW / w else 1f
                                 var p = Offset(cx * rectW, cy * rectH)
@@ -286,7 +294,7 @@ fun StickerOverlayLayer(
                                 w = clamped.widthFractionOfVideo
                                 rot = clamped.rotationDeg
                                 result = clamped
-                                live = clamped         // local preview, no editor recompose
+                                onLiveChangeState(clamped)   // local preview, no editor recompose
                                 e.changes.forEach { if (it.positionChanged()) it.consume() }
                             }
                         } while (e.changes.any { it.pressed })
@@ -304,11 +312,12 @@ fun StickerOverlayLayer(
                                 else -> onSelectState(null)
                             }
                         }
-                        live = null   // clear the live preview (see note in the resize branch)
+                        onLiveChangeState(null)   // clear the live preview (see resize branch note)
                         return@awaitEachGesture
                     }
 
-                    // 4) Nothing selected and nothing hit → tap = no-op, double-tap = top-most.
+                    // 4) Nothing hit → single tap keeps the current selection (deselect-on-empty
+                    //    is intentionally disabled); double-tap still brings the top-most to front.
                     var moved = false
                     do {
                         val e = awaitPointerEvent()
@@ -320,47 +329,87 @@ fun StickerOverlayLayer(
                         val now = down.uptimeMillis
                         val isDouble = now - lastTapUptime <= doubleTapMs
                         lastTapUptime = if (isDouble) 0L else now
-                        if (isDouble) onDoubleTapState() else onSelectState(null)
+                        if (isDouble) onDoubleTapState()
                     }
                 }
             }
+    )
+}
+
+// ============================================
+// 2) IMAGE LAYER (draw-only) — emitted once per z-run so stickers interleave with text
+// ============================================
+
+/**
+ * Draws the [stickers] of one z-run, clipped to the video rect. Reports each sticker's aspect
+ * into the shared [aspectRatios] map as it loads. Renders the [live] (in-progress) transform for
+ * the sticker currently being manipulated so a gesture is reflected instantly. NO pointerInput —
+ * this layer must never block the gesture layer beneath it.
+ */
+@Composable
+fun StickerImagesLayer(
+    stickers: List<StickerPlacement>,
+    live: StickerPlacement?,
+    aspectRatios: SnapshotStateMap<String, Float>,
+    modifier: Modifier = Modifier
+) {
+    var rectSize by remember { mutableStateOf(Size.Zero) }
+    val onAspect = remember { { url: String, ratio: Float -> aspectRatios[url] = ratio } }
+
+    Box(
+        modifier = modifier
+            .clipToBounds()
+            .onSizeChanged { rectSize = Size(it.width.toFloat(), it.height.toFloat()) }
     ) {
         if (rectSize == Size.Zero) return@Box
         val rectW = rectSize.width
         val rectH = rectSize.height
-        // Render the live (in-progress) placement instead of the committed one for the sticker
-        // being manipulated, so the gesture is reflected instantly without an editor recompose.
-        val live0 = live
         val ordered = stickers
-            .map { if (live0 != null && it.instanceId == live0.instanceId) live0 else it }
+            .map { if (live != null && it.instanceId == live.instanceId) live else it }
             .sortedBy { it.zIndex }
-
-        // Layer 1: sticker images (clipped to the video by the root).
-        Box(modifier = Modifier.matchParentSize()) {
-            ordered.forEach { placement ->
-                StickerImage(
-                    placement = placement,
-                    rectW = rectW,
-                    rectH = rectH,
-                    aspect = aspectRatios[placement.assetUrl] ?: 1f,
-                    onAspect = onAspect
-                )
-            }
-        }
-
-        // Layer 2: selection chrome (dashed box, delete, resize handle) — purely visual,
-        // positioned from the placement so it always tracks the sticker's corners. Only shown
-        // while the layer is interactive (picker open); hidden once stickers are committed.
         ordered.forEach { placement ->
-            if (interactive && placement.instanceId == selectedInstanceId) {
-                StickerSelectionChrome(
-                    placement = placement,
-                    rectW = rectW,
-                    rectH = rectH,
-                    aspect = aspectRatios[placement.assetUrl] ?: 1f
-                )
-            }
+            StickerImage(
+                placement = placement,
+                rectW = rectW,
+                rectH = rectH,
+                aspect = aspectRatios[placement.assetUrl] ?: 1f,
+                onAspect = onAspect
+            )
         }
+    }
+}
+
+// ============================================
+// 3) CHROME LAYER (draw-only) — selection box + handles for the selected sticker, on top
+// ============================================
+
+/**
+ * Draws the dashed selection box + delete/resize handles for [selected] (if any). Follows the
+ * [live] transform during a gesture. Purely visual — gestures are handled by [StickerGestureLayer]
+ * via geometry, so this layer has no pointerInput and never blocks anything.
+ */
+@Composable
+fun StickerChromeLayer(
+    selected: StickerPlacement?,
+    live: StickerPlacement?,
+    aspectRatios: SnapshotStateMap<String, Float>,
+    modifier: Modifier = Modifier
+) {
+    var rectSize by remember { mutableStateOf(Size.Zero) }
+    Box(
+        modifier = modifier
+            .clipToBounds()
+            .onSizeChanged { rectSize = Size(it.width.toFloat(), it.height.toFloat()) }
+    ) {
+        if (rectSize == Size.Zero || selected == null) return@Box
+        val placement =
+            if (live != null && live.instanceId == selected.instanceId) live else selected
+        StickerSelectionChrome(
+            placement = placement,
+            rectW = rectSize.width,
+            rectH = rectSize.height,
+            aspect = aspectRatios[placement.assetUrl] ?: 1f
+        )
     }
 }
 
@@ -444,14 +493,12 @@ private fun clampPlacement(
 // ============================================
 
 /**
- * The sticker image — clipped to the video rect by the root. Reports its aspect on load.
+ * The sticker image — clipped to the video rect by the caller. Reports its aspect on load.
  *
  * Rendered into a CONSTANT-size base layer ([STICKER_BASE_PX] wide). Position, zoom and
  * rotation are applied as a GPU [graphicsLayer] transform (translate + scale + rotate) on top
  * of that fixed layer — so dragging/pinching to any size only re-composites on the GPU and
- * never re-measures the node or allocates a buffer bigger than the base. This is what keeps
- * zoom smooth and crash-free at extreme sizes (the previous layout-resize approach allocated
- * an offscreen buffer up to MAX_BOX_PX² and re-laid-out every frame).
+ * never re-measures the node or allocates a buffer bigger than the base.
  */
 @Composable
 private fun StickerImage(
@@ -488,10 +535,7 @@ private fun StickerImage(
             .requiredWidth(baseWdp)
             .requiredHeight(baseHdp)
             // All transforms in the draw phase (GPU) — read live placement values here so a
-            // gesture re-composites without re-measuring. Scale maps the base layer to the
-            // target box width; translation moves the base-box center onto the placement
-            // center (scale/rotate pivot is the layer center, so translating the center is
-            // zoom-invariant and never drifts).
+            // gesture re-composites without re-measuring.
             .graphicsLayer {
                 val boxWpx = (placement.widthFractionOfVideo * sizeRefPx).coerceAtLeast(1f)
                 val s = (boxWpx / baseWpx).coerceAtLeast(0.0001f)
@@ -521,7 +565,7 @@ private fun StickerImage(
 }
 
 // ============================================
-// SELECTION CHROME (visual only — gestures handled by the root)
+// SELECTION CHROME (visual only — gestures handled by the gesture layer)
 // ============================================
 
 @Composable
@@ -552,8 +596,7 @@ private fun StickerSelectionChrome(
 
     // Dashed bounding box — matches the text overlay's selection style (white, thin 1.5dp
     // stroke, 12/12 dash, 6dp rounded corners). Drawn in video-rect pixel space via
-    // rotate + drawRoundRect so the stroke stays thin at any zoom and never allocates a
-    // giant scaled layer.
+    // rotate + drawRoundRect so the stroke stays thin at any zoom.
     val strokePx = with(density) { 1.5.dp.toPx() }
     val cornerPx = with(density) { 6.dp.toPx() }
     Canvas(modifier = Modifier.fillMaxSize()) {
