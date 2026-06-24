@@ -450,11 +450,8 @@ fun TextBottomSheetContent(
                                                 shape = CircleShape
                                             )
                                             .clickable {
-                                                val currentFont = fontPresets.find { it.id == selectedOverlay.fontId }
-                                                val isPremium = currentFont?.isPremium ?: false
-                                                val fontType = if (isPremium) "ads" else "free"
                                                 val colorName = getColorName(colorValue)
-                                                Analytics.trackTextColorClick(type = fontType, colorName = colorName)
+                                                Analytics.trackTextColorClick(colorName = colorName)
                                                 onUpdateColor(selectedOverlay.id, colorValue)
                                             }
                                     )
@@ -533,7 +530,8 @@ fun TextBottomSheetContent(
                                         )
                                         .clickable {
                                             val fontType = if (fontPreset.isPremium && !isFirstFont) "ads" else "free"
-                                            if (showDownloadLabel) {
+                                            val needsDownload = fontPreset.fontResId == null && !downloadedFontIds.contains(fontPreset.id)
+                                            if (needsDownload) {
                                                 Analytics.trackTextFontDownload(type = fontType, fontName = fontPreset.name)
                                             } else {
                                                 Analytics.trackTextFontClick(type = fontType, fontName = fontPreset.name)
