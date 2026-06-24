@@ -1333,7 +1333,7 @@ class EditorViewModel(
     /**
      * Add a sticker centered on the video, sized to 1/3 of the frame's SHORT side. Because the
      * short side is the same (1080) in every aspect ratio, [StickerPlacement.widthFractionOfVideo]
-     * is interpreted against the short side (see [StickerOverlayLayer]/[StickerOverlay]), so 1/3
+     * is interpreted against the short side (see [StickerImagesLayer]/[StickerOverlay]), so 1/3
      * stays a sensible, ratio-invariant size — no per-ratio adjustment needed. Each call adds a
      * NEW instance (stacking on top).
      */

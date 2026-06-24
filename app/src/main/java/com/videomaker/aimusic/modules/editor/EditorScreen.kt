@@ -1509,7 +1509,7 @@ internal fun EditorMainContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
-                .padding(top = 2.dp),
+                .padding(top = 8.dp),
             contentAlignment = Alignment.Center
         ) {
             // GL renderer — always mounted. AndroidEmbeddedExternalSurface (TextureView)
