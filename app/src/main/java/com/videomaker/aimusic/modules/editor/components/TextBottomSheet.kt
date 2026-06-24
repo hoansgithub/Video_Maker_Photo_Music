@@ -4,6 +4,13 @@ import androidx.compose.foundation.Image
 import coil.compose.AsyncImage
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.foundation.layout.wrapContentHeight
 import com.videomaker.aimusic.ui.components.ProvideShimmerEffect
 import com.videomaker.aimusic.ui.components.ShimmerPlaceholder
@@ -96,6 +103,7 @@ fun TextBottomSheet(
     viewModel: TextOverlayViewModel,
     onDismiss: () -> Unit,
     onConfirm: () -> Unit,
+    isKeyboardOpen: Boolean,
     focusTrigger: Long = 0L,
     modifier: Modifier = Modifier
 ) {
@@ -163,6 +171,7 @@ fun TextBottomSheet(
             removeIfEmpty()
             onConfirm()
         },
+        isKeyboardOpen = isKeyboardOpen,
         focusTrigger = focusTrigger,
         modifier = modifier
     )
@@ -192,6 +201,7 @@ fun TextBottomSheetContent(
     clearFontAdError: () -> Unit,
     onDismiss: () -> Unit,
     onConfirm: () -> Unit,
+    isKeyboardOpen: Boolean,
     focusTrigger: Long = 0L,
     modifier: Modifier = Modifier
 ) {
@@ -227,15 +237,12 @@ fun TextBottomSheetContent(
     ) {
         val sheetHeight = maxHeight
 
-        val isKeyboardOpen = WindowInsets.ime.asPaddingValues().calculateBottomPadding() > 0.dp
-
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .then(
-                    if (isKeyboardOpen) Modifier.wrapContentHeight() else Modifier.fillMaxSize()
-                )
-                .padding(horizontal = 16.dp)
+                .fillMaxSize()
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.Bottom
         ) {
             if (selectedOverlay != null) {
                 // Text input row
@@ -255,33 +262,12 @@ fun TextBottomSheetContent(
                 var isTextFieldFocused by remember { mutableStateOf(false) }
 
                 LaunchedEffect(selectedOverlay.id, focusTrigger) {
-                    if (focusTrigger > 0L || selectedOverlay != null) {
-                        focusRequester.requestFocus()
-                    }
-                }
-
-                val density = LocalDensity.current
-                val keyboardHeight = WindowInsets.ime.asPaddingValues().calculateBottomPadding()
-
-                val translationYPx = remember(keyboardHeight, sheetHeight, isKeyboardOpen) {
-                    if (isKeyboardOpen) {
-                        0f
-                    } else {
-                        val requiredShift = keyboardHeight - sheetHeight + 8.dp
-                        if (requiredShift > 0.dp) {
-                            with(density) { -requiredShift.toPx() }
-                        } else {
-                            0f
-                        }
-                    }
+                    focusRequester.requestFocus()
                 }
 
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .graphicsLayer {
-                            this.translationY = translationYPx
-                        }
                         .background(SplashBackground)
                         .padding(bottom = 12.dp)
                         .padding(vertical = 4.dp),
@@ -373,7 +359,20 @@ fun TextBottomSheetContent(
                     }
                 }
 
-                if (!isKeyboardOpen) {
+                AnimatedVisibility(
+                    visible = !isKeyboardOpen,
+                    enter = expandVertically(
+                        animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing)
+                    ) + fadeIn(
+                        animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing)
+                    ),
+                    exit = shrinkVertically(
+                        animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing)
+                    ) + fadeOut(
+                        animationSpec = tween(durationMillis = 300, easing = FastOutSlowInEasing)
+                    )
+                ) {
+                    Column {
                     Spacer(Modifier.height(14.dp))
 
                     // Color picker section
@@ -635,6 +634,7 @@ fun TextBottomSheetContent(
                             }
                         }
                     }
+                    }
                 }
             } else {
                 Box(
@@ -708,7 +708,8 @@ private fun TextBottomSheetSelectedPreview() {
         onFontAdFailed = {},
         clearFontAdError = {},
         onDismiss = {},
-        onConfirm = {}
+        onConfirm = {},
+        isKeyboardOpen = false
     )
 }
 
@@ -738,7 +739,8 @@ private fun TextBottomSheetEmptyPreview() {
         onFontAdFailed = {},
         clearFontAdError = {},
         onDismiss = {},
-        onConfirm = {}
+        onConfirm = {},
+        isKeyboardOpen = false
     )
 }
 
