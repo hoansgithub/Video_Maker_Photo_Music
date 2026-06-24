@@ -61,6 +61,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -795,6 +796,7 @@ fun EditorScreen(
                     }
                 },
                 onTextPanelDismiss = {
+                    Analytics.trackTextClose()
                     textOverlayViewModel.setSelectedTextOverlayId(null)
                     showTextSheet = false
                 },
@@ -807,9 +809,9 @@ fun EditorScreen(
                             val fontName = fontPreset?.name ?: "neue_haas_regular"
                             val colorName = getColorName(overlay.color)
                             Analytics.trackTextSelect(colorName = colorName, fontName = fontName)
-                            Analytics.trackTextClose()
                         }
                     }
+                    Analytics.trackTextClose()
                     textOverlayViewModel.setSelectedTextOverlayId(null)
                     showTextSheet = false
                 },
@@ -2027,6 +2029,11 @@ private fun BoxScope.TextPanelWrapper(
     }
     val isKeyboardOpen = keyboardHeight > 0.dp
 
+    val currentHeightState by rememberUpdatedState(currentPanelHeight)
+    val minHeightState by rememberUpdatedState(minHeight)
+    val maxHeightState by rememberUpdatedState(maxHeight)
+    val isKeyboardOpenState by rememberUpdatedState(isKeyboardOpen)
+
     Column(
         modifier = Modifier
             .align(Alignment.BottomCenter)
@@ -2043,32 +2050,28 @@ private fun BoxScope.TextPanelWrapper(
             ) { /* consume clicks */ },
         verticalArrangement = Arrangement.Bottom
     ) {
-        AnimatedVisibility(
-            visible = !isKeyboardOpen,
-            enter = expandVertically() + fadeIn(),
-            exit = shrinkVertically() + fadeOut()
-        ) {
-            // Drag handle area
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .pointerInput(Unit) {
-                        detectDragGestures { change, dragAmount ->
+        // Drag handle area (always visible and draggable)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .pointerInput(Unit) {
+                    detectDragGestures { change, dragAmount ->
+                        if (!isKeyboardOpenState) {
                             change.consume()
                             val dragDp = with(density) { -dragAmount.y.toDp() }
-                            onHeightChange((currentPanelHeight + dragDp).coerceIn(minHeight, maxHeight))
+                            onHeightChange((currentHeightState + dragDp).coerceIn(minHeightState, maxHeightState))
                         }
                     }
-                    .padding(vertical = 12.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(width = 36.dp, height = 4.dp)
-                        .clip(RoundedCornerShape(2.dp))
-                        .background(Color.Gray)
-                )
-            }
+                }
+                .padding(vertical = 12.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(width = 36.dp, height = 4.dp)
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(Color.Gray)
+            )
         }
 
         // Player Controls — hidden when user swipes the panel up or keyboard is open
