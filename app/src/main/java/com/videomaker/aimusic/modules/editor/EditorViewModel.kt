@@ -183,8 +183,25 @@ class EditorViewModel(
     private val _hasPreviewBeenReady = MutableStateFlow(false)
     val hasPreviewBeenReady: StateFlow<Boolean> = _hasPreviewBeenReady.asStateFlow()
 
+    // Two-way handshake for deferred autoplay:
+    // - pendingAutoPlay is set when data is ready and autoplay is desired
+    // - markPreviewReady() is called when GL has rendered its first content frame
+    // Whichever happens last triggers playback, ensuring both data + GL are ready.
+    @Volatile private var pendingAutoPlay = false
+
     fun markPreviewReady() {
         _hasPreviewBeenReady.value = true
+        startDeferredAutoPlayIfReady()
+    }
+
+    private fun startDeferredAutoPlayIfReady() {
+        if (pendingAutoPlay && _hasPreviewBeenReady.value) {
+            pendingAutoPlay = false
+            _uiState.update { state ->
+                if (state is EditorUiState.Success) state.copy(isPlaying = true) else state
+            }
+            playbackClock.play()
+        }
     }
 
     // Quality unlock state — session-based (reset when ViewModel cleared)
@@ -498,7 +515,7 @@ class EditorViewModel(
                             project = project,
                             isUnsavedProject = false,
                             selectedAssetIndex = selectedIndex,
-                            isPlaying = prev?.isPlaying ?: shouldAutoPlay,
+                            isPlaying = if (shouldAutoPlay) false else (prev?.isPlaying ?: false),
                             showSettingsPanel = prev?.showSettingsPanel ?: false,
                             pendingSettings = prev?.pendingSettings,
                             seekToPosition = prev?.seekToPosition,
@@ -510,7 +527,8 @@ class EditorViewModel(
                         startPositionTicker()
                         if (shouldAutoPlay) {
                             hasAutoPlayed = true
-                            playbackClock.play()
+                            pendingAutoPlay = true
+                            startDeferredAutoPlayIfReady() // GL may already be ready
                         }
 
                         // No background preprocessing needed — preview uses realtime fadeout
@@ -693,13 +711,14 @@ class EditorViewModel(
                 _uiState.value = EditorUiState.Success(
                     project = project,
                     isUnsavedProject = true,
-                    isPlaying = true,
+                    isPlaying = false, // Deferred — markPreviewReady() sets true after GL ready
                     effectSetName = effectSetName
                 )
                 refreshRenderState()
                 startPositionTicker()
                 hasAutoPlayed = true
-                playbackClock.play()
+                pendingAutoPlay = true
+                startDeferredAutoPlayIfReady() // GL may already be ready
                 Analytics.trackEditorPrepareStep("project_built", songIdStr)
                 trackVideoGenerateCompleteReadyToEdit(
                     data = data,
@@ -1604,31 +1623,59 @@ class EditorViewModel(
         assets: List<Asset>,
         currentState: EditorUiState.Success
     ): ProjectSettings {
-        val beatSyncData = currentState.project.settings.beatSyncData
-        val primaryNode = currentState.project.settings.primaryAudioNode
+        // Use displaySettings (pendingSettings ?: project.settings) to include
+        // uncommitted changes like music selection that live in pendingSettings.
+        val settings = currentState.displaySettings
+        val beatSyncData = settings.beatSyncData
+        val primaryNode = settings.primaryAudioNode
 
         if (beatSyncData == null || primaryNode?.songId == null) {
             // No beat-sync — settings unchanged
-            return currentState.project.settings
+            return settings
         }
 
         val newDuration = Project.calculateBeatSyncDuration(
             beatData = beatSyncData,
             assetCount = assets.size,
-            trimStartMs = currentState.project.settings.hookStartTimeMs
-        ) ?: currentState.project.settings.totalDurationMs
+            trimStartMs = settings.hookStartTimeMs
+        ) ?: settings.totalDurationMs
 
-        val durationChanged = newDuration != currentState.project.settings.totalDurationMs
+        val durationChanged = newDuration != settings.totalDurationMs
         if (!durationChanged) {
-            // Same duration — just update totalDurationMs (may differ slightly)
-            return currentState.project.settings.copy(totalDurationMs = newDuration)
+            return settings.copy(totalDurationMs = newDuration)
         }
 
-        // Duration changed — update duration. No preprocessing needed for preview
-        // (realtime fadeout via volume ramp). Export re-preprocesses independently.
-        android.util.Log.d("EditorViewModel", "recalculateSettingsForAssets: Duration ${currentState.project.settings.totalDurationMs}ms → ${newDuration}ms (${assets.size} images)")
+        android.util.Log.d("EditorViewModel", "recalculateSettingsForAssets: Duration ${settings.totalDurationMs}ms → ${newDuration}ms (${assets.size} images)")
 
-        return currentState.project.settings.copy(totalDurationMs = newDuration)
+        // Duration changed — reprocess audio fadeout with new duration
+        if (primaryNode.songUrl != null && beatSyncData.bpm > 0) {
+            try {
+                val beatMs = 60000.0 / beatSyncData.bpm
+                val fadeoutDurationMs = (beatMs * 6).toLong()
+
+                val preprocessedUri = withContext(Dispatchers.IO) {
+                    audioPreprocessingService.preprocessAudioWithFadeout(
+                        sourceUri = android.net.Uri.parse(primaryNode.songUrl),
+                        songId = primaryNode.songId,
+                        trimStartMs = primaryNode.trimStartMs,
+                        totalDurationMs = newDuration,
+                        fadeoutDurationMs = fadeoutDurationMs
+                    )
+                }
+
+                if (preprocessedUri != null) {
+                    val updatedNode = primaryNode.copy(processedAudioUri = preprocessedUri.toString())
+                    return settings.copy(
+                        totalDurationMs = newDuration,
+                        audioNodes = listOf(updatedNode) + settings.audioNodes.drop(1)
+                    )
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("EditorViewModel", "Audio fadeout reprocessing failed", e)
+            }
+        }
+
+        return settings.copy(totalDurationMs = newDuration)
     }
 
     /**
@@ -1646,11 +1693,9 @@ class EditorViewModel(
         android.util.Log.d("EditorViewModel", "applyPendingAssets: Applying ${assets.size} assets (was ${currentState.project.assets.size})")
 
         // 1. Update project with new assets IMMEDIATELY — GL renderer sees them right away.
-        //    Use current settings (audio may be stale if duration changed — fixed in step 2).
-        val immediateSettings = currentState.project.settings
+        //    Keep pendingSettings intact — the DB observer preserves them across re-emissions.
         val updatedProject = currentState.project.copy(
             assets = assets,
-            settings = immediateSettings,
             updatedAt = System.currentTimeMillis()
         )
 
@@ -1679,20 +1724,55 @@ class EditorViewModel(
                     currentState = stateAfterVisualUpdate
                 )
 
-                // If settings actually changed (new duration/audio), apply them
-                if (updatedSettings != stateAfterVisualUpdate.project.settings) {
+                // If settings changed (new duration/audio), apply via pendingSettings
+                // so the DB observer doesn't overwrite them on re-emission.
+                if (updatedSettings != stateAfterVisualUpdate.displaySettings) {
                     playbackClock.setDuration(updatedSettings.totalDurationMs)
 
                     _uiState.update { current ->
                         val latest = current as? EditorUiState.Success ?: return@update current
                         latest.copy(
-                            project = latest.project.copy(settings = updatedSettings),
+                            pendingSettings = updatedSettings,
                             isProcessingAudio = false
                         )
                     }
 
                     _durationMs.value = updatedSettings.totalDurationMs
                     android.util.Log.d("EditorViewModel", "applyPendingAssets: audio updated, ${updatedSettings.totalDurationMs}ms")
+                }
+            }
+
+            // 3. Save assets to DB (saved projects only) so the Room observer
+            //    reads the correct state on re-emission instead of reverting.
+            if (!currentState.isUnsavedProject) {
+                withContext(Dispatchers.IO) {
+                    try {
+                        val existingAssetIds = currentState.project.assets.map { it.id }.toSet()
+                        val newAssetIds = assets.map { it.id }.toSet()
+
+                        val assetsToRemove = currentState.project.assets.filter { it.id !in newAssetIds }
+                        assetsToRemove.forEach { asset ->
+                            projectRepository.removeAsset(updatedProject.id, asset.id)
+                        }
+
+                        val newAssets = assets.filter { it.id !in existingAssetIds }
+                        if (newAssets.isNotEmpty()) {
+                            projectRepository.addAssets(updatedProject.id, newAssets.map { it.uri })
+                        }
+
+                        projectRepository.reorderAssets(updatedProject.id, assets)
+
+                        // Save current settings (including pendingSettings) to DB
+                        val latestState = _uiState.value as? EditorUiState.Success
+                        val latestSettings = latestState?.displaySettings
+                        if (latestSettings != null && latestSettings != currentState.project.settings) {
+                            updateSettingsUseCase(updatedProject.id, latestSettings)
+                        }
+
+                        android.util.Log.d("EditorViewModel", "applyPendingAssets: saved ${assets.size} assets to DB")
+                    } catch (e: Exception) {
+                        android.util.Log.e("EditorViewModel", "applyPendingAssets: DB save failed - ${e.message}", e)
+                    }
                 }
             }
         }
@@ -1778,13 +1858,13 @@ class EditorViewModel(
                     currentState = stateAfterVisualUpdate
                 )
 
-                if (updatedSettings != stateAfterVisualUpdate.project.settings) {
+                if (updatedSettings != stateAfterVisualUpdate.displaySettings) {
                     playbackClock.setDuration(updatedSettings.totalDurationMs)
 
                     _uiState.update { current ->
                         val latest = current as? EditorUiState.Success ?: return@update current
                         latest.copy(
-                            project = latest.project.copy(settings = updatedSettings),
+                            pendingSettings = updatedSettings,
                             isProcessingAudio = false
                         )
                     }
@@ -1813,8 +1893,10 @@ class EditorViewModel(
 
                         projectRepository.reorderAssets(updatedProject.id, finalAssets)
 
+                        // Save current settings (including pendingSettings) to DB.
+                        // displaySettings = pendingSettings ?: project.settings
                         val latestState = _uiState.value as? EditorUiState.Success
-                        val latestSettings = latestState?.project?.settings
+                        val latestSettings = latestState?.displaySettings
                         if (latestSettings != null && latestSettings != currentState.project.settings) {
                             updateSettingsUseCase(updatedProject.id, latestSettings)
                         }

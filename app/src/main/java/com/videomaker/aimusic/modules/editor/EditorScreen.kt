@@ -477,7 +477,7 @@ fun EditorScreen(
         }
     }
 
-    // True once the GL renderer has images loaded (replaces CompositionPlayer Ready state).
+    // True once the GL renderer has actually rendered its first frame with content.
     // NOTE: plain remember → resets when the editor is recomposed fresh (e.g. returning from the
     // asset picker), which is what we want for the placeholder cover during a replace rebuild.
     var hasBeenReady by remember { mutableStateOf(false) }
@@ -485,11 +485,11 @@ fun EditorScreen(
     // changes), so editorScreenState stays READY across replace/effect and only reports LOADING
     // for the very first load. Reset by the VM on a fresh load (initial/retry).
     val hasPreviewBeenReady by viewModel.hasPreviewBeenReady.collectAsStateWithLifecycle()
-    // Drive hasPreviewBeenReady from renderState instead of CompositionPlayer
+    // Drive hasPreviewBeenReady from renderState for data-readiness (fast path for replace/effect).
+    // GL first-frame callback in PreviewSurfaceView handles the initial markPreviewReady().
     LaunchedEffect(renderState) {
-        if (renderState.imageUris.isNotEmpty()) {
+        if (renderState.imageUris.isNotEmpty() && hasPreviewBeenReady) {
             hasBeenReady = true
-            viewModel.markPreviewReady()
         }
     }
     val isProcessingAudio = (uiState as? EditorUiState.Success)?.isProcessingAudio == true
@@ -841,6 +841,10 @@ fun EditorScreen(
                     Analytics.trackTextClose()
                     textOverlayViewModel.setSelectedTextOverlayId(null)
                     showTextSheet = false
+                },
+                onFirstFrameRendered = {
+                    hasBeenReady = true
+                    viewModel.markPreviewReady()
                 },
                 topBar = {
                     androidx.compose.animation.AnimatedVisibility(
@@ -1479,6 +1483,7 @@ internal fun EditorMainContent(
     onStickerPanelDismiss: () -> Unit = {},
     onStickerPanelConfirm: () -> Unit = {},
     onAddSticker: (com.videomaker.aimusic.domain.model.Sticker) -> Unit = {},
+    onFirstFrameRendered: () -> Unit = {},
     topBar: @Composable () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
@@ -1576,6 +1581,7 @@ internal fun EditorMainContent(
                     renderState = renderState,
                     playbackClock = playbackClock,
                     isPlaying = isPlaying,
+                    onFirstFrameRendered = onFirstFrameRendered,
                     modifier = Modifier.fillMaxSize()
                 )
 
