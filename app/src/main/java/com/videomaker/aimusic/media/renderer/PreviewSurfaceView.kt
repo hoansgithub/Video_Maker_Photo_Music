@@ -8,6 +8,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -39,12 +40,25 @@ fun PreviewSurfaceView(
     renderState: RenderState,
     playbackClock: PlaybackClock,
     isPlaying: Boolean,
+    onFirstFrameRendered: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
     val renderer = remember { VideoRenderer(context) }
+
+    // Wire first-frame callback — dispatches to main thread since it fires on GL thread
+    val currentOnFirstFrame by rememberUpdatedState(onFirstFrameRendered)
+    DisposableEffect(Unit) {
+        val handler = android.os.Handler(android.os.Looper.getMainLooper())
+        renderer.onFirstFrameRendered = { handler.post { currentOnFirstFrame() } }
+
+        onDispose {
+            renderer.onFirstFrameRendered = null
+            handler.removeCallbacksAndMessages(null)
+        }
+    }
 
     var glThread by remember { mutableStateOf<GLRenderThread?>(null) }
 
