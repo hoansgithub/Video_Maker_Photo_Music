@@ -18,22 +18,28 @@ data class BeatSyncClip(
 /**
  * BeatSyncTimingCalculator - Matches Python reference exactly (demo_beat_sync.py).
  *
- * Key algorithm (matching Python):
- * 1. Pick every 4th beat as transition point
+ * Key algorithm (matching Python detect_beats.py + demo_beat_sync.py):
+ * 1. BPM-based beats_per_transition: >=140→1, >=100→2, <100→4
  * 2. Transition duration = 1 BEAT (capped at 1000ms)
  * 3. Transitions START at beats (not centered!)
  * 4. All transitions have SAME duration
  * 5. Last image holds for 6 beats AFTER last transition ends
  *
- * Python reference: demo_beat_sync.py lines 465-472, 490-491
+ * Python reference: detect_beats.py:43-49, demo_beat_sync.py
  */
 class BeatSyncTimingCalculator {
 
     companion object {
-        const val PREFERRED_BEATS_PER_TRANSITION = 4  // Ideal spacing
-        const val MIN_BEATS_PER_TRANSITION = 2        // Minimum spacing
+        const val MIN_BEATS_PER_TRANSITION = 1
         const val FADEOUT_BEATS = 6
         const val MAX_TRANSITION_MS = 1000L  // Cap transition at 1 second
+
+        /** BPM-based beats per transition (inverted from pipeline) */
+        fun beatsPerTransitionForBpm(bpm: Double): Int = when {
+            bpm >= 140 -> 4
+            bpm >= 100 -> 2
+            else -> 1
+        }
     }
 
     fun calculateClips(
@@ -65,11 +71,15 @@ class BeatSyncTimingCalculator {
             )
         }
 
+        // BPM-based beats per transition (detect_beats.py:43-49)
+        val safeBpm = beatData.bpm.coerceAtLeast(1.0)
+        val preferredBpt = beatsPerTransitionForBpm(safeBpm)
+
         // Step 1: Get all beats and filter to trim window
         val allBeatsMs = beatData.beats.map { it * 1000.0 }
 
-        // Calculate how many beats we need (use preferred spacing)
-        val beatsNeeded = (numTransitions * PREFERRED_BEATS_PER_TRANSITION) + FADEOUT_BEATS + 4
+        // Calculate how many beats we need
+        val beatsNeeded = (numTransitions * preferredBpt) + FADEOUT_BEATS + 4
 
         // Determine trim end to include enough beats
         val calculatedEndMs = trimEndMs?.toDouble() ?: run {
@@ -87,15 +97,12 @@ class BeatSyncTimingCalculator {
 
         if (trimmedBeatsMs.isEmpty()) return emptyList()
 
-        // Step 2: Calculate dynamic beats per transition based on available beats
+        // Step 2: Use BPM-based spacing, compress if not enough beats available
         val availableBeats = trimmedBeatsMs.size
-        val beatsPerTransition = if (availableBeats >= numTransitions * PREFERRED_BEATS_PER_TRANSITION) {
-            PREFERRED_BEATS_PER_TRANSITION  // Use preferred spacing (4 beats)
+        val beatsPerTransition = if (availableBeats >= numTransitions * preferredBpt) {
+            preferredBpt
         } else {
-            // Compress spacing to fit all transitions
-            // Calculate: how many beats per transition to fit all transitions?
-            // We need at least MIN_BEATS_PER_TRANSITION
-            val calculated = availableBeats / (numTransitions + 1)  // +1 for buffer
+            val calculated = availableBeats / (numTransitions + 1)
             calculated.coerceAtLeast(MIN_BEATS_PER_TRANSITION)
         }
 
@@ -112,8 +119,7 @@ class BeatSyncTimingCalculator {
             return emptyList()
         }
 
-        // Step 3: Calculate transition duration = 1 BEAT (Python line 465-466)
-        val safeBpm = beatData.bpm.coerceAtLeast(1.0)
+        // Step 3: Calculate transition duration = 1 BEAT
         val beatMs = 60000.0 / safeBpm
         val transitionDurationMs = min(beatMs, MAX_TRANSITION_MS.toDouble()).toLong()
 
