@@ -106,6 +106,7 @@ class AdPlacementConfigService(
     @Volatile
     var adBottomNavPaddingEnabled: Boolean = false
         private set
+
     init {
         try {
             registerAllPlacements()
@@ -952,6 +953,21 @@ class AdPlacementConfigService(
             enabled = true
         )
 
+        // Home Screen Collapsible Native Ad
+        // Shown at the bottom of the Home screen on first entry and app reopen
+        // Layout: native_big_bait (large size layout)
+        // Waterfall: Primary unit (Pro_AIMV_NAc_high_Home) -> Secondary unit (Pro_AIMV_NAc_all_Home)
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_HOME_COLLAPSIBLE,
+            layoutName = "native_big_bait",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/7760749137",  // Primary (Pro_AIMV_NAc_high_Home)
+                "ca-app-pub-7121075950716954/9195864128"   // Secondary (Pro_AIMV_NAc_all_Home)
+            ),
+            enabled = true
+        )
+
+
         // Template Previewer Banner Native Ad (replaces standard banner)
         // Shown at the bottom of the template previewer screen
         // Layout: native_small_row (horizontal row) to fit banner dimensions
@@ -1342,9 +1358,9 @@ class AdPlacementConfigService(
         Log.d(TAG, "📊 Quality ad types — 720p: $quality720pAdType, 1080p: $quality1080pAdType")
 
         // Banner → Native toggle
-        bannerUseNative = config.getString(
-            com.videomaker.aimusic.core.constants.RemoteConfigKeys.AD_BANNER_USE_NATIVE, "true"
-        ).toBoolean()
+        bannerUseNative = config.getBoolean(
+            com.videomaker.aimusic.core.constants.RemoteConfigKeys.AD_BANNER_USE_NATIVE, true
+        )
         Log.d(TAG, "📊 Banner use native: $bannerUseNative")
 
         // Bottom ad navigation bar padding toggle

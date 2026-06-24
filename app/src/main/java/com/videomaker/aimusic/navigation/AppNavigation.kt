@@ -420,6 +420,8 @@ fun AppNavigation(
                     key = "projects",
                     factory = createSafeViewModelFactory { projectsFactory.create() }
                 )
+                val homeAdTracker = koinInject<com.videomaker.aimusic.core.ads.HomeAdTracker>()
+
                 // Auto-open MusicPlayerBottomSheet when launched from widget song tap
                 LaunchedEffect(route.initialSongId) {
                     if (route.initialSongId != -1L) {
@@ -440,6 +442,7 @@ fun AppNavigation(
                     highlightProjectId = route.highlightProjectId,
                     projectHintMode = route.hintMode,
                     onCreateClick = {
+                        homeAdTracker.onNavigateAway()
                         backStack.add(AppRoute.TemplatePreviewer(
                             templateId = "",
                             imageUris = emptyList(),
@@ -447,13 +450,27 @@ fun AppNavigation(
                         ))
                     },
                     onSettingsClick = { location ->
+                        homeAdTracker.onNavigateAway()
                         backStack.add(AppRoute.Settings(settingLocation = location))
                     },
-                    onNavigateToSearch = { backStack.add(AppRoute.UnifiedSearch(SearchSection.TEMPLATES)) },
-                    onNavigateToSongSearch = { backStack.add(AppRoute.UnifiedSearch(SearchSection.MUSIC)) },
-                    onNavigateToSuggestedSongsList = { backStack.add(AppRoute.SuggestedSongsList) },
-                    onNavigateToWeeklyRankingList = { backStack.add(AppRoute.WeeklyRankingList) },
+                    onNavigateToSearch = {
+                        homeAdTracker.onNavigateAway()
+                        backStack.add(AppRoute.UnifiedSearch(SearchSection.TEMPLATES))
+                    },
+                    onNavigateToSongSearch = {
+                        homeAdTracker.onNavigateAway()
+                        backStack.add(AppRoute.UnifiedSearch(SearchSection.MUSIC))
+                    },
+                    onNavigateToSuggestedSongsList = {
+                        homeAdTracker.onNavigateAway()
+                        backStack.add(AppRoute.SuggestedSongsList)
+                    },
+                    onNavigateToWeeklyRankingList = {
+                        homeAdTracker.onNavigateAway()
+                        backStack.add(AppRoute.WeeklyRankingList)
+                    },
                     onNavigateToTemplateDetail = { templateId, sourceLocation ->
+                        homeAdTracker.onNavigateAway()
                         // NEW FLOW: Browse templates first, THEN select images
                         backStack.add(AppRoute.TemplatePreviewer(
                             templateId = templateId,
@@ -462,17 +479,23 @@ fun AppNavigation(
                         ))
                     },
                     onNavigateToAllTemplates = { selectedVibeTagId ->
+                        homeAdTracker.onNavigateAway()
                         // Navigate to template list with selected tag filter
                         backStack.add(AppRoute.TemplateList(selectedVibeTagId))
                     },
                     onNavigateToAssetPicker = { songId ->
+                        homeAdTracker.onNavigateAway()
                         // Song-to-video flow: select images, then go to editor (skip templates)
                         backStack.add(AppRoute.AssetPicker(
                             overrideSongId = songId
                         ))
                     },
-                    onNavigateToAllSongs = { backStack.add(AppRoute.SuggestedSongsList) },
+                    onNavigateToAllSongs = {
+                        homeAdTracker.onNavigateAway()
+                        backStack.add(AppRoute.SuggestedSongsList)
+                    },
                     onNavigateToTemplatePreviewerWithSong = { songId ->
+                        homeAdTracker.onNavigateAway()
                         // Song-to-template flow: browse templates with selected song, then select images
                         backStack.add(AppRoute.TemplatePreviewer(
                             templateId = "",  // Empty = start from first template
@@ -482,10 +505,12 @@ fun AppNavigation(
                         ))
                     },
                     onProjectClick = { projectId, thumbnailUri ->
+                        homeAdTracker.onNavigateAway()
                         backStack.add(AppRoute.Editor(projectId, thumbnailUri = thumbnailUri))
                     }
                 )
             }
+
 
             entry<AppRoute.WelcomeBack> {
                 WelcomeBackScreen(
