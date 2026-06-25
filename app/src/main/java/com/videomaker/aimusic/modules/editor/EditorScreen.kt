@@ -1745,9 +1745,9 @@ internal fun EditorMainContent(
                                     spotColor = Color(0x3D000000),
                                     clip = false
                                 )
-                                .clip(RoundedCornerShape(20.dp))
+                                .clip(RoundedCornerShape(12.dp))
                                 .background(Color(0xFF575757).copy(0.4f))
-                                .border(1.dp, Color.White.copy(0.4f), RoundedCornerShape(20.dp))
+                                .border(1.dp, Color.White.copy(0.4f), RoundedCornerShape(12.dp))
                                 .clickable(onClick = onMusicSelectorClick)
                                 .padding(vertical = 8.dp, horizontal = 12.dp),
                             verticalAlignment = Alignment.CenterVertically
