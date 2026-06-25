@@ -1,19 +1,13 @@
 package com.videomaker.aimusic.modules.editor.components
 
-import androidx.compose.foundation.Image
-import coil.compose.AsyncImage
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.foundation.layout.wrapContentHeight
-import com.videomaker.aimusic.ui.components.ProvideShimmerEffect
-import com.videomaker.aimusic.ui.components.ShimmerPlaceholder
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -25,21 +19,22 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Icon
@@ -59,16 +54,13 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextRange
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -77,22 +69,25 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
+import coil.compose.AsyncImage
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.core.ads.RewardedAdPresenter
+import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.domain.model.TextFontPreset
 import com.videomaker.aimusic.domain.model.TextOverlay
 import com.videomaker.aimusic.domain.model.mockFontPresets
 import com.videomaker.aimusic.modules.editor.TextOverlayViewModel
+import com.videomaker.aimusic.ui.components.ProvideShimmerEffect
+import com.videomaker.aimusic.ui.components.ShimmerPlaceholder
 import com.videomaker.aimusic.ui.theme.EffectUnselectedBg
 import com.videomaker.aimusic.ui.theme.Primary
 import com.videomaker.aimusic.ui.theme.SplashBackground
+import com.videomaker.aimusic.ui.theme.TextOnPrimary
 import com.videomaker.aimusic.ui.theme.TextPrimary
 import com.videomaker.aimusic.ui.theme.TextSecondary
-import com.videomaker.aimusic.ui.theme.TextOnPrimary
 import com.videomaker.aimusic.ui.theme.White16
 import org.koin.compose.koinInject
-import com.videomaker.aimusic.core.analytics.Analytics
 
 /**
  * TextBottomSheet - Sliding inline sheet for customizing text overlays.
@@ -240,7 +235,13 @@ fun TextBottomSheetContent(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .fillMaxSize()
+                .then(
+                    // When the keyboard is open only the input row is shown, so wrap the
+                    // height instead of filling — this prevents the input from being
+                    // squeezed/hidden behind the keyboard on first open.
+                    if (isKeyboardOpen) Modifier.wrapContentHeight()
+                    else Modifier.fillMaxSize()
+                )
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.Bottom
         ) {

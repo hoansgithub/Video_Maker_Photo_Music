@@ -47,6 +47,8 @@ import com.videomaker.aimusic.R
 import com.videomaker.aimusic.domain.model.TextFontPreset
 import com.videomaker.aimusic.domain.model.TextOverlay
 import com.videomaker.aimusic.domain.model.mockFontPresets
+import com.videomaker.aimusic.core.analytics.Analytics
+import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import kotlin.math.atan2
 import kotlin.math.hypot
 import kotlin.math.roundToInt
@@ -225,6 +227,8 @@ fun TextOverlayCanvasContent(
                                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                         }
 
+                                        var hasDraggedOrPinched = false
+
                                         while (true) {
                                             val event = awaitPointerEvent()
                                             val pressedChanges = event.changes.filter { it.pressed }
@@ -271,6 +275,10 @@ fun TextOverlayCanvasContent(
                                                         val newX = initialCenterX + (centerDeltaWindow.x / currentCanvasWidth)
                                                         val newY = initialCenterY + (centerDeltaWindow.y / currentCanvasHeight)
 
+                                                        if (!hasDraggedOrPinched) {
+                                                            hasDraggedOrPinched = true
+                                                            Analytics.trackEditBoxDrag(AnalyticsEvent.Value.TypeTool.TEXT)
+                                                        }
                                                         currentOnUpdateText(
                                                             currentOverlay.id,
                                                             newX,
@@ -309,6 +317,10 @@ fun TextOverlayCanvasContent(
                                                     val newX = currentOverlay.xPercentage + (dragDeltaWindow.x / currentCanvasWidth)
                                                     val newY = currentOverlay.yPercentage + (dragDeltaWindow.y / currentCanvasHeight)
                                                     
+                                                    if (!hasDraggedOrPinched) {
+                                                        hasDraggedOrPinched = true
+                                                        Analytics.trackEditBoxDrag(AnalyticsEvent.Value.TypeTool.TEXT)
+                                                    }
                                                     currentOnUpdateText(
                                                         currentOverlay.id,
                                                         newX,
@@ -373,6 +385,7 @@ fun TextOverlayCanvasContent(
                                     .size(40.dp) // 40dp touch target (Material minimum)
                                     .clip(CircleShape)
                                     .clickable {
+                                        Analytics.trackEditBoxDelete(AnalyticsEvent.Value.TypeTool.TEXT)
                                         onRemoveText(overlay.id)
                                     },
                                 contentAlignment = Alignment.Center
@@ -416,6 +429,7 @@ fun TextOverlayCanvasContent(
                                             while (true) {
                                                 val down = awaitFirstDown(requireUnconsumed = false)
                                                 down.consume()
+                                                Analytics.trackEditBoxDrag(AnalyticsEvent.Value.TypeTool.TEXT)
                                                 val currentHandleCoords = handleCoordinates ?: continue
                                                 val currentCenterCoords = centerCoordinates ?: continue
 

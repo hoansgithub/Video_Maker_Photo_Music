@@ -38,6 +38,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -2093,7 +2094,14 @@ private fun BoxScope.TextPanelWrapper(
         modifier = Modifier
             .align(Alignment.BottomCenter)
             .fillMaxWidth()
-            .height(currentPanelHeight)
+            .then(
+                // When the keyboard is open the color/font sections are hidden, so the
+                // panel only needs to wrap the input row. A fixed height combined with the
+                // large bottom IME padding would squeeze the content and hide the input
+                // behind the keyboard, so wrap height instead and let dynamicPadding lift it.
+                if (isKeyboardOpen) Modifier.wrapContentHeight()
+                else Modifier.height(currentPanelHeight)
+            )
             .padding(bottom = dynamicPadding)
             .background(SplashBackground)
             .then(
@@ -2165,7 +2173,10 @@ private fun BoxScope.TextPanelWrapper(
             focusTrigger = textFocusTrigger,
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(1f)
+                .then(
+                    if (isKeyboardOpen) Modifier.wrapContentHeight()
+                    else Modifier.weight(1f)
+                )
         )
     }
 }
