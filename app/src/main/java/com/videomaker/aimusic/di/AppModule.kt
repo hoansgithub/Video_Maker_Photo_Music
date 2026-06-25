@@ -266,7 +266,7 @@ val dataModule = module {
 
     // Repository implementations
     single<OnboardingRepository> { OnboardingRepositoryImpl(get()) }
-    single<ProjectRepository> { ProjectRepositoryImpl(get(), get()) }
+    single<ProjectRepository> { ProjectRepositoryImpl(get(), get(), get()) }
     single<ExportRepository> { ExportRepositoryImpl(get()) }
     single<SongRepository> { SongRepositoryImpl(get(), get(), regionProvider = get(), languageManager = get()) }
     single<BeatSyncRepository> { BeatSyncRepositoryImpl(androidContext(), get()) }

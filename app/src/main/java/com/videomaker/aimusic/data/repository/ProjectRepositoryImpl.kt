@@ -17,6 +17,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
+import com.videomaker.aimusic.data.local.database.ProjectDatabase
+import androidx.room.withTransaction
 import java.util.UUID
 
 /**
@@ -25,6 +27,7 @@ import java.util.UUID
  * Handles all database operations for projects and assets.
  */
 class ProjectRepositoryImpl(
+    private val database: ProjectDatabase,
     private val projectDao: ProjectDao,
     private val assetDao: AssetDao
 ) : ProjectRepository {
@@ -220,6 +223,26 @@ class ProjectRepositoryImpl(
         }
     }
 
+    override suspend fun addProjectAssets(projectId: String, assets: List<Asset>) {
+        val existingCount = assetDao.countByProjectId(projectId)
+        val assetEntities = assets.mapIndexed { index, asset ->
+            ProjectMapper.toEntity(asset.copy(orderIndex = existingCount + index), projectId)
+        }
+        assetDao.insertAll(assetEntities)
+
+        // Update thumbnail if this is first asset
+        if (existingCount == 0 && assets.isNotEmpty()) {
+            projectDao.getById(projectId)?.let { project ->
+                projectDao.update(project.copy(
+                    thumbnailUri = assets.first().uri.toString(),
+                    updatedAt = System.currentTimeMillis()
+                ))
+            }
+        } else {
+            projectDao.updateTimestamp(projectId, System.currentTimeMillis())
+        }
+    }
+
     override suspend fun removeAsset(projectId: String, assetId: String) {
         assetDao.deleteById(assetId)
 
@@ -260,6 +283,70 @@ class ProjectRepositoryImpl(
                 isWatermarkFree = isWatermarkFree,
                 updatedAt = System.currentTimeMillis()
             ))
+        }
+    }
+
+    override suspend fun updateProjectAssetsAndSettings(
+        projectId: String,
+        assets: List<Asset>,
+        settings: ProjectSettings?
+    ) {
+        database.withTransaction {
+            val existing = assetDao.getByProjectId(projectId)
+            val existingIds = existing.map { it.id }.toSet()
+            val newIds = assets.map { it.id }.toSet()
+
+            // 1. Delete removed assets
+            existing.forEach { asset ->
+                if (asset.id !in newIds) {
+                    assetDao.deleteById(asset.id)
+                }
+            }
+
+            // 2. Insert/replace remaining and new assets with correct orderIndex
+            val assetEntities = assets.mapIndexed { index, asset ->
+                ProjectMapper.toEntity(asset.copy(orderIndex = index), projectId)
+            }
+            assetDao.insertAll(assetEntities)
+
+            // 3. Update project settings and/or thumbnail and timestamp
+            projectDao.getById(projectId)?.let { project ->
+                val newThumbnail = assetEntities.firstOrNull()?.uri
+                val baseProject = if (settings != null) {
+                    val audioNodesJson = if (settings.audioNodes.isNotEmpty()) {
+                        json.encodeToString(ListSerializer(AudioNode.serializer()), settings.audioNodes)
+                    } else {
+                        null
+                    }
+                    val textOverlaysJson = if (settings.textOverlays.isNotEmpty()) {
+                        json.encodeToString(ListSerializer(TextOverlay.serializer()), settings.textOverlays)
+                    } else {
+                        null
+                    }
+                    val stickersJson = if (settings.stickers.isNotEmpty()) {
+                        json.encodeToString(ListSerializer(StickerPlacement.serializer()), settings.stickers)
+                    } else {
+                        null
+                    }
+                    project.copy(
+                        totalDurationMs = settings.totalDurationMs,
+                        effectSetId = settings.effectSetId,
+                        templateId = settings.templateId?.takeIf { it.isNotBlank() },
+                        overlayFrameId = settings.overlayFrameId,
+                        aspectRatio = settings.aspectRatio.name,
+                        audioNodesJson = audioNodesJson,
+                        textOverlaysJson = textOverlaysJson,
+                        stickersJson = stickersJson
+                    )
+                } else {
+                    project
+                }
+
+                projectDao.update(baseProject.copy(
+                    thumbnailUri = newThumbnail,
+                    updatedAt = System.currentTimeMillis()
+                ))
+            }
         }
     }
 }

@@ -12,7 +12,6 @@ import androidx.lifecycle.viewModelScope
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
 import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
 import com.videomaker.aimusic.core.analytics.Analytics
-import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.core.data.local.PreferencesManager
 import com.videomaker.aimusic.core.notification.NotificationScheduler
@@ -27,6 +26,7 @@ import com.videomaker.aimusic.domain.repository.SongRepository
 import com.videomaker.aimusic.domain.repository.TemplateRepository
 import com.videomaker.aimusic.domain.usecase.AddAssetsUseCase
 import com.videomaker.aimusic.domain.usecase.CreateProjectUseCase
+import com.videomaker.aimusic.modules.picker.AssetPickerViewModel.Companion.MAX_SELECTION
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -650,10 +650,19 @@ class AssetPickerViewModel(
             cached.assets.isNotEmpty()
         ) {
             _gridScrollState.value = cached.gridScrollState
+            // Prioritize selectedAssetUris parameter (editing mode) over cached selection.
+            // When the user deletes images in ImagesBottomSheet and then opens the picker,
+            // selectedAssetUris contains the updated list without deleted images, but
+            // cached.selectedUris still has the old (pre-deletion) selection.
+            val resolvedSelection = if (selectedAssetUris.isNotEmpty()) {
+                selectedAssetUris
+            } else {
+                cached.selectedUris
+            }
             _uiState.value = createWithAssetsState(
                 permissionMode = newMode,
                 assets = cached.assets,
-                selectedUris = cached.selectedUris,
+                selectedUris = resolvedSelection,
                 preferredAlbumId = cached.selectedAlbumId
             )
             return

@@ -48,12 +48,9 @@ fun PreviewSurfaceView(
 
     val renderer = remember { VideoRenderer(context) }
 
-    // Wire first-frame callback — dispatches to main thread since it fires on GL thread
     val currentOnFirstFrame by rememberUpdatedState(onFirstFrameRendered)
+    val handler = remember { android.os.Handler(android.os.Looper.getMainLooper()) }
     DisposableEffect(Unit) {
-        val handler = android.os.Handler(android.os.Looper.getMainLooper())
-        renderer.onFirstFrameRendered = { handler.post { currentOnFirstFrame() } }
-
         onDispose {
             renderer.onFirstFrameRendered = null
             handler.removeCallbacksAndMessages(null)
@@ -65,6 +62,10 @@ fun PreviewSurfaceView(
     // Update renderer state reactively — @Volatile ensures atomic read on GL thread
     LaunchedEffect(renderState) {
         renderer.renderState = renderState
+        // Re-enable first-frame callback when state changes to hide stale frames during texture load
+        renderer.resetFirstFrameNotification {
+            handler.post { currentOnFirstFrame() }
+        }
         glThread?.requestRender() // Ensure state changes are visible even when paused
     }
 
