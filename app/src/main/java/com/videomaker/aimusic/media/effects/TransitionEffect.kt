@@ -297,13 +297,15 @@ uniform float smoothness;
 uniform vec3 fadeColor;
 varying vec2 vTexCoords;
 
-// SINGLE SOURCE OF TRUTH: Both textures loaded identically, sampled identically
+// Flip Y when sampling FROM/TO textures to compensate for GLUtils.texImage2D
+// placing bitmap row 0 (top of image) at the bottom of the GL texture.
+// The pre-processed PNGs are saved in standard top-to-bottom orientation.
 vec4 getFromColor(vec2 uv) {
-    return texture2D(uFromSampler, uv);
+    return texture2D(uFromSampler, vec2(uv.x, 1.0 - uv.y));
 }
 
 vec4 getToColor(vec2 uv) {
-    return texture2D(uToSampler, uv);
+    return texture2D(uToSampler, vec2(uv.x, 1.0 - uv.y));
 }
 
 $transitionCode

@@ -1,6 +1,7 @@
 package com.videomaker.aimusic.core.analytics
 
 import co.alcheclub.lib.acccore.analytics.AnalyticsCoordinator
+import com.videomaker.aimusic.core.analytics.Analytics.trackTabView
 import java.util.UUID
 
 /**
@@ -2703,11 +2704,10 @@ object Analytics {
         track(AnalyticsEvent.TEXT_EDIT)
     }
 
-    fun trackTextColorClick(type: String, colorName: String) {
+    fun trackTextColorClick(colorName: String) {
         track(
             AnalyticsEvent.TEXT_COLOR_CLICK,
             mapOf(
-                AnalyticsEvent.Param.TYPE to type,
                 AnalyticsEvent.Param.COLOR_NAME to colorName
             )
         )

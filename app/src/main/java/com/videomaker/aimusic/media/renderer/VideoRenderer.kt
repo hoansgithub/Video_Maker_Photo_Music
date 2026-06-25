@@ -51,6 +51,11 @@ class VideoRenderer(private val context: Context) : GLSurfaceView.Renderer {
     // Clock for time-based rendering
     @Volatile var playbackClock: PlaybackClock? = null
 
+    // Fires once on the GL thread after the first frame with actual content is rendered.
+    // Cleared after invocation to avoid leaks.
+    @Volatile var onFirstFrameRendered: (() -> Unit)? = null
+    private var hasNotifiedFirstFrame = false
+
     // GL resources (created on GL thread)
     private lateinit var textureManager: TextureManager
     private lateinit var shaderCache: ShaderProgramCache
@@ -118,6 +123,14 @@ class VideoRenderer(private val context: Context) : GLSurfaceView.Renderer {
 
         // Ensure textures are loaded
         textureManager.ensureTextures(state.imageUris)
+
+        // Notify first frame rendered — textures are loaded and content is about to draw.
+        // Fired after ensureTextures so the preparing overlay stays until real content is visible.
+        if (!hasNotifiedFirstFrame) {
+            hasNotifiedFirstFrame = true
+            onFirstFrameRendered?.invoke()
+            onFirstFrameRendered = null
+        }
 
         // Get current time from PlaybackClock
         val timeMs = clock?.currentTimeMs() ?: 0L

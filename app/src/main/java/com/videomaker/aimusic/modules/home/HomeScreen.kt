@@ -1,6 +1,7 @@
 package com.videomaker.aimusic.modules.home
 
 import android.Manifest
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.Animatable
@@ -8,6 +9,7 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,6 +20,7 @@ import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -30,8 +33,10 @@ import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Settings
@@ -40,6 +45,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -71,13 +77,16 @@ import co.alcheclub.lib.acccore.ads.loader.AdsLoaderException
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
 import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.core.ads.AdClickDetector
+import com.videomaker.aimusic.core.ads.AdPlacementConfigService
+import com.videomaker.aimusic.core.ads.HomeAdTracker
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
-import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.core.permission.NotificationPermissionCoordinator
 import com.videomaker.aimusic.core.popup.TrendingPopupCoordinator
 import com.videomaker.aimusic.core.rating.RatingTriggerManager
+import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.media.audio.AudioPreviewCache
 import com.videomaker.aimusic.modules.gallery.GalleryScreen
 import com.videomaker.aimusic.modules.gallery.GalleryUiState
@@ -98,11 +107,10 @@ import com.videomaker.aimusic.ui.theme.PrimaryDark
 import com.videomaker.aimusic.ui.theme.TextInactive
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 import com.videomaker.aimusic.ui.theme.WelcomeBackBackground
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
-import com.videomaker.aimusic.core.ads.AdClickDetector
-import com.videomaker.aimusic.core.ads.AdPlacementConfigService
 
 /** Two scroll sessions ending within this window count as a single swipe (dedupes split flings). */
 private const val GESTURE_COOLDOWN_MS = 250L
@@ -150,11 +158,19 @@ fun HomeScreen(
 ) {
     val adClickDetector: AdClickDetector = koinInject()
     val adPlacementConfigService: AdPlacementConfigService = koinInject()
+    val homeAdTracker: HomeAdTracker = koinInject()
     val context = LocalContext.current
     val notificationPermissionCoordinator = koinInject<NotificationPermissionCoordinator>()
     val adsLoaderService = koinInject<AdsLoaderService>()
     val ratingTriggerManager = koinInject<RatingTriggerManager>()
     val trendingPopupCoordinator = koinInject<TrendingPopupCoordinator>()
+
+    DisposableEffect(Unit) {
+        homeAdTracker.isHomeScreenActive = true
+        onDispose {
+            homeAdTracker.isHomeScreenActive = false
+        }
+    }
 
     val notificationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
@@ -182,7 +198,7 @@ fun HomeScreen(
         }
     }
 
-    // Preload template previewer ad while user is on home screen
+    // Preload template previewer ad and collapsible native ad while user is on home screen
     LaunchedEffect("ad_preload") {
         try {
             adsLoaderService.loadNative(AdPlacement.NATIVE_TEMPLATE_PREVIEWER_LOADING)
@@ -192,6 +208,14 @@ fun HomeScreen(
         } catch (e: Exception) {
             // Unexpected error - log but don't crash
             android.util.Log.e("HomeScreen", "Unexpected error preloading ad: ${e.message}", e)
+        }
+
+        if (adPlacementConfigService.isPlacementEnabled(AdPlacement.NATIVE_HOME_COLLAPSIBLE)) {
+            try {
+                adsLoaderService.loadNative(AdPlacement.NATIVE_HOME_COLLAPSIBLE)
+            } catch (e: Exception) {
+                Log.w("HomeScreen", "Failed to preload home collapsible ad: ${e.message}")
+            }
         }
     }
 
@@ -227,10 +251,36 @@ fun HomeScreen(
     val songsListState = rememberLazyListState()
 
     val galleryUiState by galleryViewModel.uiState.collectAsStateWithLifecycle()
+    val isCollapsibleAdDismissed by homeAdTracker.isCollapsibleAdDismissed.collectAsStateWithLifecycle()
+    val isFromOtherFlow by homeAdTracker.isFromOtherFlow.collectAsStateWithLifecycle()
     val galleryTemplatesHeaderIndex = remember(galleryUiState) {
         val successState = galleryUiState as? GalleryUiState.Success
         val featuredTemplates = successState?.featuredTemplates ?: emptyList()
         if (featuredTemplates.isNotEmpty()) 4 else 2
+    }
+
+    var isCollapsibleAdLoaded by remember { mutableStateOf(false) }
+
+    LaunchedEffect(
+        isCollapsibleAdDismissed,
+        isFromOtherFlow
+    ) {
+        if (adPlacementConfigService.isPlacementEnabled(AdPlacement.NATIVE_HOME_COLLAPSIBLE) &&
+            !isCollapsibleAdDismissed &&
+            !isFromOtherFlow
+        ) {
+            isCollapsibleAdLoaded = adsLoaderService.isNativeAdReady(AdPlacement.NATIVE_HOME_COLLAPSIBLE)
+            while (!isCollapsibleAdLoaded) {
+                delay(500)
+                isCollapsibleAdLoaded = adsLoaderService.isNativeAdReady(AdPlacement.NATIVE_HOME_COLLAPSIBLE)
+            }
+        } else {
+            isCollapsibleAdLoaded = false
+        }
+    }
+
+    LaunchedEffect(isCollapsibleAdDismissed, isFromOtherFlow, isCollapsibleAdLoaded) {
+        Log.d("HomeScreenAd", "Collapsible Ad Status: dismissed=$isCollapsibleAdDismissed, fromOtherFlow=$isFromOtherFlow, loaded=$isCollapsibleAdLoaded")
     }
 
     // Swipe-gesture counters drive the bottom FAB state machine per tab.
@@ -672,32 +722,73 @@ fun HomeScreen(
             }
         }
 
+            // Ad below tab content (at bottom of screen)
+            // Remote Config toggle: native ad (default) or standard banner
+            val bottomAdModifier = if (adPlacementConfigService.adBottomNavPaddingEnabled)
+                Modifier.navigationBarsPadding() else Modifier
             Box(
-                modifier = Modifier
+                modifier = bottomAdModifier
                     .fillMaxWidth()
                     .onSizeChanged { size ->
                         bottomSectionHeight = size.height  // Measure actual height dynamically!
                     }
             ) {
                 // Ad below tab content (at bottom of screen)
-                // Remote Config toggle: native ad (default) or standard banner
-                if (adPlacementConfigService.bannerUseNative) {
-                    NativeAdView(
-                        placement = AdPlacement.NATIVE_HOME_BANNER,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(100.dp),
-                        isDebug = BuildConfig.DEBUG,
-                        onAdClicked = { adClickDetector.onAdClick(it) }
-                    )
+                val showCollapsibleAd = adPlacementConfigService.isPlacementEnabled(AdPlacement.NATIVE_HOME_COLLAPSIBLE) &&
+                        isCollapsibleAdLoaded &&
+                        !isCollapsibleAdDismissed &&
+                        !isFromOtherFlow
+
+                if (showCollapsibleAd) {
+                    Box(modifier = Modifier.fillMaxWidth()) {
+                        NativeAdView(
+                            placement = AdPlacement.NATIVE_HOME_COLLAPSIBLE,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(300.dp),
+                            isDebug = BuildConfig.DEBUG,
+                            onAdClicked = { adClickDetector.onAdClick(it) }
+                        )
+
+                        // Collapse button overlay
+                        // White circle containing a black collapse icon with minimal padding
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .padding(top = 6.dp, end = 6.dp)
+                                .size(22.dp)
+                                .background(Color.White, shape = CircleShape)
+                                .clickable { homeAdTracker.dismissCollapsibleAd() },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.KeyboardArrowDown,
+                                contentDescription = "Collapse ad",
+                                tint = Color.Black,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    }
                 } else {
-                    BannerAdView(
-                        placement = AdPlacement.BANNER_HOME,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(50.dp),
-                        onAdClicked = { adClickDetector.onAdClick(it) }
-                    )
+                    // Fallback home banner
+                    if (adPlacementConfigService.bannerUseNative) {
+                        NativeAdView(
+                            placement = AdPlacement.NATIVE_HOME_BANNER,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(100.dp),
+                            isDebug = BuildConfig.DEBUG,
+                            onAdClicked = { adClickDetector.onAdClick(it) }
+                        )
+                    } else {
+                        BannerAdView(
+                            placement = AdPlacement.BANNER_HOME,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(50.dp),
+                            onAdClicked = { adClickDetector.onAdClick(it) }
+                        )
+                    }
                 }
             }
         }

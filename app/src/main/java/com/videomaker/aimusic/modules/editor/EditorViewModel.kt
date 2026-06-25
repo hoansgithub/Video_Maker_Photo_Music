@@ -177,18 +177,31 @@ class EditorViewModel(
     private val _navigationEvent = Channel<EditorNavigationEvent>()
     val navigationEvent = _navigationEvent.receiveAsFlow()
 
-    // Music Trimmer State — modal bottom sheet with isolated music player
-    private val _musicTrimmerState = MutableStateFlow<MusicTrimmerState>(MusicTrimmerState.Closed)
-    val musicTrimmerState: StateFlow<MusicTrimmerState> = _musicTrimmerState.asStateFlow()
-
     // Whether the video preview has reached Ready at least once for the current load. Lives in the
     // ViewModel (retained across the asset-picker round trip and config changes) so the screen can
     // stay READY across replace/effect without flickering back to LOADING. Reset on a fresh load.
     private val _hasPreviewBeenReady = MutableStateFlow(false)
     val hasPreviewBeenReady: StateFlow<Boolean> = _hasPreviewBeenReady.asStateFlow()
 
+    // Two-way handshake for deferred autoplay:
+    // - pendingAutoPlay is set when data is ready and autoplay is desired
+    // - markPreviewReady() is called when GL has rendered its first content frame
+    // Whichever happens last triggers playback, ensuring both data + GL are ready.
+    @Volatile private var pendingAutoPlay = false
+
     fun markPreviewReady() {
         _hasPreviewBeenReady.value = true
+        startDeferredAutoPlayIfReady()
+    }
+
+    private fun startDeferredAutoPlayIfReady() {
+        if (pendingAutoPlay && _hasPreviewBeenReady.value) {
+            pendingAutoPlay = false
+            _uiState.update { state ->
+                if (state is EditorUiState.Success) state.copy(isPlaying = true) else state
+            }
+            playbackClock.play()
+        }
     }
 
     // Quality unlock state — session-based (reset when ViewModel cleared)
@@ -234,9 +247,6 @@ class EditorViewModel(
 
     // Shared playback clock between GL renderer and ExoPlayer audio
     val playbackClock = PlaybackClock()
-
-    // Mutex for thread-safe trimmer operations (prevents race conditions)
-    private val trimStateMutex = Mutex()
 
     // Mutex for thread-safe asset replacement (prevents interleaving from rapid changes)
     private val assetMutex = Mutex()
@@ -505,7 +515,7 @@ class EditorViewModel(
                             project = project,
                             isUnsavedProject = false,
                             selectedAssetIndex = selectedIndex,
-                            isPlaying = prev?.isPlaying ?: shouldAutoPlay,
+                            isPlaying = if (shouldAutoPlay) false else (prev?.isPlaying ?: false),
                             showSettingsPanel = prev?.showSettingsPanel ?: false,
                             pendingSettings = prev?.pendingSettings,
                             seekToPosition = prev?.seekToPosition,
@@ -517,7 +527,8 @@ class EditorViewModel(
                         startPositionTicker()
                         if (shouldAutoPlay) {
                             hasAutoPlayed = true
-                            playbackClock.play()
+                            pendingAutoPlay = true
+                            startDeferredAutoPlayIfReady() // GL may already be ready
                         }
 
                         // No background preprocessing needed — preview uses realtime fadeout
@@ -700,13 +711,14 @@ class EditorViewModel(
                 _uiState.value = EditorUiState.Success(
                     project = project,
                     isUnsavedProject = true,
-                    isPlaying = true,
+                    isPlaying = false, // Deferred — markPreviewReady() sets true after GL ready
                     effectSetName = effectSetName
                 )
                 refreshRenderState()
                 startPositionTicker()
                 hasAutoPlayed = true
-                playbackClock.play()
+                pendingAutoPlay = true
+                startDeferredAutoPlayIfReady() // GL may already be ready
                 Analytics.trackEditorPrepareStep("project_built", songIdStr)
                 trackVideoGenerateCompleteReadyToEdit(
                     data = data,
@@ -1319,12 +1331,11 @@ class EditorViewModel(
     }
 
     fun updateAspectRatio(ratio: AspectRatio) {
-        // Only the ratio changes. Sticker placements are left untouched: both the preview
-        // (frac * rectW) and the export (frac * frameWidth) interpret widthFractionOfVideo
-        // relative to the frame, and centers are normalized — so each sticker keeps the same
-        // position and frame-relative size across ratios and stays inside the frame, exactly
-        // like text overlays (which are also not remapped). Rescaling the fraction here would
-        // grow edge stickers when switching to a narrower frame and push them outside.
+        // Only the ratio changes here. Centers are normalized so positions carry over unchanged.
+        // To keep each sticker's ON-SCREEN size put across the change (so a ratio toggle never
+        // resizes a sticker — only an explicit zoom does), the editor pairs this call with
+        // [rescaleStickersForRatioChange], which needs the preview container geometry and so lives
+        // in the UI. See that method for the math.
         updatePendingSettings { it.copy(aspectRatio = ratio) }
         // Restart from beginning so user sees the new aspect ratio from the start
         restartPlaybackFromStart()
@@ -1340,7 +1351,7 @@ class EditorViewModel(
     /**
      * Add a sticker centered on the video, sized to 1/3 of the frame's SHORT side. Because the
      * short side is the same (1080) in every aspect ratio, [StickerPlacement.widthFractionOfVideo]
-     * is interpreted against the short side (see [StickerOverlayLayer]/[StickerOverlay]), so 1/3
+     * is interpreted against the short side (see [StickerImagesLayer]/[StickerOverlay]), so 1/3
      * stays a sensible, ratio-invariant size — no per-ratio adjustment needed. Each call adds a
      * NEW instance (stacking on top).
      */
@@ -1372,6 +1383,30 @@ class EditorViewModel(
             settings.copy(
                 stickers = settings.stickers.map {
                     if (it.instanceId == placement.instanceId) placement else it
+                }
+            )
+        }
+    }
+
+    /**
+     * Preserve each sticker's ON-SCREEN size when the editor aspect ratio changes.
+     *
+     * Sticker size is stored as [StickerPlacement.widthFractionOfVideo] of the frame's SHORT side.
+     * In the editor the preview rect is fit into a fixed container, so its short side spans a
+     * DIFFERENT number of screen pixels per ratio — which makes a sticker visually grow/shrink when
+     * the user just toggles ratios. To keep it visually put (only an explicit zoom should resize
+     * it), the caller passes [factor] = oldRatioShortSidePx / newRatioShortSidePx (computed from the
+     * preview container geometry); multiplying the fraction by it cancels the rect-size change so
+     * the sticker keeps the same on-screen size. Centers/rotation are ratio-invariant (normalized)
+     * and untouched. WYSIWYG holds: the export reads the same fraction, so it matches the preview.
+     */
+    fun rescaleStickersForRatioChange(factor: Float) {
+        if (factor <= 0f || factor == 1f) return
+        updatePendingSettingsAudioOnly { settings ->
+            if (settings.stickers.isEmpty()) return@updatePendingSettingsAudioOnly settings
+            settings.copy(
+                stickers = settings.stickers.map {
+                    it.copy(widthFractionOfVideo = (it.widthFractionOfVideo * factor).coerceAtLeast(0.05f))
                 }
             )
         }
@@ -1588,31 +1623,59 @@ class EditorViewModel(
         assets: List<Asset>,
         currentState: EditorUiState.Success
     ): ProjectSettings {
-        val beatSyncData = currentState.project.settings.beatSyncData
-        val primaryNode = currentState.project.settings.primaryAudioNode
+        // Use displaySettings (pendingSettings ?: project.settings) to include
+        // uncommitted changes like music selection that live in pendingSettings.
+        val settings = currentState.displaySettings
+        val beatSyncData = settings.beatSyncData
+        val primaryNode = settings.primaryAudioNode
 
         if (beatSyncData == null || primaryNode?.songId == null) {
             // No beat-sync — settings unchanged
-            return currentState.project.settings
+            return settings
         }
 
         val newDuration = Project.calculateBeatSyncDuration(
             beatData = beatSyncData,
             assetCount = assets.size,
-            trimStartMs = currentState.project.settings.hookStartTimeMs
-        ) ?: currentState.project.settings.totalDurationMs
+            trimStartMs = settings.hookStartTimeMs
+        ) ?: settings.totalDurationMs
 
-        val durationChanged = newDuration != currentState.project.settings.totalDurationMs
+        val durationChanged = newDuration != settings.totalDurationMs
         if (!durationChanged) {
-            // Same duration — just update totalDurationMs (may differ slightly)
-            return currentState.project.settings.copy(totalDurationMs = newDuration)
+            return settings.copy(totalDurationMs = newDuration)
         }
 
-        // Duration changed — update duration. No preprocessing needed for preview
-        // (realtime fadeout via volume ramp). Export re-preprocesses independently.
-        android.util.Log.d("EditorViewModel", "recalculateSettingsForAssets: Duration ${currentState.project.settings.totalDurationMs}ms → ${newDuration}ms (${assets.size} images)")
+        android.util.Log.d("EditorViewModel", "recalculateSettingsForAssets: Duration ${settings.totalDurationMs}ms → ${newDuration}ms (${assets.size} images)")
 
-        return currentState.project.settings.copy(totalDurationMs = newDuration)
+        // Duration changed — reprocess audio fadeout with new duration
+        if (primaryNode.songUrl != null && beatSyncData.bpm > 0) {
+            try {
+                val beatMs = 60000.0 / beatSyncData.bpm
+                val fadeoutDurationMs = (beatMs * 6).toLong()
+
+                val preprocessedUri = withContext(Dispatchers.IO) {
+                    audioPreprocessingService.preprocessAudioWithFadeout(
+                        sourceUri = android.net.Uri.parse(primaryNode.songUrl),
+                        songId = primaryNode.songId,
+                        trimStartMs = primaryNode.trimStartMs,
+                        totalDurationMs = newDuration,
+                        fadeoutDurationMs = fadeoutDurationMs
+                    )
+                }
+
+                if (preprocessedUri != null) {
+                    val updatedNode = primaryNode.copy(processedAudioUri = preprocessedUri.toString())
+                    return settings.copy(
+                        totalDurationMs = newDuration,
+                        audioNodes = listOf(updatedNode) + settings.audioNodes.drop(1)
+                    )
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("EditorViewModel", "Audio fadeout reprocessing failed", e)
+            }
+        }
+
+        return settings.copy(totalDurationMs = newDuration)
     }
 
     /**
@@ -1630,11 +1693,9 @@ class EditorViewModel(
         android.util.Log.d("EditorViewModel", "applyPendingAssets: Applying ${assets.size} assets (was ${currentState.project.assets.size})")
 
         // 1. Update project with new assets IMMEDIATELY — GL renderer sees them right away.
-        //    Use current settings (audio may be stale if duration changed — fixed in step 2).
-        val immediateSettings = currentState.project.settings
+        //    Keep pendingSettings intact — the DB observer preserves them across re-emissions.
         val updatedProject = currentState.project.copy(
             assets = assets,
-            settings = immediateSettings,
             updatedAt = System.currentTimeMillis()
         )
 
@@ -1663,20 +1724,55 @@ class EditorViewModel(
                     currentState = stateAfterVisualUpdate
                 )
 
-                // If settings actually changed (new duration/audio), apply them
-                if (updatedSettings != stateAfterVisualUpdate.project.settings) {
+                // If settings changed (new duration/audio), apply via pendingSettings
+                // so the DB observer doesn't overwrite them on re-emission.
+                if (updatedSettings != stateAfterVisualUpdate.displaySettings) {
                     playbackClock.setDuration(updatedSettings.totalDurationMs)
 
                     _uiState.update { current ->
                         val latest = current as? EditorUiState.Success ?: return@update current
                         latest.copy(
-                            project = latest.project.copy(settings = updatedSettings),
+                            pendingSettings = updatedSettings,
                             isProcessingAudio = false
                         )
                     }
 
                     _durationMs.value = updatedSettings.totalDurationMs
                     android.util.Log.d("EditorViewModel", "applyPendingAssets: audio updated, ${updatedSettings.totalDurationMs}ms")
+                }
+            }
+
+            // 3. Save assets to DB (saved projects only) so the Room observer
+            //    reads the correct state on re-emission instead of reverting.
+            if (!currentState.isUnsavedProject) {
+                withContext(Dispatchers.IO) {
+                    try {
+                        val existingAssetIds = currentState.project.assets.map { it.id }.toSet()
+                        val newAssetIds = assets.map { it.id }.toSet()
+
+                        val assetsToRemove = currentState.project.assets.filter { it.id !in newAssetIds }
+                        assetsToRemove.forEach { asset ->
+                            projectRepository.removeAsset(updatedProject.id, asset.id)
+                        }
+
+                        val newAssets = assets.filter { it.id !in existingAssetIds }
+                        if (newAssets.isNotEmpty()) {
+                            projectRepository.addAssets(updatedProject.id, newAssets.map { it.uri })
+                        }
+
+                        projectRepository.reorderAssets(updatedProject.id, assets)
+
+                        // Save current settings (including pendingSettings) to DB
+                        val latestState = _uiState.value as? EditorUiState.Success
+                        val latestSettings = latestState?.displaySettings
+                        if (latestSettings != null && latestSettings != currentState.project.settings) {
+                            updateSettingsUseCase(updatedProject.id, latestSettings)
+                        }
+
+                        android.util.Log.d("EditorViewModel", "applyPendingAssets: saved ${assets.size} assets to DB")
+                    } catch (e: Exception) {
+                        android.util.Log.e("EditorViewModel", "applyPendingAssets: DB save failed - ${e.message}", e)
+                    }
                 }
             }
         }
@@ -1762,13 +1858,13 @@ class EditorViewModel(
                     currentState = stateAfterVisualUpdate
                 )
 
-                if (updatedSettings != stateAfterVisualUpdate.project.settings) {
+                if (updatedSettings != stateAfterVisualUpdate.displaySettings) {
                     playbackClock.setDuration(updatedSettings.totalDurationMs)
 
                     _uiState.update { current ->
                         val latest = current as? EditorUiState.Success ?: return@update current
                         latest.copy(
-                            project = latest.project.copy(settings = updatedSettings),
+                            pendingSettings = updatedSettings,
                             isProcessingAudio = false
                         )
                     }
@@ -1797,8 +1893,10 @@ class EditorViewModel(
 
                         projectRepository.reorderAssets(updatedProject.id, finalAssets)
 
+                        // Save current settings (including pendingSettings) to DB.
+                        // displaySettings = pendingSettings ?: project.settings
                         val latestState = _uiState.value as? EditorUiState.Success
-                        val latestSettings = latestState?.project?.settings
+                        val latestSettings = latestState?.displaySettings
                         if (latestSettings != null && latestSettings != currentState.project.settings) {
                             updateSettingsUseCase(updatedProject.id, latestSettings)
                         }
@@ -1807,301 +1905,6 @@ class EditorViewModel(
                     } catch (e: Exception) {
                         android.util.Log.e("EditorViewModel", "❌ Failed to save - ${e.message}", e)
                     }
-                }
-            }
-        }
-    }
-
-    // ============================================
-    // MUSIC TRIMMER CONTROLS
-    // ============================================
-
-    /**
-     * Opens the music trimmer bottom sheet.
-     * Pauses main video player and creates isolated music-only preview player.
-     * Thread-safe with mutex protection.
-     */
-    fun openMusicTrimmer() {
-        val currentState = _uiState.value
-        if (currentState !is EditorUiState.Success) return
-
-        val settings = currentState.displaySettings
-        val primaryNode = settings.primaryAudioNode
-        val songName = primaryNode?.songName
-        val songUrl = primaryNode?.songUrl
-
-        // Can only trim if there's a music track selected
-        if (songName == null || songUrl == null) return
-
-        viewModelScope.launch {
-            trimStateMutex.withLock {
-                try {
-                    // Pause main video player if playing
-                    val wasPlaying = currentState.isPlaying
-                    if (wasPlaying) {
-                        setPlaybackState(false)
-                    }
-
-                    // Get actual song duration from metadata (network URL — needs timeout)
-                    val songDurationMs = withContext(Dispatchers.IO) {
-                        try {
-                            kotlinx.coroutines.withTimeoutOrNull(5000L) {
-                                val retriever = android.media.MediaMetadataRetriever()
-                                try {
-                                    retriever.setDataSource(songUrl, HashMap<String, String>())
-                                    retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_DURATION)
-                                        ?.toLongOrNull() ?: 180_000L
-                                } finally {
-                                    retriever.release()
-                                }
-                            } ?: 180_000L // Timeout fallback
-                        } catch (e: Exception) {
-                            android.util.Log.w("EditorViewModel", "Failed to get song duration, using fallback: ${e.message}")
-                            180_000L // Fallback to 3 minutes
-                        }
-                    }
-
-                    // Open trimmer with a window aligned to current video duration.
-                    // This keeps music editing tied to the current timeline length.
-                    val currentVideoDurationMs = currentState.displayProject.totalDurationMs
-                        .coerceAtLeast(MusicTrimmerState.Open.MIN_TRIM_DURATION_MS)
-                    val preferredStartMs = 0L  // Beat-sync mode: always start from beginning
-                    val preferredEndMs = preferredStartMs + currentVideoDurationMs
-                    val (trimStartMs, trimEndMs) = normalizeTrimWindow(
-                        preferredStartMs = preferredStartMs,
-                        preferredEndMs = preferredEndMs,
-                        songDurationMs = songDurationMs
-                    )
-
-                    _musicTrimmerState.value = MusicTrimmerState.Open(
-                        songName = songName,
-                        songDurationMs = songDurationMs,
-                        trimStartMs = trimStartMs,
-                        trimEndMs = trimEndMs,
-                        currentMusicPositionMs = trimStartMs, // Start at trim start
-                        isMusicPlaying = false,
-                        wasMainPlayerPlaying = wasPlaying
-                    )
-                } catch (e: Exception) {
-                    // Log error but don't crash
-                    android.util.Log.e("EditorViewModel", "Failed to open music trimmer", e)
-                }
-            }
-        }
-    }
-
-    /**
-     * Updates music trim preview positions during drag.
-     * Real-time update - no database write.
-     * Thread-safe with mutex protection.
-     */
-    fun updateMusicTrimPreview(startMs: Long, endMs: Long) {
-        val currentTrimState = _musicTrimmerState.value
-        if (currentTrimState !is MusicTrimmerState.Open) return
-
-        viewModelScope.launch {
-            trimStateMutex.withLock {
-                try {
-                    // Validate minimum duration (5 seconds)
-                    val duration = endMs - startMs
-                    if (duration < MusicTrimmerState.Open.MIN_TRIM_DURATION_MS) {
-                        return@withLock
-                    }
-
-                    // Update trimmer state (NOT pending settings yet - preview only)
-                    _musicTrimmerState.value = currentTrimState.copy(
-                        trimStartMs = startMs,
-                        trimEndMs = endMs
-                    )
-                } catch (e: Exception) {
-                    android.util.Log.e("EditorViewModel", "Failed to update trim preview", e)
-                }
-            }
-        }
-    }
-
-    /**
-     * Updates current music playback position (for playhead indicator).
-     * High-frequency update - no mutex needed (single atomic write).
-     */
-    fun updateMusicTrimPosition(currentMs: Long) {
-        val currentTrimState = _musicTrimmerState.value
-        if (currentTrimState is MusicTrimmerState.Open) {
-            _musicTrimmerState.value = currentTrimState.copy(
-                currentMusicPositionMs = currentMs
-            )
-        }
-    }
-
-    /**
-     * Toggles music playback in trimmer.
-     * Single atomic write - no mutex needed.
-     */
-    fun toggleMusicTrimPlayback() {
-        val currentTrimState = _musicTrimmerState.value
-        if (currentTrimState is MusicTrimmerState.Open) {
-            _musicTrimmerState.value = currentTrimState.copy(
-                isMusicPlaying = !currentTrimState.isMusicPlaying
-            )
-        }
-    }
-
-    /**
-     * Sets music playback state in trimmer.
-     * Single atomic write - no mutex needed.
-     */
-    fun setMusicTrimPlaybackState(isPlaying: Boolean) {
-        val currentTrimState = _musicTrimmerState.value
-        if (currentTrimState is MusicTrimmerState.Open) {
-            _musicTrimmerState.value = currentTrimState.copy(
-                isMusicPlaying = isPlaying
-            )
-        }
-    }
-
-    /**
-     * Updates song duration when music player finishes loading.
-     * Called by UI when actual duration is known.
-     */
-    fun updateMusicTrimDuration(durationMs: Long) {
-        val currentTrimState = _musicTrimmerState.value
-        if (currentTrimState is MusicTrimmerState.Open) {
-            viewModelScope.launch {
-                trimStateMutex.withLock {
-                    val (trimStartMs, trimEndMs) = normalizeTrimWindow(
-                        preferredStartMs = currentTrimState.trimStartMs,
-                        preferredEndMs = currentTrimState.trimEndMs,
-                        songDurationMs = durationMs
-                    )
-
-                    _musicTrimmerState.value = currentTrimState.copy(
-                        songDurationMs = durationMs,
-                        trimStartMs = trimStartMs,
-                        trimEndMs = trimEndMs
-                    )
-                }
-            }
-        }
-    }
-
-    /**
-     * Applies music trim to project settings and saves to database.
-     * Thread-safe with mutex protection.
-     * Closes trimmer after applying.
-     */
-    fun applyMusicTrim() {
-        val currentTrimState = _musicTrimmerState.value
-        if (currentTrimState !is MusicTrimmerState.Open) {
-            android.util.Log.w("EditorViewModel", "applyMusicTrim: Not in Open state")
-            return
-        }
-        if (!currentTrimState.isValid) {
-            android.util.Log.w("EditorViewModel", "applyMusicTrim: Invalid trim state")
-            return // Don't save invalid trim
-        }
-
-        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
-            trimStateMutex.withLock {
-                try {
-                    val startMs = currentTrimState.trimStartMs
-                    val endMs = currentTrimState.trimEndMs
-                    val currentState = _uiState.value
-
-                    if (currentState !is EditorUiState.Success) {
-                        android.util.Log.w("EditorViewModel", "applyMusicTrim: Invalid UI state")
-                        return@withLock
-                    }
-
-                    // Get audio URI (handles both custom audio and music songs)
-                    val audioUri = getAudioUri(currentState.displaySettings)
-                    if (audioUri == null) {
-                        android.util.Log.w("EditorViewModel", "applyMusicTrim: No audio selected")
-                        return@withLock
-                    }
-
-                    android.util.Log.d("EditorViewModel", "applyMusicTrim: Saving trim positions start=$startMs, end=$endMs (instant)")
-
-                    // Beat-sync mode: Music trimming is handled via hookStartTimeMs in beat-sync data
-                    // No need to update totalDurationMs here - it's calculated from beats
-                    // Don't clear processedAudioUri — it contains the beat-sync fadeout
-                    applySettings()
-
-                    android.util.Log.d("EditorViewModel", "applyMusicTrim: Trim positions saved (Media3 will handle looping)")
-
-                    // Close trimmer and restore main player state
-                    closeMusicTrimmerInternal(currentTrimState.wasMainPlayerPlaying)
-                } catch (e: Exception) {
-                    android.util.Log.e("EditorViewModel", "Failed to apply music trim", e)
-                }
-            }
-        }
-    }
-
-    /**
-     * Closes music trimmer bottom sheet.
-     * Discards changes if applyChanges = false.
-     * Restores main player state.
-     * Thread-safe with mutex protection.
-     */
-    fun closeMusicTrimmer(applyChanges: Boolean = false) {
-        val currentTrimState = _musicTrimmerState.value
-        if (currentTrimState !is MusicTrimmerState.Open) return
-
-        viewModelScope.launch {
-            trimStateMutex.withLock {
-                try {
-                    if (applyChanges && currentTrimState.isValid) {
-                        // In beat-sync mode, trim is handled via hookStartTimeMs
-                        applySettings()
-                    }
-
-                    // Close trimmer and restore main player state
-                    closeMusicTrimmerInternal(currentTrimState.wasMainPlayerPlaying)
-                } catch (e: Exception) {
-                    android.util.Log.e("EditorViewModel", "Failed to close music trimmer", e)
-                }
-            }
-        }
-    }
-
-    /**
-     * Internal helper to close trimmer and restore main player.
-     * Must be called within mutex lock.
-     */
-    private fun closeMusicTrimmerInternal(restorePlaybackState: Boolean) {
-        android.util.Log.d("EditorViewModel", "closeMusicTrimmerInternal: restorePlaybackState=$restorePlaybackState")
-
-        // Close trimmer state
-        _musicTrimmerState.value = MusicTrimmerState.Closed
-
-        // Restore main player playback state if it was playing before
-        if (restorePlaybackState) {
-            android.util.Log.d("EditorViewModel", "closeMusicTrimmerInternal: Restoring playback (play)")
-            setPlaybackState(true)
-        } else {
-            android.util.Log.d("EditorViewModel", "closeMusicTrimmerInternal: Not restoring playback (was paused)")
-        }
-    }
-
-    /**
-     * Clears music trim settings (reset to full song).
-     * Updates pending settings and closes trimmer.
-     */
-    fun clearMusicTrim() {
-        viewModelScope.launch {
-            trimStateMutex.withLock {
-                try {
-                    // Reset trim positions to default (full song)
-                    // Don't clear processedAudioUri — it contains the beat-sync fadeout
-                    applySettings()
-
-                    // Close trimmer if open
-                    val currentTrimState = _musicTrimmerState.value
-                    if (currentTrimState is MusicTrimmerState.Open) {
-                        closeMusicTrimmerInternal(currentTrimState.wasMainPlayerPlaying)
-                    }
-                } catch (e: Exception) {
-                    android.util.Log.e("EditorViewModel", "Failed to clear music trim", e)
                 }
             }
         }
@@ -2403,34 +2206,6 @@ class EditorViewModel(
         positionTickerJob?.cancel()
         positionTickerJob = null
 
-        // Close music trimmer and release resources (prevents memory leak)
-        val currentTrimState = _musicTrimmerState.value
-        if (currentTrimState is MusicTrimmerState.Open) {
-            _musicTrimmerState.value = MusicTrimmerState.Closed
-        }
-    }
-
-    private fun normalizeTrimWindow(
-        preferredStartMs: Long,
-        preferredEndMs: Long,
-        songDurationMs: Long
-    ): Pair<Long, Long> {
-        val minDurationMs = MusicTrimmerState.Open.MIN_TRIM_DURATION_MS
-        val safeSongDurationMs = songDurationMs.coerceAtLeast(minDurationMs)
-        val maxStartMs = (safeSongDurationMs - minDurationMs).coerceAtLeast(0L)
-
-        val startMs = preferredStartMs.coerceIn(0L, maxStartMs)
-        val minEndMs = startMs + minDurationMs
-        val endMs = preferredEndMs
-            .coerceAtLeast(minEndMs)
-            .coerceAtMost(safeSongDurationMs)
-
-        return if (endMs - startMs >= minDurationMs) {
-            startMs to endMs
-        } else {
-            val fallbackStartMs = (safeSongDurationMs - minDurationMs).coerceAtLeast(0L)
-            fallbackStartMs to safeSongDurationMs
-        }
     }
 }
 

@@ -47,6 +47,8 @@ import com.videomaker.aimusic.R
 import com.videomaker.aimusic.domain.model.TextFontPreset
 import com.videomaker.aimusic.domain.model.TextOverlay
 import com.videomaker.aimusic.domain.model.mockFontPresets
+import com.videomaker.aimusic.core.analytics.Analytics
+import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import kotlin.math.atan2
 import kotlin.math.hypot
 import kotlin.math.roundToInt
@@ -202,8 +204,7 @@ fun TextOverlayCanvasContent(
                                         var currentDragX = startX
                                         var currentDragY = startY
 
-                                        // Detect hold (long press) of the first finger to activate 2-finger zoom/rotate
-                                        var longPressTriggered = false
+                                        // Detect hold (long press) of the first finger to trigger haptic feedback
                                         val holdResult = withTimeoutOrNull(400L) {
                                             while (true) {
                                                 val event = awaitPointerEvent()
@@ -223,9 +224,10 @@ fun TextOverlayCanvasContent(
                                         }
                                         if (holdResult == null) {
                                             // Timeout met -> User held down without lifting/dragging past touchSlop
-                                            longPressTriggered = true
                                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                         }
+
+                                        var hasDraggedOrPinched = false
 
                                         while (true) {
                                             val event = awaitPointerEvent()
@@ -237,8 +239,6 @@ fun TextOverlayCanvasContent(
                                             activePointers = pressedChanges.map { it.id }
 
                                             if (pressedChanges.size >= 2) {
-                                                // Handle multi-finger zoom & rotate ONLY if longPressTriggered occurred first
-                                                if (longPressTriggered) {
                                                     val p1 = pressedChanges[0]
                                                     val p2 = pressedChanges[1]
                                                     val p1Pos = p1.position
@@ -275,6 +275,10 @@ fun TextOverlayCanvasContent(
                                                         val newX = initialCenterX + (centerDeltaWindow.x / currentCanvasWidth)
                                                         val newY = initialCenterY + (centerDeltaWindow.y / currentCanvasHeight)
 
+                                                        if (!hasDraggedOrPinched) {
+                                                            hasDraggedOrPinched = true
+                                                            Analytics.trackEditBoxDrag(AnalyticsEvent.Value.TypeTool.TEXT)
+                                                        }
                                                         currentOnUpdateText(
                                                             currentOverlay.id,
                                                             newX,
@@ -284,10 +288,6 @@ fun TextOverlayCanvasContent(
                                                         )
                                                     }
                                                     pressedChanges.forEach { it.consume() }
-                                                } else {
-                                                    // Consume touch so single finger drag doesn't jump wildly if 2nd finger placed without hold
-                                                    pressedChanges.forEach { it.consume() }
-                                                }
                                             } else {
                                                 // Handle single-finger drag
                                                 val change = pressedChanges.first()
@@ -317,6 +317,10 @@ fun TextOverlayCanvasContent(
                                                     val newX = currentOverlay.xPercentage + (dragDeltaWindow.x / currentCanvasWidth)
                                                     val newY = currentOverlay.yPercentage + (dragDeltaWindow.y / currentCanvasHeight)
                                                     
+                                                    if (!hasDraggedOrPinched) {
+                                                        hasDraggedOrPinched = true
+                                                        Analytics.trackEditBoxDrag(AnalyticsEvent.Value.TypeTool.TEXT)
+                                                    }
                                                     currentOnUpdateText(
                                                         currentOverlay.id,
                                                         newX,
@@ -381,6 +385,7 @@ fun TextOverlayCanvasContent(
                                     .size(40.dp) // 40dp touch target (Material minimum)
                                     .clip(CircleShape)
                                     .clickable {
+                                        Analytics.trackEditBoxDelete(AnalyticsEvent.Value.TypeTool.TEXT)
                                         onRemoveText(overlay.id)
                                     },
                                 contentAlignment = Alignment.Center
@@ -424,6 +429,7 @@ fun TextOverlayCanvasContent(
                                             while (true) {
                                                 val down = awaitFirstDown(requireUnconsumed = false)
                                                 down.consume()
+                                                Analytics.trackEditBoxDrag(AnalyticsEvent.Value.TypeTool.TEXT)
                                                 val currentHandleCoords = handleCoordinates ?: continue
                                                 val currentCenterCoords = centerCoordinates ?: continue
 

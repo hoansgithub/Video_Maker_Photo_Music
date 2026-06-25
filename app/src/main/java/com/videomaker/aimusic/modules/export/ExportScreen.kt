@@ -122,6 +122,7 @@ import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import java.io.File
 import com.videomaker.aimusic.core.ads.AdClickDetector
+import com.videomaker.aimusic.core.ads.AdPlacementConfigService
 
 // ============================================
 // HELPER - Release player async to avoid ANR
@@ -184,6 +185,7 @@ fun ExportScreen(
     onNavigateToTemplateDetail: (String) -> Unit
 ) {
     val adClickDetector: AdClickDetector = koinInject()
+    val adPlacementConfigService: AdPlacementConfigService = koinInject()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val thumbnailUri by viewModel.thumbnailUri.collectAsStateWithLifecycle()
     val aspectRatio by viewModel.aspectRatio.collectAsStateWithLifecycle()
@@ -603,14 +605,16 @@ fun ExportScreen(
         }
     }
     // Bottom ad: native "banner" (replaces BANNER_EXPORT) on all export states
-    NativeAdView(
-        placement = AdPlacement.NATIVE_EXPORT_PREPARING,
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(100.dp),
-        isDebug = BuildConfig.DEBUG,
-        onAdClicked = { adClickDetector.onAdClick(it) }
-    )
+    Box(modifier = if (adPlacementConfigService.adBottomNavPaddingEnabled) Modifier.navigationBarsPadding() else Modifier) {
+        NativeAdView(
+            placement = AdPlacement.NATIVE_EXPORT_PREPARING,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(100.dp),
+            isDebug = BuildConfig.DEBUG,
+            onAdClicked = { adClickDetector.onAdClick(it) }
+        )
+    }
 }
 }
 
@@ -642,6 +646,7 @@ private fun ProcessingContent(
     aspectRatio: AspectRatio = AspectRatio.RATIO_9_16
 ) {
     val adClickDetector: AdClickDetector = koinInject()
+    val adPlacementConfigService: AdPlacementConfigService = koinInject()
     // Rotating tips - cycle through 10 messages every 4 seconds
     val tipMessages = listOf(
         stringResource(R.string.export_tip_1),
@@ -829,12 +834,14 @@ private fun ProcessingContent(
             }
 
             // Native ad at bottom (edge-to-edge, no horizontal padding)
-            NativeAdView(
-                placement = AdPlacement.NATIVE_EXPORT_GENERATING,
-                modifier = Modifier.fillMaxWidth(),
-                isDebug = BuildConfig.DEBUG,
-                onAdClicked = { adClickDetector.onAdClick(it) }
-            )
+            Box(modifier = if (adPlacementConfigService.adBottomNavPaddingEnabled) Modifier.navigationBarsPadding() else Modifier) {
+                NativeAdView(
+                    placement = AdPlacement.NATIVE_EXPORT_GENERATING,
+                    modifier = Modifier.fillMaxWidth(),
+                    isDebug = BuildConfig.DEBUG,
+                    onAdClicked = { adClickDetector.onAdClick(it) }
+                )
+            }
         }
     }
 }

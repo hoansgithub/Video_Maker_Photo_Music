@@ -72,6 +72,7 @@ import com.videomaker.aimusic.ui.theme.Primary
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import com.videomaker.aimusic.core.ads.AdClickDetector
+import com.videomaker.aimusic.core.ads.AdPlacementConfigService
 import org.koin.compose.koinInject
 
 // ============================================
@@ -94,6 +95,7 @@ internal fun WelcomePage(
     pageIndex: Int = 0  // 0-based index for ad placement
 ) {
     val adClickDetector: AdClickDetector = koinInject()
+    val adPlacementConfigService: AdPlacementConfigService = koinInject()
     // Map page index to ad placement
     val adPlacement = when (pageIndex) {
         0 -> AdPlacement.NATIVE_ONBOARDING_PAGE1
@@ -174,6 +176,7 @@ internal fun WelcomePage(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .then(if (adPlacementConfigService.adBottomNavPaddingEnabled) Modifier.navigationBarsPadding() else Modifier)
             ) {
                 NativeAdView(
                     placement = adPlacement,
@@ -205,6 +208,7 @@ internal fun WelcomePageDynamic(
     pageIndex: Int = 0
 ) {
     val adClickDetector: AdClickDetector = koinInject()
+    val adPlacementConfigService: AdPlacementConfigService = koinInject()
     var bottomSectionHeight by remember { mutableStateOf(0) }
     val adPlacement = when (pageIndex) {
         0 -> AdPlacement.NATIVE_ONBOARDING_PAGE1
@@ -456,6 +460,7 @@ internal fun WelcomePageDynamic(
                         bottomSectionHeight =
                             size.height  // Measure actual height dynamically!
                     }
+                    .then(if (adPlacementConfigService.adBottomNavPaddingEnabled) Modifier.navigationBarsPadding() else Modifier)
             ) {
                 NativeAdView(
                     placement = adPlacement,
@@ -484,6 +489,7 @@ internal fun DynamicCarousel(
     pageIndex: Int = 0
 ) {
     val adClickDetector: AdClickDetector = koinInject()
+    val adPlacementConfigService: AdPlacementConfigService = koinInject()
     var bottomSectionHeight by remember { mutableStateOf(0) }
     val totalSlides = maxOf(1, thumbnailUrls.size + localFallbackResIds.size)
     val pagerState = rememberPagerState(pageCount = { totalSlides })
@@ -624,6 +630,7 @@ internal fun DynamicCarousel(
                         bottomSectionHeight =
                             size.height  // Measure actual height dynamically!
                     }
+                    .then(if (adPlacementConfigService.adBottomNavPaddingEnabled) Modifier.navigationBarsPadding() else Modifier)
             ) {
                 NativeAdView(
                     placement = adPlacement,
@@ -650,6 +657,7 @@ internal fun IndiaPage3Carousel(
     pageIndex: Int = 0
 ) {
     val adClickDetector: AdClickDetector = koinInject()
+    val adPlacementConfigService: AdPlacementConfigService = koinInject()
     val pagerState = rememberPagerState(pageCount = { 3 })
 
     val images = listOf(
@@ -759,7 +767,9 @@ internal fun IndiaPage3Carousel(
         // Native Ad at bottom
         if (adPlacement != null) {
             Box(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .then(if (adPlacementConfigService.adBottomNavPaddingEnabled) Modifier.navigationBarsPadding() else Modifier)
             ) {
                 NativeAdView(
                     placement = adPlacement,

@@ -163,7 +163,6 @@ fun HomeBannerCarousel(
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(388 / 200f)
-                    .clip(RoundedCornerShape(dimens.radiusXl))
                     .background(Color.Black)
             ) {
                 NativeAdView(

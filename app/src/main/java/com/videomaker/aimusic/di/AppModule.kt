@@ -395,6 +395,10 @@ val adsModule = module {
     // Ad Click Context Tracker (singleton - tracks ad click background state)
     single { com.videomaker.aimusic.core.ads.AdClickContextTracker() }
 
+    // Home screen collapsible ad tracker (singleton)
+    single { com.videomaker.aimusic.core.ads.HomeAdTracker() }
+
+
     // Ad Click Detector (singleton - handles ad click detection + preloads post-click AOA)
     single {
         com.videomaker.aimusic.core.ads.AdClickDetector(

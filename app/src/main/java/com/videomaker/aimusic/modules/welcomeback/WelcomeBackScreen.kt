@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -44,6 +45,7 @@ import com.videomaker.aimusic.ui.theme.WelcomeBackBackground
 import com.videomaker.aimusic.ui.theme.WelcomeBackVibeBg
 import com.videomaker.aimusic.ui.theme.WelcomeBackVibeBorder
 import com.videomaker.aimusic.core.ads.AdClickDetector
+import com.videomaker.aimusic.core.ads.AdPlacementConfigService
 import org.koin.compose.koinInject
 
 @Composable
@@ -52,6 +54,7 @@ fun WelcomeBackScreen(
     adPlacement: String = AdPlacement.NATIVE_WELCOME_BACK
 ) {
     val adClickDetector: AdClickDetector = koinInject()
+    val adPlacementConfigService: AdPlacementConfigService = koinInject()
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -153,6 +156,7 @@ fun WelcomeBackScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(min = 150.dp)
+                    .then(if (adPlacementConfigService.adBottomNavPaddingEnabled) Modifier.navigationBarsPadding() else Modifier)
             ) {
                 NativeAdView(
                     placement = adPlacement,

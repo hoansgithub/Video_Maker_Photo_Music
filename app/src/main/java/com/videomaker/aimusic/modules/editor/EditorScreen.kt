@@ -21,6 +21,7 @@ import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -31,7 +32,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.ime
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -61,6 +61,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -73,12 +74,15 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
@@ -229,6 +233,9 @@ fun EditorScreen(
     var hasTrackedVideoPreviewComplete by remember { mutableStateOf(false) }
     var hasTrackedExitPopupShow by remember { mutableStateOf(false) }
     var ratioBeforePanel by remember { mutableStateOf<AspectRatio?>(null) }
+    // Size of the area the preview is fit into — reported by EditorMainContent, used to keep
+    // stickers visually the same size when the user toggles aspect ratio (see rescaleStickers...).
+    var previewContainerSize by remember { mutableStateOf(IntSize.Zero) }
     val scope = rememberCoroutineScope()
     LaunchedEffect(textOverlayViewModel) {
         var lastId: String? = null
@@ -470,7 +477,7 @@ fun EditorScreen(
         }
     }
 
-    // True once the GL renderer has images loaded (replaces CompositionPlayer Ready state).
+    // True once the GL renderer has actually rendered its first frame with content.
     // NOTE: plain remember → resets when the editor is recomposed fresh (e.g. returning from the
     // asset picker), which is what we want for the placeholder cover during a replace rebuild.
     var hasBeenReady by remember { mutableStateOf(false) }
@@ -478,11 +485,11 @@ fun EditorScreen(
     // changes), so editorScreenState stays READY across replace/effect and only reports LOADING
     // for the very first load. Reset by the VM on a fresh load (initial/retry).
     val hasPreviewBeenReady by viewModel.hasPreviewBeenReady.collectAsStateWithLifecycle()
-    // Drive hasPreviewBeenReady from renderState instead of CompositionPlayer
+    // Drive hasPreviewBeenReady from renderState for data-readiness (fast path for replace/effect).
+    // GL first-frame callback in PreviewSurfaceView handles the initial markPreviewReady().
     LaunchedEffect(renderState) {
-        if (renderState.imageUris.isNotEmpty()) {
+        if (renderState.imageUris.isNotEmpty() && hasPreviewBeenReady) {
             hasBeenReady = true
-            viewModel.markPreviewReady()
         }
     }
     val isProcessingAudio = (uiState as? EditorUiState.Success)?.isProcessingAudio == true
@@ -515,6 +522,8 @@ fun EditorScreen(
     val previewAspectRatio =
         (uiState as? EditorUiState.Success)?.displaySettings?.aspectRatio?.ratio
             ?: lastAspectRatio.ratio
+
+
 
     Column(
         modifier = Modifier
@@ -672,7 +681,17 @@ fun EditorScreen(
                     }
                     // Revert if ratio changed during preview
                     val before = ratioBeforePanel
-                    if (before != null && state?.displaySettings?.aspectRatio != before) {
+                    val current = state?.displaySettings?.aspectRatio
+                    if (before != null && current != before) {
+                        // Reverse the sticker rescale too, so cancelling restores the original
+                        // on-screen sizes (factors telescope back to the pre-panel placement).
+                        if (current != null) {
+                            val oldShort = previewShortSidePx(current.ratio, previewContainerSize)
+                            val newShort = previewShortSidePx(before.ratio, previewContainerSize)
+                            if (oldShort > 0f && newShort > 0f) {
+                                viewModel.rescaleStickersForRatioChange(oldShort / newShort)
+                            }
+                        }
                         viewModel.updateAspectRatio(before)
                     }
                     showRatioSheet = false
@@ -689,6 +708,17 @@ fun EditorScreen(
                     showRatioSheet = false
                 },
                 onRatioSelected = { selectedRatio ->
+                    // Keep stickers visually the same size across the ratio change: scale their
+                    // width fraction by oldShortSidePx / newShortSidePx (the preview rect's short
+                    // side spans different px per ratio). Only an explicit zoom should resize them.
+                    val current = currentState()?.displaySettings?.aspectRatio
+                    if (current != null && current != selectedRatio) {
+                        val oldShort = previewShortSidePx(current.ratio, previewContainerSize)
+                        val newShort = previewShortSidePx(selectedRatio.ratio, previewContainerSize)
+                        if (oldShort > 0f && newShort > 0f) {
+                            viewModel.rescaleStickersForRatioChange(oldShort / newShort)
+                        }
+                    }
                     viewModel.updateAspectRatio(selectedRatio)
                     val videoId = currentVideoId()
                     if (videoId != null) {
@@ -698,6 +728,7 @@ fun EditorScreen(
                         )
                     }
                 },
+                onPreviewContainerSized = { previewContainerSize = it },
                 stickers = successState?.displaySettings?.stickers ?: emptyList(),
                 selectedStickerId = selectedStickerId,
                 onStickerTabClick = {
@@ -792,6 +823,7 @@ fun EditorScreen(
                     }
                 },
                 onTextPanelDismiss = {
+                    Analytics.trackTextClose()
                     textOverlayViewModel.setSelectedTextOverlayId(null)
                     showTextSheet = false
                 },
@@ -804,11 +836,15 @@ fun EditorScreen(
                             val fontName = fontPreset?.name ?: "neue_haas_regular"
                             val colorName = getColorName(overlay.color)
                             Analytics.trackTextSelect(colorName = colorName, fontName = fontName)
-                            Analytics.trackTextClose()
                         }
                     }
+                    Analytics.trackTextClose()
                     textOverlayViewModel.setSelectedTextOverlayId(null)
                     showTextSheet = false
+                },
+                onFirstFrameRendered = {
+                    hasBeenReady = true
+                    viewModel.markPreviewReady()
                 },
                 topBar = {
                     androidx.compose.animation.AnimatedVisibility(
@@ -1366,6 +1402,22 @@ private fun AspectRatio.toAnalyticsRatioSize(): String = when (this) {
     AspectRatio.RATIO_1_1 -> "1:1"
 }
 
+/**
+ * On-screen length (px) of the preview rect's SHORT side for a given video [ratio] (= width/height)
+ * when fit (largest, centered) into the [container] available to the preview — i.e. the same size
+ * `Modifier.aspectRatio(ratio)` produces inside that container. Sticker size is anchored to this
+ * short side, so the px ratio between two ratios is exactly how much a sticker would visually
+ * grow/shrink on a ratio toggle — and thus the factor needed to cancel it. Returns 0 if unknown.
+ */
+private fun previewShortSidePx(ratio: Float, container: IntSize): Float {
+    val w = container.width.toFloat()
+    val h = container.height.toFloat()
+    if (ratio <= 0f || w <= 0f || h <= 0f) return 0f
+    // Normalize the video to vw = ratio, vh = 1; fit scale = min(w/vw, h/vh).
+    val scale = minOf(w / ratio, h)
+    return scale * minOf(ratio, 1f)
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 // MusicSection, SettingsTabBar, and SettingsTabButton moved to components/ package
 
@@ -1407,6 +1459,9 @@ internal fun EditorMainContent(
     onRatioPanelDismiss: () -> Unit = {},
     onRatioPanelConfirm: () -> Unit = {},
     onRatioSelected: (AspectRatio) -> Unit = {},
+    // Reports the size of the area the preview is fit into (constant across ratios), so the host
+    // can compute the sticker rescale factor that keeps stickers visually put on a ratio toggle.
+    onPreviewContainerSized: (IntSize) -> Unit = {},
     showTextPanel: Boolean = false,
     textFocusTrigger: Long = 0L,
     textOverlayViewModel: TextOverlayViewModel? = null,
@@ -1428,6 +1483,7 @@ internal fun EditorMainContent(
     onStickerPanelDismiss: () -> Unit = {},
     onStickerPanelConfirm: () -> Unit = {},
     onAddSticker: (com.videomaker.aimusic.domain.model.Sticker) -> Unit = {},
+    onFirstFrameRendered: () -> Unit = {},
     topBar: @Composable () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
@@ -1444,6 +1500,7 @@ internal fun EditorMainContent(
     }
     val maxHeight = 620.dp
     var currentPanelHeight by remember(minHeight) { mutableStateOf(minHeight) }
+
 
     LaunchedEffect(showEffectSetPanel, showTextPanel, showRatioPanel, showStickerPanel, minHeight) {
         if (showEffectSetPanel || showTextPanel || showRatioPanel || showStickerPanel) {
@@ -1503,7 +1560,10 @@ internal fun EditorMainContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
-                .padding(top = 2.dp),
+                .padding(top = 8.dp)
+                // Measured AFTER padding → the actual area the aspectRatio preview is fit into.
+                // Constant across ratios, so it's the reference for the sticker rescale factor.
+                .onSizeChanged { onPreviewContainerSized(it) },
             contentAlignment = Alignment.Center
         ) {
             // GL renderer — always mounted. AndroidEmbeddedExternalSurface (TextureView)
@@ -1521,6 +1581,7 @@ internal fun EditorMainContent(
                     renderState = renderState,
                     playbackClock = playbackClock,
                     isPlaying = isPlaying,
+                    onFirstFrameRendered = onFirstFrameRendered,
                     modifier = Modifier.fillMaxSize()
                 )
 
@@ -1684,9 +1745,9 @@ internal fun EditorMainContent(
                                     spotColor = Color(0x3D000000),
                                     clip = false
                                 )
-                                .clip(RoundedCornerShape(20.dp))
+                                .clip(RoundedCornerShape(12.dp))
                                 .background(Color(0xFF575757).copy(0.4f))
-                                .border(1.dp, Color.White.copy(0.4f), RoundedCornerShape(20.dp))
+                                .border(1.dp, Color.White.copy(0.4f), RoundedCornerShape(12.dp))
                                 .clickable(onClick = onMusicSelectorClick)
                                 .padding(vertical = 8.dp, horizontal = 12.dp),
                             verticalAlignment = Alignment.CenterVertically
@@ -1964,103 +2025,162 @@ internal fun EditorMainContent(
     }
 
     if (showTextPanel && textOverlayViewModel != null) {
-        val isKeyboardOpen = WindowInsets.ime.asPaddingValues().calculateBottomPadding() > 0.dp
-
-        Column(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .then(
-                    if (isKeyboardOpen) {
-                        val adPlacementConfigService: AdPlacementConfigService = koinInject()
-                        val keyboardHeight = WindowInsets.ime.asPaddingValues().calculateBottomPadding()
-                        val navigationBarsHeight = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-                        val bannerHeight = if (adPlacementConfigService.bannerUseNative) 100.dp else 50.dp
-                        val bottomOffset = navigationBarsHeight + bannerHeight
-                        val dynamicPadding = (keyboardHeight - bottomOffset + 8.dp).coerceAtLeast(0.dp)
-
-                        Modifier
-                            .padding(bottom = dynamicPadding)
-                            .wrapContentHeight()
-                    } else {
-                        Modifier.height(currentPanelHeight)
-                    }
-                )
-                .background(SplashBackground)
-                .then(
-                    if (isKeyboardOpen) Modifier else Modifier.nestedScroll(nestedScrollConnection)
-                )
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null
-                ) { /* consume clicks */ }
-        ) {
-            if (!isKeyboardOpen) {
-                // Drag handle area
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .pointerInput(Unit) {
-                            detectDragGestures { change, dragAmount ->
-                                change.consume()
-                                val dragDp = with(density) { -dragAmount.y.toDp() }
-                                currentPanelHeight = (currentPanelHeight + dragDp).coerceIn(minHeight, maxHeight)
-                            }
-                        }
-                        .padding(vertical = 12.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(width = 36.dp, height = 4.dp)
-                            .clip(RoundedCornerShape(2.dp))
-                            .background(Color.Gray)
-                    )
-                }
-            }
-
-            // Player Controls — hidden when user swipes the panel up or keyboard is open
-            AnimatedVisibility(
-                visible = currentPanelHeight <= minHeight + 30.dp && !isKeyboardOpen,
-                enter = fadeIn() + expandVertically(),
-                exit = fadeOut() + shrinkVertically()
-            ) {
-                EditorPlayerControls(
-                    currentPositionMs = currentPositionMs,
-                    durationMs = durationMs,
-                    isPlaying = isPlaying,
-                    onSeek = { position ->
-                        if (durationMs > 0) {
-                            onSeek((position * durationMs).toLong())
-                        }
-                    },
-                    onScrub = { position ->
-                        if (durationMs > 0) {
-                            onScrub((position * durationMs).toLong())
-                        }
-                    },
-                    onSeekStart = onSeekStart,
-                    onSeekEnd = onSeekEnd,
-                    onPlayPauseClick = onPlayPauseClick,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-
-            // Inline TextBottomSheet
-            TextBottomSheet(
-                viewModel = textOverlayViewModel,
-                onDismiss = onTextPanelDismiss,
-                onConfirm = onTextPanelConfirm,
-                focusTrigger = textFocusTrigger,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .then(
-                        if (isKeyboardOpen) Modifier else Modifier.weight(1f)
-                    )
-            )
-        }
+        TextPanelWrapper(
+            textOverlayViewModel = textOverlayViewModel,
+            currentPanelHeight = currentPanelHeight,
+            minHeight = minHeight,
+            maxHeight = maxHeight,
+            density = density,
+            nestedScrollConnection = nestedScrollConnection,
+            currentPositionMs = currentPositionMs,
+            durationMs = durationMs,
+            isPlaying = isPlaying,
+            onSeek = onSeek,
+            onScrub = onScrub,
+            onSeekStart = onSeekStart,
+            onSeekEnd = onSeekEnd,
+            onPlayPauseClick = onPlayPauseClick,
+            textFocusTrigger = textFocusTrigger,
+            onTextPanelDismiss = onTextPanelDismiss,
+            onTextPanelConfirm = onTextPanelConfirm,
+            onHeightChange = { currentPanelHeight = it }
+        )
     }
 }
+}
+
+@Composable
+private fun BoxScope.TextPanelWrapper(
+    textOverlayViewModel: TextOverlayViewModel,
+    currentPanelHeight: Dp,
+    minHeight: Dp,
+    maxHeight: Dp,
+    density: androidx.compose.ui.unit.Density,
+    nestedScrollConnection: NestedScrollConnection,
+    currentPositionMs: Long,
+    durationMs: Long,
+    isPlaying: Boolean,
+    onSeek: (Long) -> Unit,
+    onScrub: (Long) -> Unit,
+    onSeekStart: () -> Unit,
+    onSeekEnd: () -> Unit,
+    onPlayPauseClick: () -> Unit,
+    textFocusTrigger: Long,
+    onTextPanelDismiss: () -> Unit,
+    onTextPanelConfirm: () -> Unit,
+    onHeightChange: (Dp) -> Unit
+) {
+    val adPlacementConfigService: AdPlacementConfigService = koinInject()
+    val keyboardHeight = WindowInsets.ime.asPaddingValues().calculateBottomPadding()
+    val bannerHeight = if (adPlacementConfigService.bannerUseNative) 100.dp else 50.dp
+
+    // The IME inset (keyboardHeight) is measured from the very bottom of the screen and
+    // already spans the navigation-bar region. This panel sits directly above the banner
+    // ad, so only the banner height separates the panel's bottom from the keyboard; the
+    // nav-bar area below is covered by the keyboard. Subtracting the nav bar too would
+    // under-lift the input and let the keyboard clip it.
+    // Add extra space (12.dp) between the keyboard and the input field for a premium look.
+    val dynamicPadding = if (keyboardHeight > 0.dp) {
+        (keyboardHeight - bannerHeight + 12.dp).coerceAtLeast(0.dp)
+    } else {
+        0.dp
+    }
+    val isKeyboardOpen = keyboardHeight > 0.dp
+
+    val currentHeightState by rememberUpdatedState(currentPanelHeight)
+    val minHeightState by rememberUpdatedState(minHeight)
+    val maxHeightState by rememberUpdatedState(maxHeight)
+    val isKeyboardOpenState by rememberUpdatedState(isKeyboardOpen)
+
+    Column(
+        modifier = Modifier
+            .align(Alignment.BottomCenter)
+            .fillMaxWidth()
+            .then(
+                // When the keyboard is open the color/font sections are hidden, so the
+                // panel only needs to wrap the input row. A fixed height combined with the
+                // large bottom IME padding would squeeze the content and hide the input
+                // behind the keyboard, so wrap height instead and let dynamicPadding lift it.
+                if (isKeyboardOpen) Modifier.wrapContentHeight()
+                else Modifier.height(currentPanelHeight)
+            )
+            .padding(bottom = dynamicPadding)
+            .background(SplashBackground)
+            .then(
+                if (isKeyboardOpen) Modifier else Modifier.nestedScroll(nestedScrollConnection)
+            )
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null
+            ) { /* consume clicks */ },
+        verticalArrangement = Arrangement.Bottom
+    ) {
+        // Drag handle area (always visible and draggable)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .pointerInput(Unit) {
+                    detectDragGestures { change, dragAmount ->
+                        if (!isKeyboardOpenState) {
+                            change.consume()
+                            val dragDp = with(density) { -dragAmount.y.toDp() }
+                            onHeightChange((currentHeightState + dragDp).coerceIn(minHeightState, maxHeightState))
+                        }
+                    }
+                }
+                .padding(vertical = 12.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(width = 36.dp, height = 4.dp)
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(Color.Gray)
+            )
+        }
+
+        // Player Controls — hidden when user swipes the panel up or keyboard is open
+        AnimatedVisibility(
+            visible = currentPanelHeight <= minHeight + 30.dp && !isKeyboardOpen,
+            enter = fadeIn() + expandVertically(),
+            exit = fadeOut() + shrinkVertically()
+        ) {
+            EditorPlayerControls(
+                currentPositionMs = currentPositionMs,
+                durationMs = durationMs,
+                isPlaying = isPlaying,
+                onSeek = { position ->
+                    if (durationMs > 0) {
+                        onSeek((position * durationMs).toLong())
+                    }
+                },
+                onScrub = { position ->
+                    if (durationMs > 0) {
+                        onScrub((position * durationMs).toLong())
+                    }
+                },
+                onSeekStart = onSeekStart,
+                onSeekEnd = onSeekEnd,
+                onPlayPauseClick = onPlayPauseClick,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+
+        // Inline TextBottomSheet
+        TextBottomSheet(
+            viewModel = textOverlayViewModel,
+            onDismiss = onTextPanelDismiss,
+            onConfirm = onTextPanelConfirm,
+            isKeyboardOpen = isKeyboardOpen,
+            focusTrigger = textFocusTrigger,
+            modifier = Modifier
+                .fillMaxWidth()
+                .then(
+                    if (isKeyboardOpen) Modifier.wrapContentHeight()
+                    else Modifier.weight(1f)
+                )
+        )
+    }
 }
 
 @Composable
