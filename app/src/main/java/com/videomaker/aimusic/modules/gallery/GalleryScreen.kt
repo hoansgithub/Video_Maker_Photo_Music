@@ -769,7 +769,6 @@ private fun FeaturedTemplatesCarousel(
                         modifier = Modifier
                             .fillMaxWidth()
                             .aspectRatio(16f / 9f)
-                            .clip(RoundedCornerShape(dimens.radiusXl))
                             .background(Color.Black)
                     ) {
                         NativeAdView(

@@ -432,7 +432,9 @@ private fun PageGrid(
                             is TemplateGridItem.AdItem -> {
                                 NativeAdView(
                                     placement = AdPlacement.NATIVE_GALLERY_GRID,
-                                    modifier = Modifier.fillMaxWidth(),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 4.dp),
                                     isDebug = BuildConfig.DEBUG,
                                     onAdClicked = { adClickDetector.onAdClick(it) }
                                 )

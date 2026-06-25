@@ -44,6 +44,7 @@ import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 import kotlinx.coroutines.delay
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import com.videomaker.aimusic.core.ads.AdClickDetector
+import com.videomaker.aimusic.core.ads.AdPlacementConfigService
 import org.koin.compose.koinInject
 
 class GenreTemplateActivity : AppCompatActivity() {
@@ -57,6 +58,7 @@ class GenreTemplateActivity : AppCompatActivity() {
 
         setContent {
             val adClickDetector: AdClickDetector = koinInject()
+            val adPlacementConfigService: AdPlacementConfigService = koinInject()
             val remoteConfig: RemoteConfig = koinInject()
             var bottomSectionHeight by remember { mutableStateOf(0) }
             val currentStep by viewModel.currentStep.collectAsStateWithLifecycle()
@@ -309,6 +311,7 @@ class GenreTemplateActivity : AppCompatActivity() {
                                 .onSizeChanged { size ->
                                     bottomSectionHeight = size.height
                                 }
+                                .then(if (adPlacementConfigService.adBottomNavPaddingEnabled) Modifier.navigationBarsPadding() else Modifier)
                         ) {
                             key(adPlacement) {
                                 NativeAdView(

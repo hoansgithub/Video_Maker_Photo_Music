@@ -63,6 +63,7 @@ import com.videomaker.aimusic.R
 import com.videomaker.aimusic.ui.components.LocalAsyncImage
 import com.videomaker.aimusic.VideoMakerApplication
 import com.videomaker.aimusic.core.ads.AdClickDetector
+import com.videomaker.aimusic.core.ads.AdPlacementConfigService
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.core.constants.AdPlacement
@@ -133,6 +134,7 @@ class OnboardingSurveyActivity : AppCompatActivity() {
     @Composable
     private fun SurveyStep(step: OnboardingSurveyStep) {
         val adClickDetector: AdClickDetector = koinInject()
+        val adPlacementConfigService: AdPlacementConfigService = koinInject()
 
         // 1-step-ahead: preload the next step's ads when arriving at the current step.
         // MUST be before the AI_LEVEL early return so last-step preloading always fires.
@@ -403,6 +405,7 @@ class OnboardingSurveyActivity : AppCompatActivity() {
                         .onSizeChanged { size ->
                             if (size.height > bottomSectionHeight) bottomSectionHeight = size.height
                         }
+                        .then(if (adPlacementConfigService.adBottomNavPaddingEnabled) Modifier.navigationBarsPadding() else Modifier)
                 ) {
                     if (isFeatureStep) {
                         // FEATURE: dual-ad swap (matches Language/Feature Selection pattern).
@@ -452,6 +455,7 @@ class OnboardingSurveyActivity : AppCompatActivity() {
 
     @Composable
     private fun AiLevelStep(adClickDetector: AdClickDetector) {
+        val adPlacementConfigService: AdPlacementConfigService = koinInject()
         val density = LocalDensity.current
         val selectedIds by viewModel.selectedAiLevel.collectAsStateWithLifecycle()
         // No pre-selection: empty string means nothing is selected (no item highlighted).
@@ -540,6 +544,7 @@ class OnboardingSurveyActivity : AppCompatActivity() {
                     .onSizeChanged { size ->
                         if (size.height > bottomSectionHeight) bottomSectionHeight = size.height
                     }
+                    .then(if (adPlacementConfigService.adBottomNavPaddingEnabled) Modifier.navigationBarsPadding() else Modifier)
             ) {
                 val aiLevelPlacement =
                     if (aiLevelAltActive) AdPlacement.NATIVE_ONBOARDING_AI_LEVEL_ALT

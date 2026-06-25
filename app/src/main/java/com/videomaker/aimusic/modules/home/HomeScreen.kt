@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -672,15 +673,17 @@ fun HomeScreen(
             }
         }
 
+            // Ad below tab content (at bottom of screen)
+            // Remote Config toggle: native ad (default) or standard banner
+            val bottomAdModifier = if (adPlacementConfigService.adBottomNavPaddingEnabled)
+                Modifier.navigationBarsPadding() else Modifier
             Box(
-                modifier = Modifier
+                modifier = bottomAdModifier
                     .fillMaxWidth()
                     .onSizeChanged { size ->
                         bottomSectionHeight = size.height  // Measure actual height dynamically!
                     }
             ) {
-                // Ad below tab content (at bottom of screen)
-                // Remote Config toggle: native ad (default) or standard banner
                 if (adPlacementConfigService.bannerUseNative) {
                     NativeAdView(
                         placement = AdPlacement.NATIVE_HOME_BANNER,

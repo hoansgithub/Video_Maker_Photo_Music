@@ -50,6 +50,7 @@ import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
 import kotlinx.coroutines.launch
 import com.videomaker.aimusic.core.ads.AdClickDetector
+import com.videomaker.aimusic.core.ads.AdPlacementConfigService
 import org.koin.compose.koinInject
 import co.alcheclub.lib.acccore.remoteconfig.RemoteConfig
 import com.videomaker.aimusic.core.constants.RemoteConfigKeys
@@ -84,6 +85,7 @@ class FeatureSelectionActivity : AppCompatActivity() {
 
         setContent {
             val adClickDetector: AdClickDetector = koinInject()
+            val adPlacementConfigService: AdPlacementConfigService = koinInject()
             val density = LocalDensity.current
             var isSaving by remember { mutableStateOf(false) }
 
@@ -160,7 +162,11 @@ class FeatureSelectionActivity : AppCompatActivity() {
                         Box(modifier = Modifier.weight(1f)) {
                             PersonalizingScreen()
                         }
-                        Box(modifier = Modifier.fillMaxWidth()) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .then(if (adPlacementConfigService.adBottomNavPaddingEnabled) Modifier.navigationBarsPadding() else Modifier)
+                        ) {
                             NativeAdView(
                                 placement = AdPlacement.NATIVE_ONBOARDING_PERSONALIZING,
                                 modifier = Modifier.fillMaxWidth(),
@@ -316,6 +322,7 @@ class FeatureSelectionActivity : AppCompatActivity() {
                                 bottomSectionHeight =
                                     size.height  // Measure actual height dynamically!
                             }
+                            .then(if (adPlacementConfigService.adBottomNavPaddingEnabled) Modifier.navigationBarsPadding() else Modifier)
                     ) {
                         if (delayedHasSelection) {
                             // ALT ad - shown after user selects a feature

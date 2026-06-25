@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
@@ -70,6 +71,7 @@ import com.videomaker.aimusic.widget.components.TrendingSongWidget
 import com.videomaker.aimusic.widget.components.TrendingWidget
 import com.videomaker.aimusic.widget.model.WidgetType
 import com.videomaker.aimusic.core.ads.AdClickDetector
+import com.videomaker.aimusic.core.ads.AdPlacementConfigService
 import org.koin.compose.koinInject
 
 private const val TAG = "WidgetScreen"
@@ -87,6 +89,7 @@ fun WidgetScreen(
     onNavigateToSongPlayer: (songId: Long) -> Unit,
 ) {
     val adClickDetector: AdClickDetector = koinInject()
+    val adPlacementConfigService: AdPlacementConfigService = koinInject()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
     val pinWidgetEvent by viewModel.pinWidgetEvent.collectAsStateWithLifecycle()
@@ -301,12 +304,14 @@ fun WidgetScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             // Native Ad at bottom (auto height - TOP PRIORITY)
-            NativeAdView(
-                placement = AdPlacement.NATIVE_WIDGET_BOTTOM,
-                modifier = Modifier.fillMaxWidth(),
-                isDebug = BuildConfig.DEBUG,
-                onAdClicked = { adClickDetector.onAdClick(it) }
-            )
+            Box(modifier = if (adPlacementConfigService.adBottomNavPaddingEnabled) Modifier.navigationBarsPadding() else Modifier) {
+                NativeAdView(
+                    placement = AdPlacement.NATIVE_WIDGET_BOTTOM,
+                    modifier = Modifier.fillMaxWidth(),
+                    isDebug = BuildConfig.DEBUG,
+                    onAdClicked = { adClickDetector.onAdClick(it) }
+                )
+            }
         }
     }
 }

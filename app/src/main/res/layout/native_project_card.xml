@@ -9,14 +9,15 @@ Native Ad Layout: Project Card (9:16 Portrait)
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/transparent">
+    android:background="@android:color/transparent"
+    android:elevation="2dp">
 
     <!-- Container matching ProjectCard style -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
-        android:background="@color/foundation_black">
+        android:background="#1E1E1E">
 
         <!-- Ad Media (stretches to fill available height) -->
         <com.google.android.gms.ads.nativead.MediaView
@@ -25,7 +26,7 @@ Native Ad Layout: Project Card (9:16 Portrait)
             android:layout_height="0dp"
             android:layout_weight="1"
             android:scaleType="centerCrop"
-            android:background="@color/foundation_black" />
+            android:background="#1E1E1E" />
 
         <!-- Info Section (bottom - very compact) -->
         <LinearLayout
@@ -33,7 +34,7 @@ Native Ad Layout: Project Card (9:16 Portrait)
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:padding="8dp"
-            android:background="@color/foundation_black">
+            android:background="#1E1E1E">
 
             <!-- Icon + Headline Row -->
             <LinearLayout
@@ -110,6 +111,21 @@ Native Ad Layout: Project Card (9:16 Portrait)
 
         <!-- AdChoices overlay at top-right (absolute positioning usually handled by NativeAdView, but since we are using a LinearLayout as root, we should put AdChoices overlay in a FrameLayout wrapping everything, OR keep it as a sibling to the LinearLayout) -->
     </LinearLayout>
+
+    <!-- Ad badge (required by AdMob policy) -->
+    <TextView
+        android:id="@+id/ad_badge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|start"
+        android:layout_margin="8dp"
+        android:text="Ad"
+        android:textSize="9sp"
+        android:textColor="#FFFFFF"
+        android:textStyle="bold"
+        android:background="@drawable/bg_ad_badge"
+        android:paddingHorizontal="6dp"
+        android:paddingVertical="2dp" />
 
     <FrameLayout
         android:id="@+id/ad_choices_container"

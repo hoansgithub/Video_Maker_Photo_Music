@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -91,6 +92,7 @@ import com.videomaker.aimusic.ui.theme.TextPrimary
 import com.videomaker.aimusic.ui.theme.TextSecondary
 import com.videomaker.aimusic.ui.utils.innerShadowCustom
 import com.videomaker.aimusic.core.ads.AdClickDetector
+import com.videomaker.aimusic.core.ads.AdPlacementConfigService
 import org.koin.compose.koinInject
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -104,6 +106,7 @@ fun UninstallScreen(
     onNavigateToSongPlayer: (songId: Long) -> Unit,
 ) {
     val adClickDetector: AdClickDetector = koinInject()
+    val adPlacementConfigService: AdPlacementConfigService = koinInject()
     val context = LocalContext.current
     val activity = context as? android.app.Activity
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -458,12 +461,14 @@ fun UninstallScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             // Native Ad at bottom (auto height - TOP PRIORITY)
-            NativeAdView(
-                placement = AdPlacement.NATIVE_UNINSTALL_BOTTOM,
-                modifier = Modifier.fillMaxWidth(),
-                isDebug = BuildConfig.DEBUG,
-                onAdClicked = { adClickDetector.onAdClick(it) }
-            )
+            Box(modifier = if (adPlacementConfigService.adBottomNavPaddingEnabled) Modifier.navigationBarsPadding() else Modifier) {
+                NativeAdView(
+                    placement = AdPlacement.NATIVE_UNINSTALL_BOTTOM,
+                    modifier = Modifier.fillMaxWidth(),
+                    isDebug = BuildConfig.DEBUG,
+                    onAdClicked = { adClickDetector.onAdClick(it) }
+                )
+            }
         }
     }
 }

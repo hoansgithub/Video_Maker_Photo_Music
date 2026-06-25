@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Amber/Gold ad badge background (required by Google AdMob policy) -->
+<!-- Amber ad badge background (required by Google AdMob policy) -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="rectangle">
     <solid android:color="#FFE8A100" />
