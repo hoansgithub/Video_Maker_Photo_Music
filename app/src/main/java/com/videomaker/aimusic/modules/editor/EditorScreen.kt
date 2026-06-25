@@ -32,7 +32,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.ime
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -2073,13 +2072,16 @@ private fun BoxScope.TextPanelWrapper(
 ) {
     val adPlacementConfigService: AdPlacementConfigService = koinInject()
     val keyboardHeight = WindowInsets.ime.asPaddingValues().calculateBottomPadding()
-    val navigationBarsHeight = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
     val bannerHeight = if (adPlacementConfigService.bannerUseNative) 100.dp else 50.dp
-    val bottomOffset = navigationBarsHeight + bannerHeight
 
-    // Add extra space (12.dp) between the keyboard and the input field for a premium look
+    // The IME inset (keyboardHeight) is measured from the very bottom of the screen and
+    // already spans the navigation-bar region. This panel sits directly above the banner
+    // ad, so only the banner height separates the panel's bottom from the keyboard; the
+    // nav-bar area below is covered by the keyboard. Subtracting the nav bar too would
+    // under-lift the input and let the keyboard clip it.
+    // Add extra space (12.dp) between the keyboard and the input field for a premium look.
     val dynamicPadding = if (keyboardHeight > 0.dp) {
-        (keyboardHeight - bottomOffset + 12.dp).coerceAtLeast(0.dp)
+        (keyboardHeight - bannerHeight + 12.dp).coerceAtLeast(0.dp)
     } else {
         0.dp
     }
