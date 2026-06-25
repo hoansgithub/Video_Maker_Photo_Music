@@ -93,9 +93,7 @@ class BeatSyncTimingCalculator {
             PREFERRED_BEATS_PER_TRANSITION  // Use preferred spacing (4 beats)
         } else {
             // Compress spacing to fit all transitions
-            // Calculate: how many beats per transition to fit all transitions?
-            // We need at least MIN_BEATS_PER_TRANSITION
-            val calculated = availableBeats / (numTransitions + 1)  // +1 for buffer
+            val calculated = availableBeats / (numTransitions + 1)
             calculated.coerceAtLeast(MIN_BEATS_PER_TRANSITION)
         }
 

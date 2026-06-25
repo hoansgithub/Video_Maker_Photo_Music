@@ -1,6 +1,7 @@
 package com.videomaker.aimusic.core.analytics
 
 import co.alcheclub.lib.acccore.analytics.AnalyticsCoordinator
+import com.videomaker.aimusic.core.analytics.Analytics.trackTabView
 import java.util.UUID
 
 /**
@@ -1035,6 +1036,42 @@ object Analytics {
             eventName = AnalyticsEvent.VIDEO_PREVIEW_FAILED,
             params = mapOf(AnalyticsEvent.Param.VIDEO_ID to videoId),
             requiredParams = setOf(AnalyticsEvent.Param.VIDEO_ID),
+            policy = TrackingPolicy.NORMAL
+        )
+    }
+
+    fun trackEditorErrorDialog(errorCode: String, songId: String? = null) {
+        trackWithPolicy(
+            eventName = AnalyticsEvent.EDITOR_ERROR_DIALOG,
+            params = buildMap {
+                put(AnalyticsEvent.Param.ERROR_CODE, errorCode)
+                songId?.let { put(AnalyticsEvent.Param.SONG_ID, it) }
+            },
+            requiredParams = setOf(AnalyticsEvent.Param.ERROR_CODE),
+            policy = TrackingPolicy.NORMAL
+        )
+    }
+
+    fun trackEditorPrepareStep(step: String, songId: String? = null) {
+        trackWithPolicy(
+            eventName = AnalyticsEvent.EDITOR_PREPARE_STEP,
+            params = buildMap {
+                put(AnalyticsEvent.Param.STEP, step)
+                songId?.let { put(AnalyticsEvent.Param.SONG_ID, it) }
+            },
+            requiredParams = setOf(AnalyticsEvent.Param.STEP),
+            policy = TrackingPolicy.NORMAL
+        )
+    }
+
+    fun trackEditorPrepareFailed(errorCode: String, songId: String? = null) {
+        trackWithPolicy(
+            eventName = AnalyticsEvent.EDITOR_PREPARE_FAILED,
+            params = buildMap {
+                put(AnalyticsEvent.Param.ERROR_CODE, errorCode)
+                songId?.let { put(AnalyticsEvent.Param.SONG_ID, it) }
+            },
+            requiredParams = setOf(AnalyticsEvent.Param.ERROR_CODE),
             policy = TrackingPolicy.NORMAL
         )
     }
@@ -2661,6 +2698,113 @@ object Analytics {
             "uninstall_retain_page" -> AnalyticsEvent.Value.Location.UNINSTALL
             else -> rawLocation
         }
+    }
+
+    fun trackTextEdit() {
+        track(AnalyticsEvent.TEXT_EDIT)
+    }
+
+    fun trackTextColorClick(colorName: String) {
+        track(
+            AnalyticsEvent.TEXT_COLOR_CLICK,
+            mapOf(
+                AnalyticsEvent.Param.COLOR_NAME to colorName
+            )
+        )
+    }
+
+    fun trackTextFontClick(type: String, fontName: String) {
+        track(
+            AnalyticsEvent.TEXT_FONT_CLICK,
+            mapOf(
+                AnalyticsEvent.Param.TYPE to type,
+                AnalyticsEvent.Param.FONT_NAME to fontName
+            )
+        )
+    }
+
+    fun trackTextFontDownload(type: String, fontName: String) {
+        track(
+            AnalyticsEvent.TEXT_FONT_DOWNLOAD,
+            mapOf(
+                AnalyticsEvent.Param.TYPE to type,
+                AnalyticsEvent.Param.FONT_NAME to fontName
+            )
+        )
+    }
+
+    fun trackTextSelect(colorName: String, fontName: String) {
+        track(
+            AnalyticsEvent.TEXT_SELECT,
+            mapOf(
+                AnalyticsEvent.Param.COLOR_NAME to colorName,
+                AnalyticsEvent.Param.FONT_NAME to fontName
+            )
+        )
+    }
+
+    fun trackTextClose() {
+        track(AnalyticsEvent.TEXT_CLOSE)
+    }
+
+    // ============================================
+    // STICKER OVERLAY
+    // ============================================
+
+    /** User opens the sticker edit panel. */
+    fun trackStickerEdit() {
+        track(AnalyticsEvent.STICKER_EDIT)
+    }
+
+    /** User taps a sticker set (category) and the grid switches to that set. */
+    fun trackStickerSetClick(setName: String) {
+        track(
+            AnalyticsEvent.STICKER_SET_CLICK,
+            mapOf(AnalyticsEvent.Param.SET_NAME to setName)
+        )
+    }
+
+    /** User taps a sticker in the grid. [isPremium] -> type ads/free. */
+    fun trackStickerClick(stickerName: String, isPremium: Boolean) {
+        track(
+            AnalyticsEvent.STICKER_CLICK,
+            mapOf(
+                AnalyticsEvent.Param.STICKER_NAME to stickerName,
+                AnalyticsEvent.Param.TYPE to premiumType(isPremium)
+            )
+        )
+    }
+
+    /** User confirms the sticker selection by tapping the (v) icon. */
+    fun trackStickerSelect(setName: String, stickerName: String) {
+        track(
+            AnalyticsEvent.STICKER_SELECT,
+            mapOf(
+                AnalyticsEvent.Param.SET_NAME to setName,
+                AnalyticsEvent.Param.STICKER_NAME to stickerName
+            )
+        )
+    }
+
+    /** User closes the sticker edit panel via the (x) icon. */
+    fun trackStickerClose() {
+        track(AnalyticsEvent.STICKER_CLOSE)
+    }
+
+    /** User holds an overlay box and moves or resizes it. [typeTool] = text | sticker. */
+    fun trackEditBoxDrag(typeTool: String) {
+        track(
+            AnalyticsEvent.EDIT_BOX_DRAG,
+            mapOf(AnalyticsEvent.Param.TYPE_TOOL to typeTool)
+        )
+    }
+
+    /** User deletes an overlay box via its delete handle. [typeTool] = text | sticker. */
+    fun trackEditBoxDelete(typeTool: String) {
+        track(
+            AnalyticsEvent.EDIT_BOX_DELETE,
+            mapOf(AnalyticsEvent.Param.TYPE_TOOL to typeTool)
+        )
     }
 }
 

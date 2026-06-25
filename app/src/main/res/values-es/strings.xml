@@ -180,6 +180,7 @@
     <string name="editor_keep_editing">Seguir Editando</string>
     <string name="editor_discard">Descartar</string>
     <string name="editor_effect_sets">Conjuntos de Efectos</string>
+    <string name="editor_sticker">Pegatina</string>
     <string name="editor_retry">Reintentar</string>
     <string name="editor_no_music_selected">No se seleccionó música</string>
     <string name="editor_images_title">Toca para Editar • Mantén para Reorganizar</string>
@@ -650,4 +651,20 @@
     <string name="editor_image_dragging">Arrastrando</string>
     <string name="editor_image_drag_to_reorder">Arrastra para reordenar</string>
     <string name="editor_image_content_desc">Imagen %1$s</string>
+
+    <!-- Editor Text Overlay -->
+    <string name="editor_text">Texto</string>
+    <string name="text_overlay_placeholder">Introducir texto</string>
+    <string name="text_overlay_please_enter">Por favor, introduce texto</string>
+    <string name="text_overlay_color_header">Color</string>
+    <string name="text_overlay_font_header">Fuente</string>
+    <string name="text_overlay_no_selection">Ningún texto seleccionado</string>
+    <string name="text_overlay_desc_clear_focus">Quitar enfoque</string>
+    <string name="text_overlay_desc_confirm">Confirmar y cerrar</string>
+    <string name="text_overlay_desc_ad_required">Anuncio requerido</string>
+    <string name="text_overlay_desc_new_item">Nuevo elemento</string>
+    <string name="text_overlay_desc_delete">Eliminar texto</string>
+    <string name="text_overlay_desc_rotate_scale">Rotar y escalar</string>
+    <string name="text_overlay_font_ad_error">Error al cargar el anuncio. Inténtalo de nuevo.</string>
+    <string name="text_overlay_system_default">Predeterminado del sistema</string>
 </resources>

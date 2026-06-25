@@ -5,9 +5,12 @@ package com.videomaker.aimusic.modules.editor
 // import com.videomaker.aimusic.modules.musicpicker.MusicPickerScreen // Commented out - using Supabase only
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
@@ -18,18 +21,23 @@ import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -53,6 +61,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -65,12 +74,15 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
@@ -93,6 +105,7 @@ import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.domain.model.AspectRatio
 import com.videomaker.aimusic.domain.model.EffectSet
 import com.videomaker.aimusic.domain.model.Project
+import com.videomaker.aimusic.domain.model.StickerPlacement
 import com.videomaker.aimusic.domain.model.VideoQuality
 import com.videomaker.aimusic.media.renderer.PlaybackClock
 import com.videomaker.aimusic.media.renderer.PreviewSurfaceView
@@ -101,9 +114,12 @@ import com.videomaker.aimusic.modules.editor.components.AudioPreviewPlayer
 import com.videomaker.aimusic.modules.editor.components.EffectSetPanel
 import com.videomaker.aimusic.modules.editor.components.ImagesBottomSheet
 import com.videomaker.aimusic.modules.editor.components.MusicSearchBottomSheet
+import com.videomaker.aimusic.modules.editor.components.OverlayInterleaveLayer
 import com.videomaker.aimusic.modules.editor.components.PlayMusicSlider
 import com.videomaker.aimusic.modules.editor.components.RatioPanel
 import com.videomaker.aimusic.modules.editor.components.SettingsTabBar
+import com.videomaker.aimusic.modules.editor.components.StickerPanel
+import com.videomaker.aimusic.modules.editor.components.TextBottomSheet
 import com.videomaker.aimusic.modules.editor.components.VolumeBottomSheet
 import com.videomaker.aimusic.ui.components.AppAsyncImage
 import com.videomaker.aimusic.ui.components.EditorErrorDialog
@@ -159,6 +175,24 @@ fun EditorScreen(
     val currentPositionMs by viewModel.currentPositionMs.collectAsStateWithLifecycle()
     val durationMs by viewModel.durationMs.collectAsStateWithLifecycle()
 
+    val textOverlayViewModel: TextOverlayViewModel = koinViewModel()
+
+    // Sync TextOverlayViewModel overlays -> EditorViewModel (ProjectSettings)
+    val successState = uiState as? EditorUiState.Success
+    LaunchedEffect(successState) {
+        if (successState != null && !textOverlayViewModel.isInitialized) {
+            textOverlayViewModel.initialize(successState.project.settings.textOverlays)
+        }
+    }
+
+    LaunchedEffect(textOverlayViewModel) {
+        textOverlayViewModel.textOverlays.collect { overlays ->
+            if (textOverlayViewModel.isInitialized) {
+                viewModel.updateTextOverlays(overlays)
+            }
+        }
+    }
+
     // Pause playback when screen pauses, resume when screen resumes
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
@@ -179,6 +213,15 @@ fun EditorScreen(
     // var showMusicPicker by remember { mutableStateOf(false) } // Commented out - using Supabase only
     var showRatioSheet by remember { mutableStateOf(false) }
     var showEffectSetSheet by remember { mutableStateOf(false) }
+    var showTextSheet by remember { mutableStateOf(false) }
+    var textFocusTrigger by remember { mutableStateOf(0L) }
+    var showStickerSheet by remember { mutableStateOf(false) }
+    var selectedStickerId by remember { mutableStateOf<String?>(null) }
+    // Last sticker picked while the panel is open — reported by sticker_select on confirm.
+    var lastPickedStickerName by remember { mutableStateOf<String?>(null) }
+    var lastPickedStickerSetName by remember { mutableStateOf<String?>(null) }
+    // Snapshot of stickers when the panel opens — restored on cancel (dismiss), like effects.
+    var stickersBeforePanel by remember { mutableStateOf<List<StickerPlacement>>(emptyList()) }
     var effectSetIdBeforePanel by remember { mutableStateOf<String?>(null) }
     var showMusicSearchSheet by remember { mutableStateOf(false) }
     var showVolumeSheet by remember { mutableStateOf(false) }
@@ -190,7 +233,24 @@ fun EditorScreen(
     var hasTrackedVideoPreviewComplete by remember { mutableStateOf(false) }
     var hasTrackedExitPopupShow by remember { mutableStateOf(false) }
     var ratioBeforePanel by remember { mutableStateOf<AspectRatio?>(null) }
+    // Size of the area the preview is fit into — reported by EditorMainContent, used to keep
+    // stickers visually the same size when the user toggles aspect ratio (see rescaleStickers...).
+    var previewContainerSize by remember { mutableStateOf(IntSize.Zero) }
     val scope = rememberCoroutineScope()
+    LaunchedEffect(textOverlayViewModel) {
+        var lastId: String? = null
+        textOverlayViewModel.selectedTextOverlayId.collect { id ->
+            if (id != null) {
+                if (lastId == null) {
+                    Analytics.trackTextEdit()
+                }
+                showTextSheet = true
+            } else {
+                showTextSheet = false
+            }
+            lastId = id
+        }
+    }
     val context = androidx.compose.ui.platform.LocalContext.current
     val activity = context as? android.app.Activity
     val adsLoaderService = koinInject<AdsLoaderService>()
@@ -204,6 +264,9 @@ fun EditorScreen(
 
     // Effect Set ViewModel - created once and reused
     val effectSetViewModel: EffectSetViewModel = koinViewModel()
+
+    // Sticker ViewModel - created once and reused
+    val stickerViewModel: StickerViewModel = koinViewModel()
 
     // Song Search ViewModel - created once and reused
     val songSearchViewModel: com.videomaker.aimusic.modules.songsearch.SongSearchViewModel =
@@ -414,7 +477,7 @@ fun EditorScreen(
         }
     }
 
-    // True once the GL renderer has images loaded (replaces CompositionPlayer Ready state).
+    // True once the GL renderer has actually rendered its first frame with content.
     // NOTE: plain remember → resets when the editor is recomposed fresh (e.g. returning from the
     // asset picker), which is what we want for the placeholder cover during a replace rebuild.
     var hasBeenReady by remember { mutableStateOf(false) }
@@ -422,11 +485,11 @@ fun EditorScreen(
     // changes), so editorScreenState stays READY across replace/effect and only reports LOADING
     // for the very first load. Reset by the VM on a fresh load (initial/retry).
     val hasPreviewBeenReady by viewModel.hasPreviewBeenReady.collectAsStateWithLifecycle()
-    // Drive hasPreviewBeenReady from renderState instead of CompositionPlayer
+    // Drive hasPreviewBeenReady from renderState for data-readiness (fast path for replace/effect).
+    // GL first-frame callback in PreviewSurfaceView handles the initial markPreviewReady().
     LaunchedEffect(renderState) {
-        if (renderState.imageUris.isNotEmpty()) {
+        if (renderState.imageUris.isNotEmpty() && hasPreviewBeenReady) {
             hasBeenReady = true
-            viewModel.markPreviewReady()
         }
     }
     val isProcessingAudio = (uiState as? EditorUiState.Success)?.isProcessingAudio == true
@@ -459,6 +522,8 @@ fun EditorScreen(
     val previewAspectRatio =
         (uiState as? EditorUiState.Success)?.displaySettings?.aspectRatio?.ratio
             ?: lastAspectRatio.ratio
+
+
 
     Column(
         modifier = Modifier
@@ -514,6 +579,12 @@ fun EditorScreen(
                     )
                     effectSetIdBeforePanel = state.displaySettings.effectSetId
                     showEffectSetSheet = true
+                },
+                onTextClick = {
+                    val state = currentState() ?: return@EditorMainContent
+                    val defaultText = context.getString(R.string.text_overlay_placeholder)
+                    textOverlayViewModel.addTextOverlay(defaultText, state.displaySettings.stickers)
+                    showTextSheet = true
                 },
                 onRatioClick = {
                     val state = currentState() ?: return@EditorMainContent
@@ -610,7 +681,17 @@ fun EditorScreen(
                     }
                     // Revert if ratio changed during preview
                     val before = ratioBeforePanel
-                    if (before != null && state?.displaySettings?.aspectRatio != before) {
+                    val current = state?.displaySettings?.aspectRatio
+                    if (before != null && current != before) {
+                        // Reverse the sticker rescale too, so cancelling restores the original
+                        // on-screen sizes (factors telescope back to the pre-panel placement).
+                        if (current != null) {
+                            val oldShort = previewShortSidePx(current.ratio, previewContainerSize)
+                            val newShort = previewShortSidePx(before.ratio, previewContainerSize)
+                            if (oldShort > 0f && newShort > 0f) {
+                                viewModel.rescaleStickersForRatioChange(oldShort / newShort)
+                            }
+                        }
                         viewModel.updateAspectRatio(before)
                     }
                     showRatioSheet = false
@@ -627,6 +708,17 @@ fun EditorScreen(
                     showRatioSheet = false
                 },
                 onRatioSelected = { selectedRatio ->
+                    // Keep stickers visually the same size across the ratio change: scale their
+                    // width fraction by oldShortSidePx / newShortSidePx (the preview rect's short
+                    // side spans different px per ratio). Only an explicit zoom should resize them.
+                    val current = currentState()?.displaySettings?.aspectRatio
+                    if (current != null && current != selectedRatio) {
+                        val oldShort = previewShortSidePx(current.ratio, previewContainerSize)
+                        val newShort = previewShortSidePx(selectedRatio.ratio, previewContainerSize)
+                        if (oldShort > 0f && newShort > 0f) {
+                            viewModel.rescaleStickersForRatioChange(oldShort / newShort)
+                        }
+                    }
                     viewModel.updateAspectRatio(selectedRatio)
                     val videoId = currentVideoId()
                     if (videoId != null) {
@@ -636,9 +728,127 @@ fun EditorScreen(
                         )
                     }
                 },
+                onPreviewContainerSized = { previewContainerSize = it },
+                stickers = successState?.displaySettings?.stickers ?: emptyList(),
+                selectedStickerId = selectedStickerId,
+                onStickerTabClick = {
+                    Analytics.trackStickerEdit()
+                    lastPickedStickerName = null
+                    lastPickedStickerSetName = null
+                    stickersBeforePanel = currentState()?.displaySettings?.stickers ?: emptyList()
+                    showStickerSheet = true
+                },
+                onStickerSelect = { id -> selectedStickerId = id },
+                onStickerTransform = { placement ->
+                    Analytics.trackEditBoxDrag(AnalyticsEvent.Value.TypeTool.STICKER)
+                    viewModel.updateStickerPlacement(placement)
+                },
+                onStickerDelete = { instanceId ->
+                    Analytics.trackEditBoxDelete(AnalyticsEvent.Value.TypeTool.STICKER)
+                    viewModel.removeSticker(instanceId)
+                    if (selectedStickerId == instanceId) selectedStickerId = null
+                },
+                onStickerDoubleTapTopMost = {
+                    val top = currentState()?.displaySettings?.stickers?.maxByOrNull { it.zIndex }
+                    if (top != null) {
+                        viewModel.bringStickerToFront(top.instanceId)
+                        selectedStickerId = top.instanceId
+                    }
+                },
+                // Tap a committed sticker → select it and re-open the picker (like text editing).
+                onStickerRequestEdit = { id ->
+                    // Switching from the text panel: commit text edits (live-applied) and just
+                    // hide its panel so only the sticker panel shows.
+                    if (showTextSheet) {
+                        textOverlayViewModel.setSelectedTextOverlayId(null)
+                        showTextSheet = false
+                    }
+                    Analytics.trackStickerEdit()
+                    lastPickedStickerName = null
+                    lastPickedStickerSetName = null
+                    stickersBeforePanel = currentState()?.displaySettings?.stickers ?: emptyList()
+                    selectedStickerId = id
+                    showStickerSheet = true
+                },
+                showStickerPanel = showStickerSheet,
+                stickerViewModel = stickerViewModel,
+                // Closing the picker (Done/Close) commits the stickers: drop the selection so
+                // the box/handles disappear and touches stop editing the sticker.
+                onStickerPanelDismiss = {
+                    Analytics.trackStickerClose()
+                    // Cancel → revert any stickers added/changed while the panel was open.
+                    viewModel.setStickers(stickersBeforePanel)
+                    showStickerSheet = false
+                    selectedStickerId = null
+                },
+                onStickerPanelConfirm = {
+                    // (v) icon → report the last sticker picked during this session.
+                    lastPickedStickerName?.let { name ->
+                        Analytics.trackStickerSelect(
+                            setName = lastPickedStickerSetName ?: "",
+                            stickerName = name
+                        )
+                    }
+                    showStickerSheet = false
+                    selectedStickerId = null
+                },
+                onAddSticker = { sticker ->
+                    // Auto-select the newly added sticker so its handles show immediately.
+                    selectedStickerId = viewModel.addSticker(sticker)
+                    // Remember for sticker_select (set name resolved from the active category).
+                    lastPickedStickerName = sticker.name
+                    lastPickedStickerSetName = (stickerViewModel.categoriesState.value
+                        as? StickerCategoriesState.Success)
+                        ?.categories
+                        ?.find { it.id == stickerViewModel.selectedCategoryId.value }
+                        ?.name
+                },
+                showTextPanel = showTextSheet,
+                textFocusTrigger = textFocusTrigger,
+                textOverlayViewModel = textOverlayViewModel,
+                onDoubleTapText = { id ->
+                    textOverlayViewModel.setSelectedTextOverlayId(id)
+                    showTextSheet = true
+                    textFocusTrigger = System.currentTimeMillis()
+                },
+                // Tapping a text while the sticker panel is open → switch to editing that text:
+                // commit/keep the stickers, hide the sticker panel, show only the text panel.
+                onTextTapped = { id ->
+                    if (showStickerSheet) {
+                        showStickerSheet = false
+                        selectedStickerId = null
+                        textOverlayViewModel.setSelectedTextOverlayId(id)
+                        showTextSheet = true
+                        textFocusTrigger = System.currentTimeMillis()
+                    }
+                },
+                onTextPanelDismiss = {
+                    Analytics.trackTextClose()
+                    textOverlayViewModel.setSelectedTextOverlayId(null)
+                    showTextSheet = false
+                },
+                onTextPanelConfirm = {
+                    val selectedId = textOverlayViewModel.selectedTextOverlayId.value
+                    if (selectedId != null) {
+                        val overlay = textOverlayViewModel.textOverlays.value.find { it.id == selectedId }
+                        if (overlay != null) {
+                            val fontPreset = textOverlayViewModel.fontPresets.value.find { it.id == overlay.fontId }
+                            val fontName = fontPreset?.name ?: "neue_haas_regular"
+                            val colorName = getColorName(overlay.color)
+                            Analytics.trackTextSelect(colorName = colorName, fontName = fontName)
+                        }
+                    }
+                    Analytics.trackTextClose()
+                    textOverlayViewModel.setSelectedTextOverlayId(null)
+                    showTextSheet = false
+                },
+                onFirstFrameRendered = {
+                    hasBeenReady = true
+                    viewModel.markPreviewReady()
+                },
                 topBar = {
                     androidx.compose.animation.AnimatedVisibility(
-                        visible = !showEffectSetSheet && !showRatioSheet,
+                        visible = !showEffectSetSheet && !showRatioSheet && !showTextSheet  && !showStickerSheet,
                         enter = slideInVertically(initialOffsetY = { -it }) + fadeIn(),
                         exit = slideOutVertically(targetOffsetY = { -it }) + fadeOut()
                     ) {
@@ -696,9 +906,15 @@ fun EditorScreen(
                     title = stringResource(R.string.error_network_title),
                     message = errorState.message,
                     primaryText = stringResource(R.string.error_dialog_try_again),
-                    onPrimary = { viewModel.retry() },
+                    onPrimary = {
+                        Analytics.trackEditorErrorDialog("retry")
+                        viewModel.retry()
+                    },
                     secondaryText = stringResource(R.string.error_dialog_back_home),
-                    onSecondary = { onNavigateToHome() }
+                    onSecondary = {
+                        Analytics.trackEditorErrorDialog("dismiss_back_home")
+                        onNavigateToHome()
+                    }
                 )
             }
 
@@ -831,6 +1047,8 @@ fun EditorScreen(
                     currentVideoDurationMs = durationMs,
                     initialSong = editorInitialSong,
                     onSongClick = { song ->
+                        // Prefetch beat-sync data while user previews the song
+                        viewModel.prefetchBeatSync(song.id, song.beatsUrl.ifBlank { null })
                         val videoId = currentVideoId()
                         if (videoId != null) {
                             Analytics.trackEditorSongClick(
@@ -860,7 +1078,9 @@ fun EditorScreen(
                             songUrl = song.mp3Url,
                             songCoverUrl = song.coverUrl,
                             trimStartMs = selectionStartMs,
-                            hookStartTimes = song.hookStartTimes
+                            hookStartTimes = song.hookStartTimes,
+                            songDurationMs = song.durationMs?.toLong(),
+                            beatsUrl = song.beatsUrl.ifBlank { null }
                         )
                         showMusicSearchSheet = false
                         // ViewModel handles auto-play after music change completes
@@ -1057,16 +1277,18 @@ internal fun EditorTopBar(
             .padding(horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(
-            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-            contentDescription = stringResource(R.string.back),
-            modifier = Modifier
-                .size(32.dp)
-                .clickableSingle {
-                    onBackClick.invoke()
-                }
-                .padding(4.dp)
-        )
+        if (isLoading.not()) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = stringResource(R.string.back),
+                modifier = Modifier
+                    .size(32.dp)
+                    .clickableSingle {
+                        onBackClick.invoke()
+                    }
+                    .padding(4.dp)
+            )
+        }
 
         Spacer(Modifier.weight(1f))
         if (isLoading.not()) {
@@ -1081,7 +1303,7 @@ internal fun EditorTopBar(
 
             // Done button - disabled during processing
             Text(
-                text = stringResource(R.string.done),
+                text = stringResource(R.string.editor_export),
                 fontSize = 14.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = Neutral_N100,
@@ -1180,6 +1402,22 @@ private fun AspectRatio.toAnalyticsRatioSize(): String = when (this) {
     AspectRatio.RATIO_1_1 -> "1:1"
 }
 
+/**
+ * On-screen length (px) of the preview rect's SHORT side for a given video [ratio] (= width/height)
+ * when fit (largest, centered) into the [container] available to the preview — i.e. the same size
+ * `Modifier.aspectRatio(ratio)` produces inside that container. Sticker size is anchored to this
+ * short side, so the px ratio between two ratios is exactly how much a sticker would visually
+ * grow/shrink on a ratio toggle — and thus the factor needed to cancel it. Returns 0 if unknown.
+ */
+private fun previewShortSidePx(ratio: Float, container: IntSize): Float {
+    val w = container.width.toFloat()
+    val h = container.height.toFloat()
+    if (ratio <= 0f || w <= 0f || h <= 0f) return 0f
+    // Normalize the video to vw = ratio, vh = 1; fit scale = min(w/vw, h/vh).
+    val scale = minOf(w / ratio, h)
+    return scale * minOf(ratio, 1f)
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 // MusicSection, SettingsTabBar, and SettingsTabButton moved to components/ package
 
@@ -1208,6 +1446,7 @@ internal fun EditorMainContent(
     onScrubComplete: () -> Unit,
     onImagesClick: () -> Unit,
     onEffectClick: () -> Unit,
+    onTextClick: () -> Unit,
     onRatioClick: () -> Unit,
     onVolumeClick: () -> Unit = {},
     onMusicSelectorClick: () -> Unit = {},
@@ -1220,6 +1459,31 @@ internal fun EditorMainContent(
     onRatioPanelDismiss: () -> Unit = {},
     onRatioPanelConfirm: () -> Unit = {},
     onRatioSelected: (AspectRatio) -> Unit = {},
+    // Reports the size of the area the preview is fit into (constant across ratios), so the host
+    // can compute the sticker rescale factor that keeps stickers visually put on a ratio toggle.
+    onPreviewContainerSized: (IntSize) -> Unit = {},
+    showTextPanel: Boolean = false,
+    textFocusTrigger: Long = 0L,
+    textOverlayViewModel: TextOverlayViewModel? = null,
+    onDoubleTapText: (String) -> Unit = {},
+    onTextTapped: (String) -> Unit = {},
+    onTextPanelDismiss: () -> Unit = {},
+    onTextPanelConfirm: () -> Unit = {},
+    // Stickers
+    stickers: List<com.videomaker.aimusic.domain.model.StickerPlacement> = emptyList(),
+    selectedStickerId: String? = null,
+    onStickerTabClick: () -> Unit = {},
+    onStickerSelect: (String?) -> Unit = {},
+    onStickerTransform: (com.videomaker.aimusic.domain.model.StickerPlacement) -> Unit = {},
+    onStickerDelete: (String) -> Unit = {},
+    onStickerDoubleTapTopMost: () -> Unit = {},
+    onStickerRequestEdit: (String) -> Unit = {},
+    showStickerPanel: Boolean = false,
+    stickerViewModel: StickerViewModel? = null,
+    onStickerPanelDismiss: () -> Unit = {},
+    onStickerPanelConfirm: () -> Unit = {},
+    onAddSticker: (com.videomaker.aimusic.domain.model.Sticker) -> Unit = {},
+    onFirstFrameRendered: () -> Unit = {},
     topBar: @Composable () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
@@ -1237,8 +1501,9 @@ internal fun EditorMainContent(
     val maxHeight = 620.dp
     var currentPanelHeight by remember(minHeight) { mutableStateOf(minHeight) }
 
-    LaunchedEffect(showEffectSetPanel, showRatioPanel, minHeight) {
-        if (showEffectSetPanel || showRatioPanel) {
+
+    LaunchedEffect(showEffectSetPanel, showTextPanel, showRatioPanel, showStickerPanel, minHeight) {
+        if (showEffectSetPanel || showTextPanel || showRatioPanel || showStickerPanel) {
             currentPanelHeight = minHeight
         }
     }
@@ -1295,7 +1560,10 @@ internal fun EditorMainContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
-                .padding(top = 8.dp),
+                .padding(top = 8.dp)
+                // Measured AFTER padding → the actual area the aspectRatio preview is fit into.
+                // Constant across ratios, so it's the reference for the sticker rescale factor.
+                .onSizeChanged { onPreviewContainerSized(it) },
             contentAlignment = Alignment.Center
         ) {
             // GL renderer — always mounted. AndroidEmbeddedExternalSurface (TextureView)
@@ -1304,18 +1572,50 @@ internal fun EditorMainContent(
             // tight constraints (min==max) which prevents aspectRatio() from adjusting.
             // Without fillMaxSize(), aspectRatio() receives loose constraints and can freely
             // choose the largest size that fits within the Box while maintaining the ratio.
-            PreviewSurfaceView(
-                renderState = renderState,
-                playbackClock = playbackClock,
-                isPlaying = isPlaying,
+            Box(
                 modifier = Modifier
-                    .aspectRatio(previewAspectRatio)
-            )
+                    .aspectRatio(previewAspectRatio),
+                contentAlignment = Alignment.Center
+            ) {
+                PreviewSurfaceView(
+                    renderState = renderState,
+                    playbackClock = playbackClock,
+                    isPlaying = isPlaying,
+                    onFirstFrameRendered = onFirstFrameRendered,
+                    modifier = Modifier.fillMaxSize()
+                )
+
+                // Unified overlay layer: text + stickers interleaved by shared z-order (add
+                // order). Text stays tappable while stickers are present (see OverlayInterleaveLayer).
+                if (textOverlayViewModel != null && currentState == EditorScreenState.READY) {
+                    OverlayInterleaveLayer(
+                        textOverlayViewModel = textOverlayViewModel,
+                        stickers = stickers,
+                        selectedStickerId = selectedStickerId,
+                        onStickerSelect = onStickerSelect,
+                        onStickerTransform = onStickerTransform,
+                        onStickerDelete = onStickerDelete,
+                        onStickerDoubleTapTopMost = onStickerDoubleTapTopMost,
+                        onStickerRequestEdit = onStickerRequestEdit,
+                        stickerInteractive = showStickerPanel,
+                        onDoubleTapText = onDoubleTapText,
+                        onTextTapped = onTextTapped,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+            }
 
             // Audio-only player — synced to PlaybackClock
+            // Fadeout is applied via realtime volume ramp (no Transformer preprocessing)
+            val beatSyncBpm = project?.settings?.beatSyncData?.bpm ?: 0.0
+            val previewFadeoutDurationMs = if (beatSyncBpm > 0) {
+                ((60000.0 / beatSyncBpm) * 6).toLong() // 6 beats
+            } else 0L
             AudioPreviewPlayer(
                 audioNodes = project?.settings?.audioNodes ?: emptyList(),
                 hookStartTimeMs = project?.settings?.hookStartTimeMs ?: 0L,
+                totalDurationMs = project?.settings?.totalDurationMs ?: 0L,
+                fadeoutDurationMs = previewFadeoutDurationMs,
                 isPlaying = isPlaying,
                 playbackClock = playbackClock,
                 seekToPosition = seekToPosition,
@@ -1333,10 +1633,12 @@ internal fun EditorMainContent(
                     modifier = Modifier.fillMaxSize()
                 )
             }
+
+            // (Stickers are now rendered by OverlayInterleaveLayer above, interleaved with text.)
         }
 
 
-        if (showEffectSetPanel) {
+        if (showEffectSetPanel || showTextPanel|| showStickerPanel) {
             Spacer(modifier = Modifier.height(minHeight))
         } else if (showRatioPanel) {
             Spacer(modifier = Modifier.height(210.dp))
@@ -1443,9 +1745,9 @@ internal fun EditorMainContent(
                                     spotColor = Color(0x3D000000),
                                     clip = false
                                 )
-                                .clip(RoundedCornerShape(20.dp))
+                                .clip(RoundedCornerShape(12.dp))
                                 .background(Color(0xFF575757).copy(0.4f))
-                                .border(1.dp, Color.White.copy(0.4f), RoundedCornerShape(20.dp))
+                                .border(1.dp, Color.White.copy(0.4f), RoundedCornerShape(12.dp))
                                 .clickable(onClick = onMusicSelectorClick)
                                 .padding(vertical = 8.dp, horizontal = 12.dp),
                             verticalAlignment = Alignment.CenterVertically
@@ -1457,7 +1759,7 @@ internal fun EditorMainContent(
                                     ?: stringResource(R.string.editor_no_music_selected),
                                 contentScale = ContentScale.Crop,
                                 modifier = Modifier
-                                    .size(64.dp)
+                                    .size(40.dp)
                                     .clip(RoundedCornerShape(8.dp))
                             )
 
@@ -1468,7 +1770,7 @@ internal fun EditorMainContent(
                                 Text(
                                     text = project?.settings?.primaryAudioNode?.songName
                                         ?: stringResource(R.string.editor_no_music_selected),
-                                    fontSize = 17.sp,
+                                    fontSize = 14.sp,
                                     fontWeight = FontWeight.W500,
                                     color = TextPrimary,
                                     maxLines = 2,
@@ -1479,7 +1781,7 @@ internal fun EditorMainContent(
                                 if (!songArtist.isNullOrBlank()) {
                                     Text(
                                         text = songArtist,
-                                        fontSize = 13.sp,
+                                        fontSize = 10.sp,
                                         fontWeight = FontWeight.W400,
                                         color = TextPrimary,
                                         maxLines = 1,
@@ -1495,7 +1797,7 @@ internal fun EditorMainContent(
                                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                                 contentDescription = null,
                                 tint = TextPrimary,
-                                modifier = Modifier.size(32.dp)
+                                modifier = Modifier.size(26.dp)
                             )
                         }
 
@@ -1517,6 +1819,8 @@ internal fun EditorMainContent(
                             showMusicControls = hasMusic,
                             onImagesClick = onImagesClick,
                             onEffectClick = onEffectClick,
+                            onTextClick = onTextClick,
+                            onStickerClick = onStickerTabClick,
                             onRatioClick = onRatioClick,
                             onVolumeClick = onVolumeClick,
                             modifier = Modifier.fillMaxWidth()
@@ -1645,7 +1949,238 @@ internal fun EditorMainContent(
             )
         }
     }
+
+    if (showStickerPanel && stickerViewModel != null) {
+        Column(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .height(currentPanelHeight)
+                .background(SplashBackground)
+                .nestedScroll(nestedScrollConnection)
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null
+                ) { /* consume clicks */ }
+        ) {
+            // Drag handle area
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .pointerInput(Unit) {
+                        detectDragGestures { change, dragAmount ->
+                            change.consume()
+                            val dragDp = with(density) { -dragAmount.y.toDp() }
+                            currentPanelHeight = (currentPanelHeight + dragDp).coerceIn(minHeight, maxHeight)
+                        }
+                    }
+                    .padding(vertical = 12.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(width = 36.dp, height = 4.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(Color.Gray)
+                )
+            }
+
+            // Player Controls — hidden when user swipes the panel up
+            androidx.compose.animation.AnimatedVisibility(
+                visible = currentPanelHeight <= minHeight + 30.dp,
+                enter = fadeIn() + androidx.compose.animation.expandVertically(),
+                exit = fadeOut() + androidx.compose.animation.shrinkVertically()
+            ) {
+                EditorPlayerControls(
+                    currentPositionMs = currentPositionMs,
+                    durationMs = durationMs,
+                    isPlaying = isPlaying,
+                    onSeek = { position ->
+                        if (durationMs > 0) {
+                            onSeek((position * durationMs).toLong())
+                        }
+                    },
+                    onScrub = { position ->
+                        if (durationMs > 0) {
+                            onScrub((position * durationMs).toLong())
+                        }
+                    },
+                    onSeekStart = onSeekStart,
+                    onSeekEnd = onSeekEnd,
+                    onPlayPauseClick = onPlayPauseClick,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+
+            StickerPanel(
+                viewModel = stickerViewModel,
+                onAddSticker = onAddSticker,
+                onDismiss = onStickerPanelDismiss,
+                onConfirm = onStickerPanelConfirm,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+            )
+        }
+    }
+
+    if (showTextPanel && textOverlayViewModel != null) {
+        TextPanelWrapper(
+            textOverlayViewModel = textOverlayViewModel,
+            currentPanelHeight = currentPanelHeight,
+            minHeight = minHeight,
+            maxHeight = maxHeight,
+            density = density,
+            nestedScrollConnection = nestedScrollConnection,
+            currentPositionMs = currentPositionMs,
+            durationMs = durationMs,
+            isPlaying = isPlaying,
+            onSeek = onSeek,
+            onScrub = onScrub,
+            onSeekStart = onSeekStart,
+            onSeekEnd = onSeekEnd,
+            onPlayPauseClick = onPlayPauseClick,
+            textFocusTrigger = textFocusTrigger,
+            onTextPanelDismiss = onTextPanelDismiss,
+            onTextPanelConfirm = onTextPanelConfirm,
+            onHeightChange = { currentPanelHeight = it }
+        )
+    }
 }
+}
+
+@Composable
+private fun BoxScope.TextPanelWrapper(
+    textOverlayViewModel: TextOverlayViewModel,
+    currentPanelHeight: Dp,
+    minHeight: Dp,
+    maxHeight: Dp,
+    density: androidx.compose.ui.unit.Density,
+    nestedScrollConnection: NestedScrollConnection,
+    currentPositionMs: Long,
+    durationMs: Long,
+    isPlaying: Boolean,
+    onSeek: (Long) -> Unit,
+    onScrub: (Long) -> Unit,
+    onSeekStart: () -> Unit,
+    onSeekEnd: () -> Unit,
+    onPlayPauseClick: () -> Unit,
+    textFocusTrigger: Long,
+    onTextPanelDismiss: () -> Unit,
+    onTextPanelConfirm: () -> Unit,
+    onHeightChange: (Dp) -> Unit
+) {
+    val adPlacementConfigService: AdPlacementConfigService = koinInject()
+    val keyboardHeight = WindowInsets.ime.asPaddingValues().calculateBottomPadding()
+    val bannerHeight = if (adPlacementConfigService.bannerUseNative) 100.dp else 50.dp
+
+    // The IME inset (keyboardHeight) is measured from the very bottom of the screen and
+    // already spans the navigation-bar region. This panel sits directly above the banner
+    // ad, so only the banner height separates the panel's bottom from the keyboard; the
+    // nav-bar area below is covered by the keyboard. Subtracting the nav bar too would
+    // under-lift the input and let the keyboard clip it.
+    // Add extra space (12.dp) between the keyboard and the input field for a premium look.
+    val dynamicPadding = if (keyboardHeight > 0.dp) {
+        (keyboardHeight - bannerHeight + 12.dp).coerceAtLeast(0.dp)
+    } else {
+        0.dp
+    }
+    val isKeyboardOpen = keyboardHeight > 0.dp
+
+    val currentHeightState by rememberUpdatedState(currentPanelHeight)
+    val minHeightState by rememberUpdatedState(minHeight)
+    val maxHeightState by rememberUpdatedState(maxHeight)
+    val isKeyboardOpenState by rememberUpdatedState(isKeyboardOpen)
+
+    Column(
+        modifier = Modifier
+            .align(Alignment.BottomCenter)
+            .fillMaxWidth()
+            .then(
+                // When the keyboard is open the color/font sections are hidden, so the
+                // panel only needs to wrap the input row. A fixed height combined with the
+                // large bottom IME padding would squeeze the content and hide the input
+                // behind the keyboard, so wrap height instead and let dynamicPadding lift it.
+                if (isKeyboardOpen) Modifier.wrapContentHeight()
+                else Modifier.height(currentPanelHeight)
+            )
+            .padding(bottom = dynamicPadding)
+            .background(SplashBackground)
+            .then(
+                if (isKeyboardOpen) Modifier else Modifier.nestedScroll(nestedScrollConnection)
+            )
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null
+            ) { /* consume clicks */ },
+        verticalArrangement = Arrangement.Bottom
+    ) {
+        // Drag handle area (always visible and draggable)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .pointerInput(Unit) {
+                    detectDragGestures { change, dragAmount ->
+                        if (!isKeyboardOpenState) {
+                            change.consume()
+                            val dragDp = with(density) { -dragAmount.y.toDp() }
+                            onHeightChange((currentHeightState + dragDp).coerceIn(minHeightState, maxHeightState))
+                        }
+                    }
+                }
+                .padding(vertical = 12.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(width = 36.dp, height = 4.dp)
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(Color.Gray)
+            )
+        }
+
+        // Player Controls — hidden when user swipes the panel up or keyboard is open
+        AnimatedVisibility(
+            visible = currentPanelHeight <= minHeight + 30.dp && !isKeyboardOpen,
+            enter = fadeIn() + expandVertically(),
+            exit = fadeOut() + shrinkVertically()
+        ) {
+            EditorPlayerControls(
+                currentPositionMs = currentPositionMs,
+                durationMs = durationMs,
+                isPlaying = isPlaying,
+                onSeek = { position ->
+                    if (durationMs > 0) {
+                        onSeek((position * durationMs).toLong())
+                    }
+                },
+                onScrub = { position ->
+                    if (durationMs > 0) {
+                        onScrub((position * durationMs).toLong())
+                    }
+                },
+                onSeekStart = onSeekStart,
+                onSeekEnd = onSeekEnd,
+                onPlayPauseClick = onPlayPauseClick,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+
+        // Inline TextBottomSheet
+        TextBottomSheet(
+            viewModel = textOverlayViewModel,
+            onDismiss = onTextPanelDismiss,
+            onConfirm = onTextPanelConfirm,
+            isKeyboardOpen = isKeyboardOpen,
+            focusTrigger = textFocusTrigger,
+            modifier = Modifier
+                .fillMaxWidth()
+                .then(
+                    if (isKeyboardOpen) Modifier.wrapContentHeight()
+                    else Modifier.weight(1f)
+                )
+        )
+    }
 }
 
 @Composable
@@ -1779,8 +2314,8 @@ private fun EditorPlayerControls(
     modifier: Modifier = Modifier
 ) {
     val sliderInteractionSource =
-        remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
-    var isDragging by remember { androidx.compose.runtime.mutableStateOf(false) }
+        remember { MutableInteractionSource() }
+    var isDragging by remember { mutableStateOf(false) }
     var localPosition by remember { androidx.compose.runtime.mutableFloatStateOf(0f) }
     var lastScrubTime by remember { androidx.compose.runtime.mutableLongStateOf(0L) }
 
@@ -1883,6 +2418,42 @@ private fun formatTime(ms: Long): String {
     val minutes = totalSeconds / 60
     val seconds = totalSeconds % 60
     return String.format(java.util.Locale.US, "%d:%02d", minutes, seconds)
+}
+
+private fun getColorName(colorValue: Long): String {
+    return when (colorValue) {
+        0xFFFFFFFFL -> "white"
+        0xFF2979FFL -> "blue"
+        0xFFFF80ABL -> "pink"
+        0xFF404040L -> "charcoal"
+        0xFF00E676L -> "green"
+        0xFFFFD600L -> "yellow"
+        0xFFAB47BCL -> "purple"
+        0xFFE8D5B7L -> "beige"
+        0xFF1A1A1AL -> "near_black"
+        0xFF29B6F6L -> "light_blue"
+        0xFFFF1744L -> "red"
+        0xFFC6FF00L -> "lime"
+        0xFFD4A57AL -> "tan"
+        0xFF5C6BC0L -> "indigo"
+        0xFFFF9100L -> "orange"
+        0xFFE8E8E8L -> "light_gray"
+        0xFF69F0AEL -> "mint"
+        0xFFFF4081L -> "hot_pink"
+        0xFFB0B0B0L -> "gray"
+        0xFFCE93D8L -> "lavender"
+        0xFFFFE57FL -> "gold"
+        0xFF00E5FFL -> "cyan"
+        0xFF787878L -> "dark_gray"
+        0xFFE67E22L -> "amber"
+        0xFFFF6D00L -> "deep_orange"
+        0xFFF5F0E8L -> "cream"
+        0xFF1DE9B6L -> "teal"
+        0xFFFF5252L -> "coral_red"
+        0xFF000000L -> "black"
+        0xFFFFF176L -> "light_yellow"
+        else -> String.format("#%08X", colorValue)
+    }
 }
 
 // SelectRatioBottomSheet, RatioOptionCard, AspectRatioIcon, DurationBottomSheet,

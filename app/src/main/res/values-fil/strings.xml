@@ -180,6 +180,7 @@
     <string name="editor_keep_editing">Ituloy ang Pag-edit</string>
     <string name="editor_discard">Itapon</string>
     <string name="editor_effect_sets">Mga Set ng Epekto</string>
+    <string name="editor_sticker">Sticker</string>
     <string name="editor_retry">Subukan Muli</string>
     <string name="editor_no_music_selected">Walang napiling musika</string>
     <string name="editor_images_title">I-tap para I-edit • Pindutin nang Matagal para Ayusin</string>
@@ -650,4 +651,20 @@
     <string name="editor_image_dragging">Kinakaladkad</string>
     <string name="editor_image_drag_to_reorder">I-drag para ayusin</string>
     <string name="editor_image_content_desc">Larawan %1$s</string>
+
+    <!-- Editor Text Overlay -->
+    <string name="editor_text">Teksto</string>
+    <string name="text_overlay_placeholder">Ipasok ang teksto</string>
+    <string name="text_overlay_please_enter">Mangyaring ipasok ang teksto</string>
+    <string name="text_overlay_color_header">Kulay</string>
+    <string name="text_overlay_font_header">Font</string>
+    <string name="text_overlay_no_selection">Walang napiling teksto</string>
+    <string name="text_overlay_desc_clear_focus">Alisin ang Focus</string>
+    <string name="text_overlay_desc_confirm">Kumpirmahin at Isara</string>
+    <string name="text_overlay_desc_ad_required">Kailangan ng Ad</string>
+    <string name="text_overlay_desc_new_item">Bagong item</string>
+    <string name="text_overlay_desc_delete">I-delete ang Teksto</string>
+    <string name="text_overlay_desc_rotate_scale">I-rotate at i-scale</string>
+    <string name="text_overlay_font_ad_error">Bigo sa pag-load ng Ad, mangyaring subukang muli.</string>
+    <string name="text_overlay_system_default">System Default</string>
 </resources>

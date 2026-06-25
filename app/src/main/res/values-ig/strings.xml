@@ -186,6 +186,7 @@
     <string name="editor_keep_editing">Gaa n\'ihu Idezi</string>
     <string name="editor_discard">Hichapụ</string>
     <string name="editor_effect_sets">Ndị Mmetụta</string>
+    <string name="editor_sticker">Sticker</string>
     <string name="editor_retry">Nwaa Ọzọ</string>
     <string name="editor_no_music_selected">Enweghị egwu a họrọ</string>
     <string name="editor_images_title">Pịa ka Idezi • Jide ka Idozie Ọzọ</string>
@@ -656,4 +657,20 @@
     <string name="editor_image_dragging">Na-adọkpụ</string>
     <string name="editor_image_drag_to_reorder">Dọrọ iji hazigharia</string>
     <string name="editor_image_content_desc">Foto %1$s</string>
+
+    <!-- Editor Text Overlay -->
+    <string name="editor_text">Ederede</string>
+    <string name="text_overlay_placeholder">Tinye ederede</string>
+    <string name="text_overlay_please_enter">Biko tinye ederede</string>
+    <string name="text_overlay_color_header">Agba</string>
+    <string name="text_overlay_font_header">Font</string>
+    <string name="text_overlay_no_selection">Enweghị ederede a họọrọ</string>
+    <string name="text_overlay_desc_clear_focus">Kpochapụ nleba anya</string>
+    <string name="text_overlay_desc_confirm">Nye nkwenye ma mechie</string>
+    <string name="text_overlay_desc_ad_required">Achọrọ mgbasa ozi</string>
+    <string name="text_overlay_desc_new_item">Ihe ọhụrụ</string>
+    <string name="text_overlay_desc_delete">Hichapụ Ederede</string>
+    <string name="text_overlay_desc_rotate_scale">Tụgharịa ma tụọ</string>
+    <string name="text_overlay_font_ad_error">Mgbasa ozi enweghị ike ibunye, biko gbalịa ọzọ.</string>
+    <string name="text_overlay_system_default">Ndi Agba Usoro</string>
 </resources>

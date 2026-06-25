@@ -112,6 +112,7 @@ object AudioLooper {
             for (loop in 0 until loopCount.toInt()) {
                 // Seek to trim start for each loop
                 extractor.seekTo(trimStartUs, MediaExtractor.SEEK_TO_CLOSEST_SYNC)
+                var lastSampleTimeUs = trimStartUs
 
                 // Copy samples from trim start to trim end
                 while (true) {
@@ -133,6 +134,11 @@ object AudioLooper {
                         break
                     }
 
+                    // Compute inter-sample delta for correct timestamp accumulation
+                    val deltaUs = (sampleTime - lastSampleTimeUs).coerceAtLeast(0)
+                    outputPresentationTimeUs += deltaUs
+                    lastSampleTimeUs = sampleTime
+
                     // Write sample to muxer
                     bufferInfo.offset = 0
                     bufferInfo.size = sampleSize
@@ -141,8 +147,6 @@ object AudioLooper {
 
                     muxer.writeSampleData(muxerTrackIndex, buffer, bufferInfo)
 
-                    // Advance to next sample
-                    outputPresentationTimeUs += (sampleTime - trimStartUs).coerceAtLeast(0)
                     extractor.advance()
                 }
 

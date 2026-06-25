@@ -185,6 +185,7 @@
     <string name="editor_keep_editing">Ci gaba da Gyarawa</string>
     <string name="editor_discard">Watsar</string>
     <string name="editor_effect_sets">Saitunan Tasiri</string>
+    <string name="editor_sticker">Sticker</string>
     <string name="editor_retry">Sake gwadawa</string>
     <string name="editor_no_music_selected">Ba a zaɓi kiɗa ba</string>
     <string name="editor_images_title">Danna don Gyara • Riƙe don Sake Tsara</string>
@@ -655,4 +656,20 @@
     <string name="editor_image_dragging">Ana ja</string>
     <string name="editor_image_drag_to_reorder">Ja don sake tsarawa</string>
     <string name="editor_image_content_desc">Hoto %1$s</string>
+
+    <!-- Editor Text Overlay -->
+    <string name="editor_text">Rubutu</string>
+    <string name="text_overlay_placeholder">Shigar da rubutu</string>
+    <string name="text_overlay_please_enter">Da fatan za a shigar da rubutu</string>
+    <string name="text_overlay_color_header">Launi</string>
+    <string name="text_overlay_font_header">Font</string>
+    <string name="text_overlay_no_selection">Babu rubutun da aka zaɓa</string>
+    <string name="text_overlay_desc_clear_focus">Cire Mayar da hankali</string>
+    <string name="text_overlay_desc_confirm">Tabbatar kuma Rufe</string>
+    <string name="text_overlay_desc_ad_required">Ana buƙatar Talla</string>
+    <string name="text_overlay_desc_new_item">Sabuwar abu</string>
+    <string name="text_overlay_desc_delete">Goge Rubutu</string>
+    <string name="text_overlay_desc_rotate_scale">Juya kuma auna</string>
+    <string name="text_overlay_font_ad_error">Gaza loda Talla, da fatan za a sake gwadawa.</string>
+    <string name="text_overlay_system_default">Tsoho na Tsarin</string>
 </resources>

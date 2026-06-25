@@ -182,6 +182,7 @@
     <string name="editor_keep_editing">संपादन जारी रखें</string>
     <string name="editor_discard">छोड़ें</string>
     <string name="editor_effect_sets">इफेक्ट सेट्स</string>
+    <string name="editor_sticker">स्टिकर</string>
     <string name="editor_retry">पुनः प्रयास करें</string>
     <string name="editor_no_music_selected">कोई संगीत चयनित नहीं</string>
     <string name="editor_images_title">संपादित करने के लिए टैप करें • पुनर्व्यवस्थित करने के लिए दबाए रखें</string>
@@ -652,4 +653,20 @@
     <string name="editor_image_dragging">खींचा जा रहा है</string>
     <string name="editor_image_drag_to_reorder">पुनर्व्यवस्थित करने के लिए खींचें</string>
     <string name="editor_image_content_desc">छवि %1$s</string>
+
+    <!-- Editor Text Overlay -->
+    <string name="editor_text">टेक्स्ट</string>
+    <string name="text_overlay_placeholder">टेक्स्ट दर्ज करें</string>
+    <string name="text_overlay_please_enter">कृपया टेक्स्ट दर्ज करें</string>
+    <string name="text_overlay_color_header">रंग</string>
+    <string name="text_overlay_font_header">फ़ॉन्ट</string>
+    <string name="text_overlay_no_selection">कोई टेक्स्ट चयनित नहीं है</string>
+    <string name="text_overlay_desc_clear_focus">फ़ोकस साफ़ करें</string>
+    <string name="text_overlay_desc_confirm">पुष्टि करें और बंद करें</string>
+    <string name="text_overlay_desc_ad_required">विज्ञापन आवश्यक</string>
+    <string name="text_overlay_desc_new_item">नया आइटम</string>
+    <string name="text_overlay_desc_delete">टेक्स्ट हटाएं</string>
+    <string name="text_overlay_desc_rotate_scale">घुमाएं और स्केल करें</string>
+    <string name="text_overlay_font_ad_error">विज्ञापन लोड करने में विफल, कृपया पुनः प्रयास करें।</string>
+    <string name="text_overlay_system_default">सिस्टम डिफ़ॉल्ट</string>
 </resources>

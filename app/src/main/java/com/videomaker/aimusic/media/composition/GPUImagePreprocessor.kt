@@ -17,6 +17,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import kotlin.math.roundToInt
 
 /**
  * GPUImagePreprocessor - Preprocesses images using GPU for consistent color handling
@@ -73,6 +74,7 @@ class GPUImagePreprocessor(private val context: Context) {
             eglDisplay = EGL14.eglGetDisplay(EGL14.EGL_DEFAULT_DISPLAY)
             if (eglDisplay == EGL14.EGL_NO_DISPLAY) {
                 android.util.Log.e(TAG, "Failed to get EGL display")
+                releasePartialEgl()
                 return false
             }
 
@@ -80,6 +82,7 @@ class GPUImagePreprocessor(private val context: Context) {
             val version = IntArray(2)
             if (!EGL14.eglInitialize(eglDisplay, version, 0, version, 1)) {
                 android.util.Log.e(TAG, "Failed to initialize EGL")
+                releasePartialEgl()
                 return false
             }
 
@@ -97,9 +100,13 @@ class GPUImagePreprocessor(private val context: Context) {
             val numConfigs = IntArray(1)
             if (!EGL14.eglChooseConfig(eglDisplay, configAttribs, 0, configs, 0, 1, numConfigs, 0)) {
                 android.util.Log.e(TAG, "Failed to choose EGL config")
+                releasePartialEgl()
                 return false
             }
-            val eglConfig = configs[0] ?: return false
+            val eglConfig = configs[0] ?: run {
+                releasePartialEgl()
+                return false
+            }
 
             // Create context
             val contextAttribs = intArrayOf(
@@ -109,6 +116,7 @@ class GPUImagePreprocessor(private val context: Context) {
             eglContext = EGL14.eglCreateContext(eglDisplay, eglConfig, EGL14.EGL_NO_CONTEXT, contextAttribs, 0)
             if (eglContext == EGL14.EGL_NO_CONTEXT) {
                 android.util.Log.e(TAG, "Failed to create EGL context")
+                releasePartialEgl()
                 return false
             }
 
@@ -121,18 +129,21 @@ class GPUImagePreprocessor(private val context: Context) {
             eglSurface = EGL14.eglCreatePbufferSurface(eglDisplay, eglConfig, surfaceAttribs, 0)
             if (eglSurface == EGL14.EGL_NO_SURFACE) {
                 android.util.Log.e(TAG, "Failed to create EGL surface")
+                releasePartialEgl()
                 return false
             }
 
             // Make context current
             if (!EGL14.eglMakeCurrent(eglDisplay, eglSurface, eglSurface, eglContext)) {
                 android.util.Log.e(TAG, "Failed to make EGL context current")
+                releasePartialEgl()
                 return false
             }
 
             // Compile shader
             if (!compileShader()) {
                 android.util.Log.e(TAG, "Failed to compile shader")
+                releasePartialEgl()
                 return false
             }
 
@@ -141,7 +152,29 @@ class GPUImagePreprocessor(private val context: Context) {
 
         } catch (e: Exception) {
             android.util.Log.e(TAG, "Failed to initialize GPU preprocessor", e)
+            releasePartialEgl()
             return false
+        }
+    }
+
+    /** Clean up any partially-allocated EGL resources after a failed [initialize]. */
+    private fun releasePartialEgl() {
+        try {
+            if (eglDisplay != EGL14.EGL_NO_DISPLAY) {
+                EGL14.eglMakeCurrent(eglDisplay, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_CONTEXT)
+                if (eglSurface != EGL14.EGL_NO_SURFACE) {
+                    EGL14.eglDestroySurface(eglDisplay, eglSurface)
+                    eglSurface = EGL14.EGL_NO_SURFACE
+                }
+                if (eglContext != EGL14.EGL_NO_CONTEXT) {
+                    EGL14.eglDestroyContext(eglDisplay, eglContext)
+                    eglContext = EGL14.EGL_NO_CONTEXT
+                }
+                EGL14.eglTerminate(eglDisplay)
+                eglDisplay = EGL14.EGL_NO_DISPLAY
+            }
+        } catch (e: Exception) {
+            android.util.Log.e(TAG, "Error cleaning up partial EGL state", e)
         }
     }
 
@@ -178,9 +211,25 @@ class GPUImagePreprocessor(private val context: Context) {
             val inputHeight = inputBitmap.height
             val inputAspect = inputWidth.toFloat() / inputHeight.toFloat()
 
-            // Calculate output dimensions
-            val outputWidth = textureSize
-            val outputHeight = (textureSize / targetAspectRatio).toInt()
+            // Calculate output dimensions.
+            // textureSize = quality height = the SHORT side of the video. Anchor the short side
+            // to textureSize, derive the long side from the aspect ratio, and force BOTH
+            // dimensions even. H.264 / MediaCodec encoders reject odd width/height: the old
+            // "outputWidth = textureSize" always made width the short side, so every landscape
+            // ratio produced the wrong orientation AND 16:9 720p yielded 720×405 (odd height),
+            // which failed encoder init whenever an effect (sticker/text/watermark/transition)
+            // locked the frame size — i.e. every non-portrait export.
+            val outputWidth: Int
+            val outputHeight: Int
+            if (targetAspectRatio >= 1f) {
+                // Landscape or square: short side is the height.
+                outputHeight = makeEven(textureSize)
+                outputWidth = makeEven((textureSize * targetAspectRatio).roundToInt())
+            } else {
+                // Portrait: short side is the width.
+                outputWidth = makeEven(textureSize)
+                outputHeight = makeEven((textureSize / targetAspectRatio).roundToInt())
+            }
 
             // Create input texture
             val inputTexture = createTexture(inputBitmap)
@@ -226,20 +275,18 @@ class GPUImagePreprocessor(private val context: Context) {
             GLES20.glReadPixels(0, 0, outputWidth, outputHeight, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, buffer)
             buffer.rewind()
 
-            // Create bitmap from pixels (flip Y because OpenGL origin is bottom-left)
+            // glReadPixels reads bottom-to-top (GL origin is bottom-left), which
+            // reverses the row order of the upside-down framebuffer — the resulting
+            // bitmap is already in standard top-to-bottom orientation. No flip needed.
             val outputBitmap = Bitmap.createBitmap(outputWidth, outputHeight, Bitmap.Config.ARGB_8888)
             outputBitmap.copyPixelsFromBuffer(buffer)
-
-            // Flip vertically
-            val flippedBitmap = flipBitmapVertically(outputBitmap)
-            outputBitmap.recycle()
 
             // Save to file
             outputFile.parentFile?.mkdirs()
             FileOutputStream(outputFile).use { out ->
-                flippedBitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
+                outputBitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
             }
-            flippedBitmap.recycle()
+            outputBitmap.recycle()
 
             // Cleanup
             GLES20.glDeleteTextures(1, intArrayOf(inputTexture), 0)
@@ -252,6 +299,9 @@ class GPUImagePreprocessor(private val context: Context) {
             return false
         }
     }
+
+    /** Round down to the nearest even integer (min 2) so the encoder never sees odd dimensions. */
+    private fun makeEven(value: Int): Int = value.coerceAtLeast(2) and 1.inv()
 
     private fun loadBitmap(uri: Uri, maxSize: Int): Bitmap? {
         return try {
@@ -336,7 +386,7 @@ class GPUImagePreprocessor(private val context: Context) {
         if (width > maxWidth || height > maxHeight) {
             val halfWidth = width / 2
             val halfHeight = height / 2
-            while ((halfWidth / sampleSize) >= maxWidth && (halfHeight / sampleSize) >= maxHeight) {
+            while ((halfWidth / sampleSize) >= maxWidth || (halfHeight / sampleSize) >= maxHeight) {
                 sampleSize *= 2
             }
         }
@@ -344,19 +394,27 @@ class GPUImagePreprocessor(private val context: Context) {
     }
 
     private fun createTexture(bitmap: Bitmap): Int {
+        if (bitmap.isRecycled) return 0
+
         val textureIds = IntArray(1)
         GLES20.glGenTextures(1, textureIds, 0)
         val textureId = textureIds[0]
 
         if (textureId == 0) return 0
 
-        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureId)
-        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR)
-        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR)
-        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE)
-        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE)
+        try {
+            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureId)
+            GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR)
+            GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR)
+            GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE)
+            GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE)
 
-        GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0)
+            GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0)
+        } catch (e: Exception) {
+            android.util.Log.e(TAG, "Failed to upload texture: ${e.message}")
+            GLES20.glDeleteTextures(1, textureIds, 0)
+            return 0
+        }
 
         return textureId
     }
@@ -392,12 +450,6 @@ class GPUImagePreprocessor(private val context: Context) {
         if (status != GLES20.GL_FRAMEBUFFER_COMPLETE) {
             android.util.Log.e(TAG, "Framebuffer not complete: $status")
         }
-    }
-
-    private fun flipBitmapVertically(source: Bitmap): Bitmap {
-        val matrix = android.graphics.Matrix()
-        matrix.setScale(1f, -1f, source.width / 2f, source.height / 2f)
-        return Bitmap.createBitmap(source, 0, 0, source.width, source.height, matrix, true)
     }
 
     private fun compileShader(): Boolean {

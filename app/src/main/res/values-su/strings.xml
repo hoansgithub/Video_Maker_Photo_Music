@@ -185,6 +185,7 @@
     <string name="editor_keep_editing">Terus Édit</string>
     <string name="editor_discard">Buang</string>
     <string name="editor_effect_sets">Set Épék</string>
+    <string name="editor_sticker">Stiker</string>
     <string name="editor_retry">Cobaan Deui</string>
     <string name="editor_no_music_selected">Teu aya musik nu dipilih</string>
     <string name="editor_images_title">Pencét pikeun Édit • Tahan pikeun Nyusun Deui</string>
@@ -655,4 +656,20 @@
     <string name="editor_image_dragging">Nyered</string>
     <string name="editor_image_drag_to_reorder">Séred pikeun nyusun ulang</string>
     <string name="editor_image_content_desc">Gambar %1$s</string>
+
+    <!-- Editor Text Overlay -->
+    <string name="editor_text">Teks</string>
+    <string name="text_overlay_placeholder">Lebetkeun téks</string>
+    <string name="text_overlay_please_enter">Mangga lebetkeun téks</string>
+    <string name="text_overlay_color_header">Warna</string>
+    <string name="text_overlay_font_header">Font</string>
+    <string name="text_overlay_no_selection">Teu aya téks anu dipilih</string>
+    <string name="text_overlay_desc_clear_focus">Berseka Fokus</string>
+    <string name="text_overlay_desc_confirm">Konfirmasi sareng Tutup</string>
+    <string name="text_overlay_desc_ad_required">Iklan diperyogikeun</string>
+    <string name="text_overlay_desc_new_item">Item énggal</string>
+    <string name="text_overlay_desc_delete">Hapus Téks</string>
+    <string name="text_overlay_desc_rotate_scale">Puter sareng skala</string>
+    <string name="text_overlay_font_ad_error">Gagal ngamuat Iklan, mangga cobian deui.</string>
+    <string name="text_overlay_system_default">Bawaan Sistem</string>
 </resources>

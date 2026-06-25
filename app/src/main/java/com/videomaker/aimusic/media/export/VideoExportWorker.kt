@@ -58,6 +58,17 @@ class VideoExportWorker(
 
         private const val AUDIO_BITRATE = 128_000 // 128 kbps AAC
 
+        // Overall progress weight allocation:
+        //   0- 2%  Beat-sync data loading
+        //   2-10%  Audio preprocessing
+        //  10-65%  Composition building (image GPU, transitions, stickers)
+        //  65-100% Transformer encoding
+        private const val PROGRESS_AFTER_BEAT_SYNC = 2
+        private const val PROGRESS_AFTER_AUDIO = 10
+        private const val PROGRESS_COMPOSITION_START = 10
+        private const val PROGRESS_COMPOSITION_END = 65
+        private const val PROGRESS_ENCODING_START = 65
+
         private fun getBitrateForQuality(quality: VideoQuality): Int = when (quality) {
             VideoQuality.HD_720 -> 2_500_000   // 2.5 Mbps
             VideoQuality.FHD_1080 -> 5_000_000 // 5 Mbps
@@ -177,6 +188,7 @@ class VideoExportWorker(
 
                 android.util.Log.d("VideoExportWorker", "Beat-sync data loaded: BPM=${beatSyncData.bpm}, duration=${totalDurationMs}ms")
             }
+            setProgressAsync(workDataOf(KEY_PROGRESS to PROGRESS_AFTER_BEAT_SYNC))
 
             // Re-preprocess to ensure processedAudioUri points to a valid cached file.
             // Volume is applied by VolumeAudioProcessor in CompositionFactory, NOT baked in here.
@@ -215,6 +227,8 @@ class VideoExportWorker(
                 }
             }
 
+            setProgressAsync(workDataOf(KEY_PROGRESS to PROGRESS_AFTER_AUDIO))
+
             // Validate duration before export
             val durationMs = project.settings.totalDurationMs
             if (durationMs <= 0) {
@@ -236,7 +250,18 @@ class VideoExportWorker(
             cleanupOldExports(projectId, moviesDir)
 
             val outputFile = createOutputFile(projectId, isClean = forceWatermarkFree)
-            val composition = compositionFactory.createComposition(project, includeAudio = true, forExport = true, exportQuality = quality)
+            val composition = compositionFactory.createComposition(
+                project = project,
+                includeAudio = true,
+                forExport = true,
+                exportQuality = quality,
+                onProgress = { compositionPercent ->
+                    // Map composition 0-100 to overall PROGRESS_COMPOSITION_START..PROGRESS_COMPOSITION_END
+                    val range = PROGRESS_COMPOSITION_END - PROGRESS_COMPOSITION_START
+                    val overall = PROGRESS_COMPOSITION_START + compositionPercent * range / 100
+                    setProgressAsync(workDataOf(KEY_PROGRESS to overall))
+                }
+            )
 
             try {
                 exportVideo(composition, outputFile.absolutePath, quality)
@@ -280,6 +305,8 @@ class VideoExportWorker(
                 "Video format not supported on this device. Try a lower quality setting."
             ExportException.ERROR_CODE_DECODER_INIT_FAILED ->
                 "Media decoder failed to initialize. Please restart the app and try again."
+            ExportException.ERROR_CODE_VIDEO_FRAME_PROCESSING_FAILED ->
+                "Video frame processing failed. Try reducing the number of stickers or text overlays."
             else ->
                 "Export failed (error ${e.errorCode}): ${e.message ?: "Unknown error"}"
         }
@@ -350,7 +377,10 @@ class VideoExportWorker(
 
                             val progress = progressHolder.progress
                             if (progress >= 0) {
-                                setProgressAsync(workDataOf(KEY_PROGRESS to progress))
+                                // Map Transformer 0-100 to overall PROGRESS_ENCODING_START..100
+                                val range = 100 - PROGRESS_ENCODING_START
+                                val overall = PROGRESS_ENCODING_START + progress * range / 100
+                                setProgressAsync(workDataOf(KEY_PROGRESS to overall))
                             }
 
                             if (progress < 100 && !isStopped && !isCancelled.get()) {

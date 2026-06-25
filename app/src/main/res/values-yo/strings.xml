@@ -185,6 +185,7 @@
     <string name="editor_keep_editing">Tẹ̀síwájú Ṣíṣàtúnṣe</string>
     <string name="editor_discard">Kọ</string>
     <string name="editor_effect_sets">Àwọn Ìpín Ipa</string>
+    <string name="editor_sticker">Sticker</string>
     <string name="editor_retry">Gbìyànjú Lẹ́ẹ̀kan Sí</string>
     <string name="editor_no_music_selected">A kò yan orin kankan</string>
     <string name="editor_images_title">Tẹ lati Ṣatunkọ • Dìímú lati Tun Ṣètò</string>
@@ -655,4 +656,20 @@
     <string name="editor_image_dragging">Ń fà</string>
     <string name="editor_image_drag_to_reorder">Fà láti tún ṣètò</string>
     <string name="editor_image_content_desc">Àwòrán %1$s</string>
+
+    <!-- Editor Text Overlay -->
+    <string name="editor_text">Ọrọ</string>
+    <string name="text_overlay_placeholder">Tẹ ọrọ sii</string>
+    <string name="text_overlay_please_enter">Jọwọ tẹ ọrọ sii</string>
+    <string name="text_overlay_color_header">Àwọ̀</string>
+    <string name="text_overlay_font_header">Font</string>
+    <string name="text_overlay_no_selection">Ko si ọrọ ti a yan</string>
+    <string name="text_overlay_desc_clear_focus">Ko Idojukọ kuro</string>
+    <string name="text_overlay_desc_confirm">Jọwọ ti a yan</string>
+    <string name="text_overlay_desc_ad_required">A nilo ipolowo</string>
+    <string name="text_overlay_desc_new_item">Ohun tuntun</string>
+    <string name="text_overlay_desc_delete">Pa Ọrọ Rẹ</string>
+    <string name="text_overlay_desc_rotate_scale">Yi pada ki o si wọn</string>
+    <string name="text_overlay_font_ad_error">Kuna lati gbe Ipolowo soke, jọwọ gbiyanju lẹẹkansi.</string>
+    <string name="text_overlay_system_default">Eto Aiyipada</string>
 </resources>

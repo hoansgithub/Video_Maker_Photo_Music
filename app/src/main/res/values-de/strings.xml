@@ -185,6 +185,7 @@
     <string name="editor_keep_editing">Weiter bearbeiten</string>
     <string name="editor_discard">Verwerfen</string>
     <string name="editor_effect_sets">Effektsets</string>
+    <string name="editor_sticker">Sticker</string>
     <string name="editor_retry">Erneut versuchen</string>
     <string name="editor_no_music_selected">Keine Musik ausgewählt</string>
     <string name="editor_images_title">Tippen zum Bearbeiten • Halten zum Neu Anordnen</string>
@@ -655,4 +656,20 @@
     <string name="editor_image_dragging">Wird gezogen</string>
     <string name="editor_image_drag_to_reorder">Zum Neuordnen ziehen</string>
     <string name="editor_image_content_desc">Bild %1$s</string>
+
+    <!-- Editor Text Overlay -->
+    <string name="editor_text">Text</string>
+    <string name="text_overlay_placeholder">Text eingeben</string>
+    <string name="text_overlay_please_enter">Bitte Text eingeben</string>
+    <string name="text_overlay_color_header">Farbe</string>
+    <string name="text_overlay_font_header">Schriftart</string>
+    <string name="text_overlay_no_selection">Kein Text ausgewählt</string>
+    <string name="text_overlay_desc_clear_focus">Fokus aufheben</string>
+    <string name="text_overlay_desc_confirm">Bestätigen und Schließen</string>
+    <string name="text_overlay_desc_ad_required">Werbung erforderlich</string>
+    <string name="text_overlay_desc_new_item">Neues Element</string>
+    <string name="text_overlay_desc_delete">Text löschen</string>
+    <string name="text_overlay_desc_rotate_scale">Drehen und Skalieren</string>
+    <string name="text_overlay_font_ad_error">Werbung konnte nicht geladen werden. Bitte versuchen Sie es erneut.</string>
+    <string name="text_overlay_system_default">Systemstandard</string>
 </resources>

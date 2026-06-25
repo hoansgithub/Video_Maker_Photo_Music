@@ -24,10 +24,13 @@ import kotlinx.coroutines.launch
  *
  * For preview playback only. Export uses CompositionFactory with AudioMixer.
  *
+ * Fadeout is applied in realtime via volume ramp — no Transformer preprocessing
+ * needed for preview. This avoids player rebuilds and audible glitches.
+ *
  * Usage:
  * ```kotlin
  * val player = AudioTimelinePlayer(context, playbackClock, scope, audioCache)
- * player.setNodes(audioNodes, hookStartTimeMs)
+ * player.setNodes(audioNodes, hookStartTimeMs, totalDurationMs, fadeoutDurationMs)
  * player.play()  // Starts monitoring clock and activating nodes
  * player.pause()
  * player.release()
@@ -69,11 +72,18 @@ class AudioTimelinePlayer(
     // Hook start offset for source (non-preprocessed) audio
     private var hookStartTimeMs: Long = 0L
 
+    // Realtime fadeout parameters (applied via volume ramp in sync loop)
+    private var totalDurationMs: Long = 0L
+    private var fadeoutDurationMs: Long = 0L
+
     // Sync monitoring job
     private var syncJob: Job? = null
 
     // Timestamp of last explicit seek (prevents drift-correction during cooldown)
     private var lastSeekUptimeMs: Long = 0L
+
+    // Previous clock position for detecting video loop wrap-around
+    private var prevClockTimeMs: Long = 0L
 
     /**
      * Set the audio nodes for the timeline.
@@ -81,9 +91,18 @@ class AudioTimelinePlayer(
      *
      * @param newNodes The audio nodes to manage
      * @param hookStartMs Hook start offset for source audio clipping (beat-sync mode)
+     * @param totalDurMs Total video duration for realtime fadeout calculation
+     * @param fadeoutDurMs Fadeout ramp duration (volume ramps from 1→0 over this period)
      */
-    fun setNodes(newNodes: List<AudioNode>, hookStartMs: Long = 0L) {
+    fun setNodes(
+        newNodes: List<AudioNode>,
+        hookStartMs: Long = 0L,
+        totalDurMs: Long = 0L,
+        fadeoutDurMs: Long = 0L
+    ) {
         hookStartTimeMs = hookStartMs
+        totalDurationMs = totalDurMs
+        fadeoutDurationMs = fadeoutDurMs
 
         // Release players for removed nodes
         val newIds = newNodes.map { it.id }.toSet()
@@ -105,13 +124,14 @@ class AudioTimelinePlayer(
                 // New node — create player
                 createPlayerForNode(node)
             } else if (oldNode != null && isNodeSourceChanged(oldNode, node)) {
-                // Source changed — rebuild player
+                // Source changed (different song, trim, etc.) — rebuild player
                 Log.d(TAG, "Rebuilding player for changed node: ${node.id}")
                 existingPlayer.release()
                 activePlayers.remove(node.id)
                 createPlayerForNode(node)
             } else {
-                // Only volume changed — update in-place (no rebuild)
+                // Only volume or processedAudioUri changed — update in-place (no rebuild)
+                // processedAudioUri is ignored for preview; fadeout is applied via realtime volume
                 existingPlayer.volume = node.volume
             }
         }
@@ -148,12 +168,13 @@ class AudioTimelinePlayer(
      */
     fun seekTo(positionMs: Long) {
         lastSeekUptimeMs = SystemClock.uptimeMillis()
+        prevClockTimeMs = positionMs
 
         activePlayers.forEach { (id, player) ->
             val node = nodes.find { it.id == id } ?: return@forEach
 
-            if (isNodePreprocessed(node)) {
-                // Preprocessed: timeline position maps directly to audio position
+            if (isPrimaryBgmNode(node)) {
+                // Primary BGM: timeline position maps directly to audio position
                 player.seekTo(positionMs.coerceAtLeast(0L))
             } else if (node.isActiveAt(positionMs)) {
                 val nodePositionMs = positionMs - node.startTimeMs
@@ -181,12 +202,12 @@ class AudioTimelinePlayer(
     // ============================================
 
     /**
-     * Check if a node's audio source changed (requiring player rebuild).
-     * Volume-only changes don't need a rebuild.
+     * Check if a node's playback source changed (requiring player rebuild).
+     * Ignores processedAudioUri — preview always streams from songUrl/customAudioUri
+     * and applies fadeout via realtime volume. processedAudioUri is for export only.
      */
     private fun isNodeSourceChanged(old: AudioNode, new: AudioNode): Boolean {
-        return old.processedAudioUri != new.processedAudioUri ||
-                old.customAudioUri != new.customAudioUri ||
+        return old.customAudioUri != new.customAudioUri ||
                 old.songUrl != new.songUrl ||
                 old.trimStartMs != new.trimStartMs ||
                 old.trimEndMs != new.trimEndMs ||
@@ -194,22 +215,28 @@ class AudioTimelinePlayer(
     }
 
     /**
-     * Check if a node uses preprocessed audio (trimmed + fadeout baked in).
-     * Preprocessed nodes don't need clipping or looping — they're exact duration.
+     * Check if this is the primary BGM node (first node, always active for full duration).
      */
-    private fun isNodePreprocessed(node: AudioNode): Boolean {
-        if (node.processedAudioUri == null) return false
-        val uri = Uri.parse(node.processedAudioUri)
-        // Verify file still exists (LRU cache eviction safety)
-        return uri.scheme == "file" && uri.path?.let { java.io.File(it).exists() } == true
+    private fun isPrimaryBgmNode(node: AudioNode): Boolean {
+        return node == nodes.firstOrNull()
+    }
+
+    /**
+     * Calculate fadeout volume multiplier for the given position.
+     * Returns 1.0 outside fadeout range, ramps linearly from 1.0→0.0 during fadeout.
+     */
+    private fun fadeoutMultiplier(positionMs: Long): Float {
+        if (totalDurationMs <= 0 || fadeoutDurationMs <= 0) return 1f
+        val fadeoutStartMs = totalDurationMs - fadeoutDurationMs
+        if (positionMs < fadeoutStartMs) return 1f
+        val progress = ((positionMs - fadeoutStartMs).toFloat() / fadeoutDurationMs).coerceIn(0f, 1f)
+        return 1f - progress
     }
 
     private fun createPlayerForNode(node: AudioNode) {
         try {
-            // Resolve URI: processedAudioUri > customAudioUri > songUrl
-            val isPreprocessed = isNodePreprocessed(node)
+            // Resolve URI: customAudioUri > songUrl (processedAudioUri ignored for preview)
             val uri: String? = when {
-                isPreprocessed -> node.processedAudioUri
                 node.customAudioUri != null -> node.customAudioUri
                 node.songUrl != null -> node.songUrl
                 else -> null
@@ -234,11 +261,7 @@ class AudioTimelinePlayer(
             }
 
             // Build media item with appropriate clipping
-            val mediaItem = if (isPreprocessed) {
-                // Preprocessed: no clipping needed (already trimmed with fadeout)
-                Log.d(TAG, "Node ${node.id}: preprocessed audio, no clipping")
-                MediaItem.Builder().setUri(uri).build()
-            } else if (node.trimStartMs > 0 || node.trimEndMs != null) {
+            val mediaItem = if (node.trimStartMs > 0 || node.trimEndMs != null) {
                 // Has per-node trim range
                 val clippingBuilder = MediaItem.ClippingConfiguration.Builder()
                     .setStartPositionMs(node.trimStartMs)
@@ -267,20 +290,15 @@ class AudioTimelinePlayer(
 
             player.setMediaItem(mediaItem)
 
-            // Repeat mode: preprocessed audio is exact duration (no loop),
-            // source audio may be shorter than video (loop)
-            player.repeatMode = if (isPreprocessed) {
-                Player.REPEAT_MODE_OFF
-            } else {
-                Player.REPEAT_MODE_ALL
-            }
+            // Always loop source audio — may be shorter than video duration
+            player.repeatMode = Player.REPEAT_MODE_ALL
 
             player.volume = node.volume
             player.prepare()
             player.playWhenReady = false
 
             activePlayers[node.id] = player
-            Log.d(TAG, "Created player for node ${node.id} (preprocessed=$isPreprocessed)")
+            Log.d(TAG, "Created player for node ${node.id}")
         } catch (e: Exception) {
             Log.e(TAG, "Failed to create player for node ${node.id}: ${e.message}")
         }
@@ -296,12 +314,22 @@ class AudioTimelinePlayer(
      *
      * The loop's primary job is activating/deactivating timeline nodes (SFX,
      * voiceover) at their startTimeMs/endTimeMs boundaries.
+     *
+     * Fadeout is applied via realtime volume ramp — no preprocessed audio needed.
      */
     private fun syncPlayersToTimeline() {
         if (!playbackClock.isPlaying) return
 
         val currentTimeMs = playbackClock.currentTimeMs()
         val inCooldown = (SystemClock.uptimeMillis() - lastSeekUptimeMs) < SEEK_COOLDOWN_MS
+
+        // Detect video loop wrap-around: clock jumped from near-end to near-start.
+        // Distinguished from user backward seek by checking both ends + cooldown.
+        val isLoopWrap = totalDurationMs > 0
+                && currentTimeMs < DRIFT_THRESHOLD_MS
+                && prevClockTimeMs > totalDurationMs - DRIFT_THRESHOLD_MS
+                && !inCooldown
+        prevClockTimeMs = currentTimeMs
 
         for (node in nodes) {
             val player = activePlayers[node.id] ?: continue
@@ -317,26 +345,37 @@ class AudioTimelinePlayer(
                 continue
             }
 
-            val isPreprocessed = isNodePreprocessed(node)
+            if (isPrimaryBgmNode(node)) {
+                // Primary BGM: always active.
+                // ExoPlayer loops internally (REPEAT_MODE_ALL) at the clip boundary,
+                // which may differ from totalDurationMs. Use player.duration to compute
+                // the expected position within the current loop iteration.
+                val clipDurationMs = player.duration.takeIf { it > 0 && it != androidx.media3.common.C.TIME_UNSET } ?: 0L
 
-            if (isPreprocessed) {
-                // Preprocessed BGM: always active, position = clock position
                 if (!player.isPlaying) {
                     // Start playing (first time or after STATE_ENDED)
-                    player.seekTo(currentTimeMs.coerceAtLeast(0L))
+                    val seekPos = if (clipDurationMs > 0) currentTimeMs % clipDurationMs else currentTimeMs
+                    player.seekTo(seekPos.coerceAtLeast(0L))
                     lastSeekUptimeMs = SystemClock.uptimeMillis()
                     player.play()
-                } else if (!inCooldown) {
-                    // Only drift-correct outside cooldown window
-                    val drift = kotlin.math.abs(currentTimeMs - player.currentPosition)
-                    if (drift > DRIFT_THRESHOLD_MS) {
+                } else if (isLoopWrap) {
+                    // Video looped — re-seek to start immediately (bypass cooldown)
+                    Log.d(TAG, "Video loop wrap — re-seeking to 0ms (node ${node.id})")
+                    player.seekTo(0L)
+                    lastSeekUptimeMs = SystemClock.uptimeMillis()
+                } else if (!inCooldown && clipDurationMs > 0) {
+                    // Drift-correct: expected position accounts for audio looping
+                    val expectedPlayerPos = currentTimeMs % clipDurationMs
+                    val drift = kotlin.math.abs(expectedPlayerPos - player.currentPosition)
+                    // Ignore drift near the audio loop boundary (wrap-around artifact)
+                    if (drift > DRIFT_THRESHOLD_MS && drift < clipDurationMs - DRIFT_THRESHOLD_MS) {
                         Log.d(TAG, "Drift correction: ${drift}ms (node ${node.id})")
-                        player.seekTo(currentTimeMs)
+                        player.seekTo(expectedPlayerPos)
                         lastSeekUptimeMs = SystemClock.uptimeMillis()
                     }
                 }
-                // Volume update (no seek, no glitch)
-                player.volume = node.volume
+                // Volume with realtime fadeout (no seek, no glitch)
+                player.volume = node.volume * fadeoutMultiplier(currentTimeMs)
             } else if (node.isActiveAt(currentTimeMs)) {
                 // Timeline node: should be playing
                 val expectedPositionMs = currentTimeMs - node.startTimeMs

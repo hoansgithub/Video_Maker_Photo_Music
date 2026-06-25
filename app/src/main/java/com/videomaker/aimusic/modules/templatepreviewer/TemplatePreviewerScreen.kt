@@ -1110,10 +1110,7 @@ private fun TemplatePreviewerReadyContent(
         Column(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .navigationBarsPadding()
-                .padding(horizontal = 24.dp, vertical = 16.dp)
-                .padding(bottom = 110.dp),  // Space for native ad banner (100dp + 10dp spacing)
+                .fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
@@ -1121,7 +1118,8 @@ private fun TemplatePreviewerReadyContent(
             val isLiked = currentTemplate?.id in likedTemplateIds
             Row(
                 modifier = Modifier
-                    .fillMaxWidth(),
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp),
                 horizontalArrangement = Arrangement.End
             ) {
                 Column(
@@ -1215,9 +1213,36 @@ private fun TemplatePreviewerReadyContent(
                     )
                 },
                 modifier = Modifier
+                    .padding(start = 24.dp, end = 24.dp, bottom = 16.dp)
                     .wrapContentWidth()
                     .height(52.dp)
             )
+
+            Box(modifier = Modifier.fillMaxWidth()){
+                Spacer(Modifier.navigationBarsPadding())
+                // Ad at bottom, above safe area (like HomeScreen)
+                // Remote Config toggle: native ad (default) or standard banner
+                if (adPlacementConfigService.bannerUseNative) {
+                    NativeAdView(
+                        placement = AdPlacement.NATIVE_TEMPLATE_PREVIEWER_BANNER,
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .fillMaxWidth()
+                            .height(100.dp),
+                        isDebug = BuildConfig.DEBUG,
+                        onAdClicked = { adClickDetector.onAdClick(it) }
+                    )
+                } else {
+                    BannerAdView(
+                        placement = AdPlacement.BANNER_TEMPLATE_PREVIEWER,
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .fillMaxWidth()
+                            .height(50.dp),
+                        onAdClicked = { adClickDetector.onAdClick(it) }
+                    )
+                }
+            }
         }
 
         // Ad at bottom, above safe area (like HomeScreen)

@@ -55,6 +55,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
@@ -495,6 +496,7 @@ fun HomeScreen(
     LaunchedEffect(projectsSelectedSong?.id) {
         if (projectsSelectedSong != null) isProjectsCtaVisible = true
     }
+    var bottomSectionHeight by remember { mutableStateOf(0) }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -629,6 +631,7 @@ fun HomeScreen(
                 val isGalleryTab = pagerState.currentPage == 0
                 HomeFabOverlay(
                     isGalleryTab = isGalleryTab,
+                    isShowPaddingBottom = bottomSectionHeight == 0,
                     collapseProgress = if (isGalleryTab) galleryCollapseProgressProvider else ZeroProgress,
                     refreshVisible = isNewIdeasVisible,
                     onCreateClick = onCreateClick,
@@ -674,7 +677,13 @@ fun HomeScreen(
             // Remote Config toggle: native ad (default) or standard banner
             val bottomAdModifier = if (adPlacementConfigService.adBottomNavPaddingEnabled)
                 Modifier.navigationBarsPadding() else Modifier
-            Box(modifier = bottomAdModifier) {
+            Box(
+                modifier = bottomAdModifier
+                    .fillMaxWidth()
+                    .onSizeChanged { size ->
+                        bottomSectionHeight = size.height  // Measure actual height dynamically!
+                    }
+            ) {
                 if (adPlacementConfigService.bannerUseNative) {
                     NativeAdView(
                         placement = AdPlacement.NATIVE_HOME_BANNER,
@@ -1105,6 +1114,7 @@ private fun HomeScreenPreviewContent(
                 val isGalleryTab = pagerState.currentPage == 0
                 HomeFabOverlay(
                     isGalleryTab = isGalleryTab,
+                    isShowPaddingBottom = false,
                     collapseProgress = { if (isGalleryTab && collapsed) 1f else 0f },
                     refreshVisible = isNewIdeasVisible,
                     onCreateClick = {},

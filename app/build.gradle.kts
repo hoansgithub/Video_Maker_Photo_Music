@@ -39,7 +39,7 @@ android {
         minSdk = 28
         targetSdk = 36
         versionCode = 53
-        versionName = "1.1.0"
+        versionName = "1.1.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -139,6 +139,14 @@ android {
                 "META-INF/LGPL2.1",
                 "META-INF/INDEX.LIST"
             )
+        }
+    }
+
+    applicationVariants.all {
+        val variant = this
+        variant.outputs.forEach { output ->
+            val apkOutput = output as? com.android.build.gradle.api.ApkVariantOutput
+            apkOutput?.outputFileName = "VideoMaker_${variant.name}_v${variant.versionName}_(${variant.versionCode}).apk"
         }
     }
 }

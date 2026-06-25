@@ -15,6 +15,7 @@ import androidx.media3.datasource.cache.CacheDataSource
 import androidx.media3.datasource.cache.SimpleCache
 import androidx.work.WorkManager
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
+import com.videomaker.aimusic.core.ads.AdPlacementConfigService
 import com.videomaker.aimusic.core.ads.VideoMakerNativeAdLayoutProvider
 import com.videomaker.aimusic.core.cache.VideoCacheManager
 import com.videomaker.aimusic.core.data.local.ApiCacheManager
@@ -48,9 +49,11 @@ import com.videomaker.aimusic.data.repository.LikedSongRepositoryImpl
 import com.videomaker.aimusic.data.repository.LikedTemplateRepositoryImpl
 import com.videomaker.aimusic.data.repository.ProjectRepositoryImpl
 import com.videomaker.aimusic.data.repository.SongRepositoryImpl
+import com.videomaker.aimusic.data.repository.StickerRepositoryImpl
 import com.videomaker.aimusic.data.repository.TemplateRepositoryImpl
 import com.videomaker.aimusic.domain.repository.BeatSyncRepository
 import com.videomaker.aimusic.domain.repository.EffectSetRepository
+import com.videomaker.aimusic.domain.repository.StickerRepository
 import com.videomaker.aimusic.domain.repository.ExportRepository
 import com.videomaker.aimusic.domain.repository.TransitionRepository
 import com.videomaker.aimusic.domain.repository.FeedbackRepository
@@ -59,6 +62,8 @@ import com.videomaker.aimusic.domain.repository.LikedTemplateRepository
 import com.videomaker.aimusic.domain.repository.ProjectRepository
 import com.videomaker.aimusic.domain.repository.SongRepository
 import com.videomaker.aimusic.domain.repository.TemplateRepository
+import com.videomaker.aimusic.domain.repository.TextRepository
+import com.videomaker.aimusic.data.repository.TextRepositoryImpl
 import com.videomaker.aimusic.domain.usecase.AddAssetsUseCase
 import com.videomaker.aimusic.domain.usecase.ClearSongCacheUseCase
 import com.videomaker.aimusic.domain.usecase.CreateProjectUseCase
@@ -69,6 +74,8 @@ import com.videomaker.aimusic.domain.usecase.GetGenresUseCase
 import com.videomaker.aimusic.domain.usecase.GetProjectUseCase
 import com.videomaker.aimusic.domain.usecase.GetSongsByGenreUseCase
 import com.videomaker.aimusic.domain.usecase.GetStationSongsUseCase
+import com.videomaker.aimusic.domain.usecase.GetStickerCategoriesUseCase
+import com.videomaker.aimusic.domain.usecase.GetStickersByCategoryUseCase
 import com.videomaker.aimusic.domain.usecase.GetSuggestedSongsUseCase
 import com.videomaker.aimusic.domain.usecase.GetWeeklyRankingSongsUseCase
 import com.videomaker.aimusic.domain.usecase.LikeSongUseCase
@@ -87,6 +94,7 @@ import com.videomaker.aimusic.domain.usecase.UpdateProjectSettingsUseCase
 import com.videomaker.aimusic.media.audio.AudioPreviewCache
 import com.videomaker.aimusic.media.composition.CompositionFactory
 import com.videomaker.aimusic.modules.editor.EditorViewModel
+import com.videomaker.aimusic.modules.editor.TextOverlayViewModel
 import com.videomaker.aimusic.modules.export.ExportViewModel
 import com.videomaker.aimusic.modules.gallery.GalleryViewModel
 import com.videomaker.aimusic.modules.language.domain.usecase.ApplyLanguageUseCase
@@ -142,6 +150,7 @@ val dataModule = module {
     single { PreferencesManager(androidContext()) }
     single { LanguageManager(androidContext()) }
     single { com.videomaker.aimusic.core.storage.UnlockedEffectSetsManager(androidContext()) }
+    single { com.videomaker.aimusic.core.storage.UnlockedStickersManager(androidContext()) }
     single { com.videomaker.aimusic.core.storage.UnlockedTemplatesManager(androidContext()) }
     single { com.videomaker.aimusic.core.storage.UnlockedSongsManager(androidContext()) }
     single { com.videomaker.aimusic.core.playback.MusicPlaybackSessionManager() }
@@ -263,6 +272,7 @@ val dataModule = module {
     single<BeatSyncRepository> { BeatSyncRepositoryImpl(androidContext(), get()) }
     single<TemplateRepository> { TemplateRepositoryImpl(get(), get(), regionProvider = get(), languageManager = get()) }
     single<EffectSetRepository> { EffectSetRepositoryImpl(get(), get(), get()) }
+    single<StickerRepository> { StickerRepositoryImpl(get(), get(), get()) }
     single<TransitionRepository> { TransitionRepositoryImpl(androidContext(), get()) }
     single<LikedSongRepository> { LikedSongRepositoryImpl(get()) }
     single<LikedTemplateRepository> { LikedTemplateRepositoryImpl(get()) }
@@ -277,6 +287,7 @@ val dataModule = module {
 
     // Feedback repository
     single<FeedbackRepository> { FeedbackRepositoryImpl(get(), get()) }
+    single<TextRepository> { TextRepositoryImpl(get(), get(), get()) }
 }
 
 // ========== MEDIA LAYER MODULE ==========
@@ -290,7 +301,7 @@ val dataModule = module {
  * Scope: Singleton - Expensive to create
  */
 val mediaModule = module {
-    single { CompositionFactory(androidContext()) }
+    single { CompositionFactory(androidContext(), get()) }
     single { AudioPreviewCache(androidContext()) }
     single { com.videomaker.aimusic.media.audio.AudioPreprocessingService(androidContext()) }
 
@@ -472,6 +483,8 @@ val domainModule = module {
 
     // Effect Set use cases
     single { GetEffectSetsPagedUseCase(get()) }
+    single { GetStickerCategoriesUseCase(get()) }
+    single { GetStickersByCategoryUseCase(get()) }
 
     // Liked song use cases
     factory { LikeSongUseCase(get()) }
@@ -563,7 +576,7 @@ class EditorViewModelFactory(
     private val projectRepository: ProjectRepository,
     private val adsLoaderService: AdsLoaderService,
     private val audioPreprocessingService: com.videomaker.aimusic.media.audio.AudioPreprocessingService,
-    private val adPlacementConfigService: com.videomaker.aimusic.core.ads.AdPlacementConfigService
+    private val adPlacementConfigService: AdPlacementConfigService
 ) {
     fun create(
         projectId: String?,
@@ -966,6 +979,27 @@ val presentationModule = module {
             unlockedEffectSetsManager = get(),
             adsLoaderService = get(),
             transitionRepository = get()
+        )
+    }
+
+    // Sticker ViewModel
+    viewModel {
+        com.videomaker.aimusic.modules.editor.StickerViewModel(
+            appContext = androidContext(),
+            getStickerCategoriesUseCase = get(),
+            getStickersByCategoryUseCase = get(),
+            unlockedStickersManager = get(),
+            adsLoaderService = get()
+        )
+    }
+
+    // Text Overlay ViewModel
+    viewModel {
+        TextOverlayViewModel(
+            context = androidContext().applicationContext,
+            textRepository = get(),
+            regionProvider = get(),
+            adsLoaderService = get()
         )
     }
 
