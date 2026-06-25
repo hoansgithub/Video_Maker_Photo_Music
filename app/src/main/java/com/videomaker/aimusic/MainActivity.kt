@@ -57,6 +57,7 @@ import com.videomaker.aimusic.widget.appwidget.WidgetActions
 import kotlinx.coroutines.delay
 import org.koin.android.ext.android.inject
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
+import com.videomaker.aimusic.core.ads.HomeAdTracker
 import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.core.data.local.PreferencesManager
@@ -137,6 +138,10 @@ class MainActivity : AppCompatActivity() {
         }
 
         notificationScheduler.scheduleDailyBootstrap()
+
+        // Reset home ad tracker states on activity creation (start of a new session)
+        val homeAdTracker: HomeAdTracker by inject()
+        homeAdTracker.resetForNewSession()
 
         if (savedInstanceState == null) {
             startupInitialTab = intent.getIntExtra(EXTRA_INITIAL_TAB, 0).coerceIn(0, 2)
