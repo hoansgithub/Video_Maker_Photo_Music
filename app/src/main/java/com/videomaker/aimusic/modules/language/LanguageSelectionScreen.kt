@@ -128,6 +128,33 @@ fun LanguageSelectionScreen(
         )
     }
 
+    var showLanguageSetupDialog by remember { mutableStateOf(false) }
+    var pendingLanguageCode by remember { mutableStateOf<String?>(null) }
+    var continueAfterDialog by remember { mutableStateOf(false) }
+
+    val handleContinueClick = {
+        if (selectedLanguage == null) {
+            val defaultCode = LanguageManager.LANGUAGE_SYSTEM
+            selectedLanguage = defaultCode
+            pendingLanguageCode = defaultCode
+            continueAfterDialog = true
+            showLanguageSetupDialog = true
+        } else {
+            onContinue.invoke()
+            val resolvedLang = if (selectedLanguage == LanguageManager.LANGUAGE_SYSTEM) {
+                languageManager.getDeviceLanguage()
+            } else {
+                selectedLanguage ?: ""
+            }
+            Analytics.track(
+                name = AnalyticsEvent.LANGUAGE_NEXT,
+                params = mapOf(
+                    AnalyticsEvent.Param.LANGUAGE to resolvedLang
+                )
+            )
+        }
+    }
+
     val systemDefaultLanguage = SupportedLanguage(
         code = LanguageManager.LANGUAGE_SYSTEM,
         displayName = stringResource(R.string.language_system_default),
@@ -172,7 +199,9 @@ fun LanguageSelectionScreen(
         if (selectedLanguage == null && !scrollState.isScrollInProgress) {
             delay(7_000.milliseconds)
             selectedLanguage = LanguageManager.LANGUAGE_SYSTEM
-            onLanguageSelected(LanguageManager.LANGUAGE_SYSTEM)
+            pendingLanguageCode = LanguageManager.LANGUAGE_SYSTEM
+            continueAfterDialog = false
+            showLanguageSetupDialog = true
             Analytics.track(
                 name = AnalyticsEvent.LANGUAGE_SELECT,
                 params = mapOf(
@@ -283,24 +312,9 @@ fun LanguageSelectionScreen(
                             ) {
                                 OnboardingCtaButtonV1(
                                     text = stringResource(R.string.done),
-                                    onClick = {
-                                        onContinue.invoke()
-                                        selectedLanguage?.let { lang ->
-                                            val resolvedLang = if (lang == LanguageManager.LANGUAGE_SYSTEM) {
-                                                languageManager.getDeviceLanguage()
-                                            } else {
-                                                lang
-                                            }
-                                            Analytics.track(
-                                                name = AnalyticsEvent.LANGUAGE_NEXT,
-                                                params = mapOf(
-                                                    AnalyticsEvent.Param.LANGUAGE to resolvedLang
-                                                )
-                                            )
-                                        }
-                                    },
+                                    onClick = handleContinueClick,
                                     color = Primary,
-                                    enabled = selectedLanguage != null && delayedButtonEnabled
+                                    enabled = selectedLanguage == null || delayedButtonEnabled
                                 )
                             }
                         }
@@ -343,7 +357,8 @@ fun LanguageSelectionScreen(
                                 },
                                 onClick = {
                                     selectedLanguage = language.code
-                                    onLanguageSelected(language.code)
+                                    pendingLanguageCode = language.code
+                                    showLanguageSetupDialog = true
                                     Analytics.track(
                                         name = AnalyticsEvent.LANGUAGE_SELECT,
                                         params = mapOf(
@@ -388,23 +403,8 @@ fun LanguageSelectionScreen(
                                 text = stringResource(R.string.onboarding_next),
                                 icon = R.drawable.ic_right_arrow,
                                 color = Primary,
-                                onClick = {
-                                    onContinue.invoke()
-                                    selectedLanguage?.let { lang ->
-                                        val resolvedLang = if (lang == LanguageManager.LANGUAGE_SYSTEM) {
-                                            languageManager.getDeviceLanguage()
-                                        } else {
-                                            lang
-                                        }
-                                        Analytics.track(
-                                            name = AnalyticsEvent.LANGUAGE_NEXT,
-                                            params = mapOf(
-                                                AnalyticsEvent.Param.LANGUAGE to resolvedLang
-                                            )
-                                        )
-                                    }
-                                },
-                                enabled = selectedLanguage != null && delayedButtonEnabled
+                                onClick = handleContinueClick,
+                                enabled = selectedLanguage == null || delayedButtonEnabled
                             )
                         }
                     }
@@ -447,9 +447,36 @@ fun LanguageSelectionScreen(
             ctaButtonOffset = ctaButtonOffset,
             onSelectLanguage = { code ->
                 selectedLanguage = code
-                onLanguageSelected(code)
+                pendingLanguageCode = code
+                showLanguageSetupDialog = true
             }
         )
+
+        if (showLanguageSetupDialog) {
+            LanguageSetupDialog(
+                onDismiss = {
+                    pendingLanguageCode?.let { code ->
+                        onLanguageSelected(code)
+                    }
+                    showLanguageSetupDialog = false
+                    if (continueAfterDialog) {
+                        continueAfterDialog = false
+                        onContinue.invoke()
+                        val resolvedLang = if (pendingLanguageCode == LanguageManager.LANGUAGE_SYSTEM) {
+                            languageManager.getDeviceLanguage()
+                        } else {
+                            pendingLanguageCode ?: ""
+                        }
+                        Analytics.track(
+                            name = AnalyticsEvent.LANGUAGE_NEXT,
+                            params = mapOf(
+                                AnalyticsEvent.Param.LANGUAGE to resolvedLang
+                            )
+                        )
+                    }
+                }
+            )
+        }
     }
 }
 

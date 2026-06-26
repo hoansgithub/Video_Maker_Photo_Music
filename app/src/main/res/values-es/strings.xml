@@ -667,4 +667,8 @@
     <string name="text_overlay_desc_rotate_scale">Rotar y escalar</string>
     <string name="text_overlay_font_ad_error">Error al cargar el anuncio. Inténtalo de nuevo.</string>
     <string name="text_overlay_system_default">Predeterminado del sistema</string>
+
+    <!-- Language Setup Dialog -->
+    <string name="language_setting_up">Configurando las cosas en tu idioma…</string>
+    <string name="language_setting_up_done">¡Listo! Vamos a explorar la aplicación.</string>
 </resources>

@@ -672,4 +672,8 @@
     <string name="text_overlay_desc_rotate_scale">ತಿರುಗಿಸಿ ಮತ್ತು ಸ್ಕೇಲ್ ಮಾಡಿ</string>
     <string name="text_overlay_font_ad_error">ಜಾಹೀರಾತು ಲೋಡ್ ಮಾಡಲು ವಿಫಲವಾಗಿದೆ, ದಯವಿಟ್ಟು ಮತ್ತೊಮ್ಮೆ ಪ್ರಯತ್ನಿಸಿ.</string>
     <string name="text_overlay_system_default">ಸಿಸ್ಟಂ ಡಿಫಾಲ್ಟ್</string>
+
+    <!-- Language Setup Dialog -->
+    <string name="language_setting_up">ನಿಮ್ಮ ಭಾಷೆಯಲ್ಲಿ ಎಲ್ಲವನ್ನೂ ಹೊಂದಿಸಲಾಗುತ್ತಿದೆ…</string>
+    <string name="language_setting_up_done">ಮುಗಿದಿದೆ! ಅಪ್ಲಿಕೇಶನ್ ಅನ್ವೇಷಿಸೋಣ.</string>
 </resources>

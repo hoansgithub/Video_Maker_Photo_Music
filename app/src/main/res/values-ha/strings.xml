@@ -672,4 +672,8 @@
     <string name="text_overlay_desc_rotate_scale">Juya kuma auna</string>
     <string name="text_overlay_font_ad_error">Gaza loda Talla, da fatan za a sake gwadawa.</string>
     <string name="text_overlay_system_default">Tsoho na Tsarin</string>
+
+    <!-- Language Setup Dialog -->
+    <string name="language_setting_up">Ana saita abubuwa a yarenku…</string>
+    <string name="language_setting_up_done">An gama! Bari mu bincika app.</string>
 </resources>

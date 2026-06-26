@@ -672,4 +672,8 @@
     <string name="text_overlay_desc_rotate_scale">Drehen und Skalieren</string>
     <string name="text_overlay_font_ad_error">Werbung konnte nicht geladen werden. Bitte versuchen Sie es erneut.</string>
     <string name="text_overlay_system_default">Systemstandard</string>
+
+    <!-- Language Setup Dialog -->
+    <string name="language_setting_up">Alles wird in deiner Sprache eingerichtet…</string>
+    <string name="language_setting_up_done">Fertig! Lass uns die App erkunden.</string>
 </resources>

@@ -667,4 +667,8 @@
     <string name="text_overlay_desc_rotate_scale">Döndür ve ölçekle</string>
     <string name="text_overlay_font_ad_error">Reklam yüklenemedi, lütfen tekrar deneyin.</string>
     <string name="text_overlay_system_default">Sistem Varsayılanı</string>
+
+    <!-- Language Setup Dialog -->
+    <string name="language_setting_up">Her şey dilinizde ayarlanıyor…</string>
+    <string name="language_setting_up_done">Tamamlandı! Uygulamayı keşfedelim.</string>
 </resources>

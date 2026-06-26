@@ -669,4 +669,8 @@
     <string name="text_overlay_desc_rotate_scale">घुमाएं और स्केल करें</string>
     <string name="text_overlay_font_ad_error">विज्ञापन लोड करने में विफल, कृपया पुनः प्रयास करें।</string>
     <string name="text_overlay_system_default">सिस्टम डिफ़ॉल्ट</string>
+
+    <!-- Language Setup Dialog -->
+    <string name="language_setting_up">आपकी भाषा में सब कुछ सेट किया जा रहा है…</string>
+    <string name="language_setting_up_done">हो गया! चलिए ऐप को एक्सप्लोर करते हैं।</string>
 </resources>

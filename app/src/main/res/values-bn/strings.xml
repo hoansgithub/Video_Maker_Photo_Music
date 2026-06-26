@@ -672,4 +672,8 @@
     <string name="text_overlay_desc_rotate_scale">ঘোরান এবং আকার পরিবর্তন করুন</string>
     <string name="text_overlay_font_ad_error">বিজ্ঞাপন লোড করা ব্যর্থ হয়েছে, অনুগ্রহ করে আবার চেষ্টা করুন।</string>
     <string name="text_overlay_system_default">সিস্টেম ডিফল্ট</string>
+
+    <!-- Language Setup Dialog -->
+    <string name="language_setting_up">আপনার ভাষায় সবকিছু সেট করা হচ্ছে…</string>
+    <string name="language_setting_up_done">শেষ! চলুন অ্যাপটি এক্সপ্লোর করি।</string>
 </resources>

@@ -672,4 +672,8 @@
     <string name="text_overlay_desc_rotate_scale">Puter sareng skala</string>
     <string name="text_overlay_font_ad_error">Gagal ngamuat Iklan, mangga cobian deui.</string>
     <string name="text_overlay_system_default">Bawaan Sistem</string>
+
+    <!-- Language Setup Dialog -->
+    <string name="language_setting_up">Nyiapkeun sadayana dina basa anjeun…</string>
+    <string name="language_setting_up_done">Réngsé! Hayu urang ngajalajah aplikasi.</string>
 </resources>

@@ -667,4 +667,8 @@
     <string name="text_overlay_desc_rotate_scale">Putar dan skala</string>
     <string name="text_overlay_font_ad_error">Gagal memuat Iklan, silakan coba lagi.</string>
     <string name="text_overlay_system_default">Bawaan Sistem</string>
+
+    <!-- Language Setup Dialog -->
+    <string name="language_setting_up">Menyiapkan semuanya dalam bahasa Anda…</string>
+    <string name="language_setting_up_done">Selesai! Ayo jelajahi aplikasinya.</string>
 </resources>

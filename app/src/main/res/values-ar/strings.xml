@@ -667,4 +667,8 @@
     <string name="text_overlay_desc_rotate_scale">تدوير وتكبير/تصغير</string>
     <string name="text_overlay_font_ad_error">فشل تحميل الإعلان، يرجى المحاولة مرة أخرى.</string>
     <string name="text_overlay_system_default">افتراضي النظام</string>
+
+    <!-- Language Setup Dialog -->
+    <string name="language_setting_up">جاري إعداد الأمور بلغتك…</string>
+    <string name="language_setting_up_done">تم! لنستكشف التطبيق.</string>
 </resources>

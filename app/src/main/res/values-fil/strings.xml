@@ -667,4 +667,8 @@
     <string name="text_overlay_desc_rotate_scale">I-rotate at i-scale</string>
     <string name="text_overlay_font_ad_error">Bigo sa pag-load ng Ad, mangyaring subukang muli.</string>
     <string name="text_overlay_system_default">System Default</string>
+
+    <!-- Language Setup Dialog -->
+    <string name="language_setting_up">Iniaayos ang mga bagay-bagay sa iyong wika…</string>
+    <string name="language_setting_up_done">Tapos na! Tuklasin natin ang app.</string>
 </resources>

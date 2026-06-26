@@ -673,4 +673,8 @@
     <string name="text_overlay_desc_rotate_scale">Tụgharịa ma tụọ</string>
     <string name="text_overlay_font_ad_error">Mgbasa ozi enweghị ike ibunye, biko gbalịa ọzọ.</string>
     <string name="text_overlay_system_default">Ndi Agba Usoro</string>
+
+    <!-- Language Setup Dialog -->
+    <string name="language_setting_up">Na-edobere gị ihe n\'asụsụ gị…</string>
+    <string name="language_setting_up_done">Emeela! Ka anyị nyochaa ngwa ahụ.</string>
 </resources>

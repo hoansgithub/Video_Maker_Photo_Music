@@ -672,4 +672,8 @@
     <string name="text_overlay_desc_rotate_scale">Yi pada ki o si wọn</string>
     <string name="text_overlay_font_ad_error">Kuna lati gbe Ipolowo soke, jọwọ gbiyanju lẹẹkansi.</string>
     <string name="text_overlay_system_default">Eto Aiyipada</string>
+
+    <!-- Language Setup Dialog -->
+    <string name="language_setting_up">N ṣeto awọn nkan ni ede rẹ…</string>
+    <string name="language_setting_up_done">O ti ṣetan! Jẹ ki a ṣawari app naa.</string>
 </resources>

@@ -664,4 +664,8 @@
     <string name="editor_image_dragging">Đang kéo</string>
     <string name="editor_image_drag_to_reorder">Kéo để sắp xếp lại</string>
     <string name="editor_image_content_desc">Ảnh %1$s</string>
+
+    <!-- Language Setup Dialog -->
+    <string name="language_setting_up">Đang thiết lập ngôn ngữ của bạn…</string>
+    <string name="language_setting_up_done">Xong! Hãy khám phá ứng dụng nhé.</string>
 </resources>
