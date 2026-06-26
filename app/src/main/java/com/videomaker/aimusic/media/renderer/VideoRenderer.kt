@@ -56,6 +56,11 @@ class VideoRenderer(private val context: Context) : GLSurfaceView.Renderer {
     @Volatile var onFirstFrameRendered: (() -> Unit)? = null
     private var hasNotifiedFirstFrame = false
 
+    fun resetFirstFrameNotification(callback: () -> Unit) {
+        onFirstFrameRendered = callback
+        hasNotifiedFirstFrame = false
+    }
+
     // GL resources (created on GL thread)
     private lateinit var textureManager: TextureManager
     private lateinit var shaderCache: ShaderProgramCache

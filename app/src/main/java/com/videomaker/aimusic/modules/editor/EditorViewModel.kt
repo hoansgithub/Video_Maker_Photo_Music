@@ -45,6 +45,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import java.util.UUID
+import kotlin.time.Duration.Companion.milliseconds
 
 // ============================================
 // UI STATE
@@ -190,6 +191,24 @@ class EditorViewModel(
     @Volatile private var pendingAutoPlay = false
 
     fun markPreviewReady() {
+        // After asset changes, enforce a minimum overlay duration so the GL surface
+        // has time to load new textures. Without this, Compose takes ~1 vsync frame
+        // to show the overlay, and the GL surface briefly renders stale (old) textures.
+        val changeTs = assetChangeTimestampMs
+        if (changeTs > 0L) {
+            val elapsed = System.currentTimeMillis() - changeTs
+            val remaining = MIN_ASSET_CHANGE_OVERLAY_MS - elapsed
+            if (remaining > 0) {
+                viewModelScope.launch {
+                    delay(duration = remaining.milliseconds)
+                    assetChangeTimestampMs = 0L
+                    _hasPreviewBeenReady.value = true
+                    startDeferredAutoPlayIfReady()
+                }
+                return
+            }
+            assetChangeTimestampMs = 0L
+        }
         _hasPreviewBeenReady.value = true
         startDeferredAutoPlayIfReady()
     }
@@ -259,6 +278,27 @@ class EditorViewModel(
     private var projectObserverJob: Job? = null
     private var musicUpdateJob: Job? = null
     private var positionTickerJob: Job? = null
+    private var dbSaveJob: Job? = null
+
+    // Suppress Room Flow emissions while we're writing asset changes to the DB.
+    // Without this, Room re-emits the project with OLD assets during the transaction
+    // (before commit completes), which briefly overwrites the in-memory state and
+    // causes the GL renderer to flash stale images.
+    @Volatile private var suppressDbEmissions = false
+
+    // Timestamp when assets were last changed — used by markPreviewReady() to enforce
+    // a minimum overlay duration so the GL surface has time to load new textures.
+    // 0L means no asset change pending (initial load or already expired).
+    private var assetChangeTimestampMs: Long = 0L
+
+    companion object {
+        /**
+         * Minimum time (ms) the preparing overlay stays visible after an asset change.
+         * Gives the Compose recomposition + GL texture loading enough time to complete
+         * before revealing the preview surface. Prevents stale-image flash.
+         */
+        private const val MIN_ASSET_CHANGE_OVERLAY_MS = 1000L
+    }
 
     // Distinguishes music-change errors (stay in editor) from initial-load errors (navigate back)
     private var isMusicChangeError = false
@@ -425,6 +465,17 @@ class EditorViewModel(
             try {
                 getProjectUseCase.observe(id).collect { loadedProject ->
                     if (loadedProject != null) {
+                        // Skip ALL Room emissions while asset changes are being committed to DB.
+                        // The in-memory state already has the correct (new) assets — accepting
+                        // a Room emission now would flash the old assets in the GL renderer.
+                        if (suppressDbEmissions) {
+                            android.util.Log.d(
+                                "EditorViewModel",
+                                "Suppressing DB emission while asset write is in progress"
+                            )
+                            return@collect
+                        }
+
                         val currentState = _uiState.value
                         val prev = currentState as? EditorUiState.Success
 
@@ -747,6 +798,9 @@ class EditorViewModel(
     suspend fun saveProject(): Boolean {
         val currentState = _uiState.value
         if (currentState !is EditorUiState.Success) return false
+
+        // Wait for any pending background database updates (assets/settings) to complete
+        dbSaveJob?.join()
 
         // Step 1: Apply pending settings if any
         if (currentState.pendingSettings != null) {
@@ -1704,19 +1758,34 @@ class EditorViewModel(
             latest.copy(
                 project = updatedProject,
                 pendingAssets = null,
-                isPlaying = true
+                isPlaying = false  // Don't play yet — deferred autoplay after overlay period
             )
         }
 
-        // GL renderer picks up new images instantly
+        // GL renderer picks up new images after Compose propagates the new renderState.
+        // Keep the overlay visible for MIN_ASSET_CHANGE_OVERLAY_MS so the GL surface has
+        // time to load new textures before the user sees the preview.
+        _hasPreviewBeenReady.value = false
+        assetChangeTimestampMs = System.currentTimeMillis()
+        suppressDbEmissions = true  // Block Room re-emissions until DB write finishes
         refreshRenderState()
-        restartPlaybackFromStart()
+
+        // Seek to start but don't play — markPreviewReady() will trigger deferred autoplay
+        // after the minimum overlay period.
+        playbackClock.seekTo(0L)
+        playbackClock.pause()
+        _currentPositionMs.value = 0L
+        pendingAutoPlay = true
 
         android.util.Log.d("EditorViewModel", "applyPendingAssets: ${assets.size} assets visible, checking audio...")
 
         // 2. Recalculate duration + reprocess audio in background if image count changed.
         //    No overlay — GL preview already shows new images.
-        viewModelScope.launch {
+        val previousJob = dbSaveJob
+        dbSaveJob = viewModelScope.launch {
+            try {
+                previousJob?.join()
+            } catch (_: Exception) {}
             assetMutex.withLock {
                 val stateAfterVisualUpdate = _uiState.value as? EditorUiState.Success ?: return@withLock
                 val updatedSettings = recalculateSettingsForAssets(
@@ -1747,33 +1816,22 @@ class EditorViewModel(
             if (!currentState.isUnsavedProject) {
                 withContext(Dispatchers.IO) {
                     try {
-                        val existingAssetIds = currentState.project.assets.map { it.id }.toSet()
-                        val newAssetIds = assets.map { it.id }.toSet()
-
-                        val assetsToRemove = currentState.project.assets.filter { it.id !in newAssetIds }
-                        assetsToRemove.forEach { asset ->
-                            projectRepository.removeAsset(updatedProject.id, asset.id)
-                        }
-
-                        val newAssets = assets.filter { it.id !in existingAssetIds }
-                        if (newAssets.isNotEmpty()) {
-                            projectRepository.addAssets(updatedProject.id, newAssets.map { it.uri })
-                        }
-
-                        projectRepository.reorderAssets(updatedProject.id, assets)
-
-                        // Save current settings (including pendingSettings) to DB
                         val latestState = _uiState.value as? EditorUiState.Success
-                        val latestSettings = latestState?.displaySettings
-                        if (latestSettings != null && latestSettings != currentState.project.settings) {
-                            updateSettingsUseCase(updatedProject.id, latestSettings)
-                        }
-
+                        val latestSettings = latestState?.displaySettings?.takeIf { it != currentState.project.settings }
+                        projectRepository.updateProjectAssetsAndSettings(
+                            projectId = updatedProject.id,
+                            assets = assets,
+                            settings = latestSettings
+                        )
                         android.util.Log.d("EditorViewModel", "applyPendingAssets: saved ${assets.size} assets to DB")
                     } catch (e: Exception) {
                         android.util.Log.e("EditorViewModel", "applyPendingAssets: DB save failed - ${e.message}", e)
+                    } finally {
+                        suppressDbEmissions = false
                     }
                 }
+            } else {
+                suppressDbEmissions = false
             }
         }
     }
@@ -1838,19 +1896,34 @@ class EditorViewModel(
             latest.copy(
                 project = updatedProject,
                 pendingAssets = null,
-                isPlaying = true
+                isPlaying = false  // Don't play yet — deferred autoplay after overlay period
             )
         }
 
-        // GL renderer picks up new images instantly
+        // GL renderer picks up new images after Compose propagates the new renderState.
+        // Keep the overlay visible for MIN_ASSET_CHANGE_OVERLAY_MS so the GL surface has
+        // time to load new textures before the user sees the preview.
+        _hasPreviewBeenReady.value = false
+        assetChangeTimestampMs = System.currentTimeMillis()
+        suppressDbEmissions = true  // Block Room re-emissions until DB write finishes
         refreshRenderState()
-        restartPlaybackFromStart()
+
+        // Seek to start but don't play — markPreviewReady() will trigger deferred autoplay
+        // after the minimum overlay period.
+        playbackClock.seekTo(0L)
+        playbackClock.pause()
+        _currentPositionMs.value = 0L
+        pendingAutoPlay = true
 
         android.util.Log.d("EditorViewModel", "replaceAssetsFromUris: ${finalAssets.size} assets visible, checking audio...")
 
         // 2. Recalculate duration + reprocess audio in background if image count changed.
         //    Also save to DB in background. No overlay — GL preview already shows new images.
-        viewModelScope.launch {
+        val previousJob = dbSaveJob
+        dbSaveJob = viewModelScope.launch {
+            try {
+                previousJob?.join()
+            } catch (_: Exception) {}
             assetMutex.withLock {
                 val stateAfterVisualUpdate = _uiState.value as? EditorUiState.Success ?: return@withLock
                 val updatedSettings = recalculateSettingsForAssets(
@@ -1878,34 +1951,22 @@ class EditorViewModel(
             if (!currentState.isUnsavedProject) {
                 withContext(Dispatchers.IO) {
                     try {
-                        val existingAssetIds = currentState.project.assets.map { it.id }.toSet()
-                        val newAssetIds = finalAssets.map { it.id }.toSet()
-
-                        val assetsToRemove = currentState.project.assets.filter { it.id !in newAssetIds }
-                        assetsToRemove.forEach { asset ->
-                            projectRepository.removeAsset(updatedProject.id, asset.id)
-                        }
-
-                        val newAssets = finalAssets.filter { it.id !in existingAssetIds }
-                        if (newAssets.isNotEmpty()) {
-                            projectRepository.addAssets(updatedProject.id, newAssets.map { it.uri })
-                        }
-
-                        projectRepository.reorderAssets(updatedProject.id, finalAssets)
-
-                        // Save current settings (including pendingSettings) to DB.
-                        // displaySettings = pendingSettings ?: project.settings
                         val latestState = _uiState.value as? EditorUiState.Success
-                        val latestSettings = latestState?.displaySettings
-                        if (latestSettings != null && latestSettings != currentState.project.settings) {
-                            updateSettingsUseCase(updatedProject.id, latestSettings)
-                        }
-
-                        android.util.Log.d("EditorViewModel", "Saved ${finalAssets.size} assets to database (removed: ${assetsToRemove.size}, added: ${newAssets.size})")
+                        val latestSettings = latestState?.displaySettings?.takeIf { it != currentState.project.settings }
+                        projectRepository.updateProjectAssetsAndSettings(
+                            projectId = updatedProject.id,
+                            assets = finalAssets,
+                            settings = latestSettings
+                        )
+                        android.util.Log.d("EditorViewModel", "Saved ${finalAssets.size} assets to database")
                     } catch (e: Exception) {
                         android.util.Log.e("EditorViewModel", "❌ Failed to save - ${e.message}", e)
+                    } finally {
+                        suppressDbEmissions = false
                     }
                 }
+            } else {
+                suppressDbEmissions = false
             }
         }
     }

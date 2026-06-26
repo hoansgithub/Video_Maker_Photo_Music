@@ -74,6 +74,13 @@ interface ProjectRepository {
     suspend fun addAssets(projectId: String, assetUris: List<Uri>)
 
     /**
+     * Add assets to an existing project preserving existing IDs
+     * @param projectId Project ID
+     * @param assets Assets to add
+     */
+    suspend fun addProjectAssets(projectId: String, assets: List<Asset>)
+
+    /**
      * Remove an asset from a project
      * @param projectId Project ID
      * @param assetId Asset ID to remove
@@ -99,4 +106,16 @@ interface ProjectRepository {
      * @param isWatermarkFree True if watermark should be removed
      */
     suspend fun updateWatermarkFreeStatus(projectId: String, isWatermarkFree: Boolean)
+
+    /**
+     * Update project assets and settings in a single transaction
+     * @param projectId Project ID
+     * @param assets New list of assets
+     * @param settings New settings (optional, updates if not null)
+     */
+    suspend fun updateProjectAssetsAndSettings(
+        projectId: String,
+        assets: List<Asset>,
+        settings: ProjectSettings?
+    )
 }

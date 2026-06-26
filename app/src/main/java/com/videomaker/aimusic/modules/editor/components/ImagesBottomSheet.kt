@@ -1,5 +1,6 @@
 package com.videomaker.aimusic.modules.editor.components
 
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
@@ -54,6 +55,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import androidx.compose.ui.tooling.preview.Preview
 import coil.compose.AsyncImage
 import coil.decode.BitmapFactoryDecoder
 import coil.request.ImageRequest
@@ -78,7 +80,7 @@ import kotlin.math.roundToInt
 internal fun ImagesBottomSheet(
     currentAssets: List<Asset>,
     onDismiss: () -> Unit,
-    onAddImages: () -> Unit,
+    onAddImages: (List<Asset>) -> Unit,
     onConfirm: (List<Asset>) -> Unit
 ) {
     val context = LocalContext.current
@@ -185,12 +187,12 @@ internal fun ImagesBottomSheet(
                             onClick = {
                                 Analytics.trackPhotoClick()
                                 if (draggedAssetId == null && assets.size > 3) {
-                                    // Only allow selection for delete if more than 3 images
+                                    // Only allow selection for delete if more than 2 images
                                     selectedAssetId = if (selectedAssetId == asset.id) null else asset.id
                                 }
                             },
                             onRemove = {
-                                // Only allow deletion if more than 3 images
+                                // Only allow deletion if more than 2 images
                                 if (assets.size > 3) {
                                     Analytics.trackPhotoDelete()
                                     assets = assets.filter { it.id != asset.id }
@@ -255,7 +257,7 @@ internal fun ImagesBottomSheet(
                         AddImageButton(
                             onClick = {
                                 Analytics.trackPhotoAdd()
-                                onAddImages()
+                                onAddImages(assets)
                             }
                         )
                     }
@@ -442,5 +444,106 @@ private fun ImageItem(
                 }
             }
         }
+    }
+}
+
+// ==============================
+// PREVIEWS
+// ==============================
+
+@Preview(showBackground = true, backgroundColor = 0xFF1A1A2E)
+@Composable
+private fun PreviewImagesBottomSheet() {
+    val dummyAssets = (1..5).map { i ->
+        Asset(
+            id = "asset_$i",
+            uri = Uri.parse("content://media/external/images/media/$i"),
+            orderIndex = i - 1
+        )
+    }
+    MaterialTheme {
+        ImagesBottomSheet(
+            currentAssets = dummyAssets,
+            onDismiss = {},
+            onAddImages = {},
+            onConfirm = {}
+        )
+    }
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFF1A1A2E)
+@Composable
+private fun PreviewImageItemNormal() {
+    val asset = Asset(
+        id = "1",
+        uri = Uri.parse("content://media/external/images/media/1"),
+        orderIndex = 0
+    )
+    MaterialTheme {
+        ImageItem(
+            asset = asset,
+            isSelected = false,
+            isDragging = false,
+            canDelete = true,
+            onClick = {},
+            onRemove = {},
+            onDragStart = {},
+            onDrag = {},
+            onDragEnd = {}
+        )
+    }
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFF1A1A2E)
+@Composable
+private fun PreviewImageItemSelected() {
+    val asset = Asset(
+        id = "1",
+        uri = Uri.parse("content://media/external/images/media/1"),
+        orderIndex = 0
+    )
+    MaterialTheme {
+        ImageItem(
+            asset = asset,
+            isSelected = true,
+            isDragging = false,
+            canDelete = true,
+            onClick = {},
+            onRemove = {},
+            onDragStart = {},
+            onDrag = {},
+            onDragEnd = {}
+        )
+    }
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFF1A1A2E)
+@Composable
+private fun PreviewImageItemCannotDelete() {
+    val asset = Asset(
+        id = "1",
+        uri = Uri.parse("content://media/external/images/media/1"),
+        orderIndex = 0
+    )
+    MaterialTheme {
+        ImageItem(
+            asset = asset,
+            isSelected = false,
+            isDragging = false,
+            canDelete = false,
+            onClick = {},
+            onRemove = {},
+            onDragStart = {},
+            onDrag = {},
+            onDragEnd = {}
+        )
+    }
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFF1A1A2E)
+@Composable
+private fun PreviewAddImageButton() {
+    MaterialTheme {
+        AddImageButton(onClick = {})
     }
 }

@@ -1144,12 +1144,24 @@ fun EditorScreen(
                         "EditorScreen",
                         "Received ${selectedUris.size} selected assets from AssetPicker"
                     )
-                    // GL renderer updates instantly via renderState — no overlay needed.
-                    // Audio reprocessing runs in background inside the VM.
-                    isEditingImages = false
-                    showImagesSheet = false
-                    viewModel.replaceAssetsFromUris(selectedUris)
-                    viewModel.discardPendingAssets()
+                    isEditingImages = true
+                    showImagesSheet = true
+
+                    val successState = viewModel.uiState.value as? EditorUiState.Success
+                    if (successState != null) {
+                        val existingAssetsByUri = successState.displayAssets.associateBy { it.uri.toString() }
+                        val finalAssets = selectedUris.mapIndexedNotNull { index, uriString ->
+                            existingAssetsByUri[uriString]?.copy(orderIndex = index)
+                                ?: android.net.Uri.parse(uriString)?.let { uri ->
+                                    com.videomaker.aimusic.domain.model.Asset(
+                                        id = java.util.UUID.randomUUID().toString(),
+                                        uri = uri,
+                                        orderIndex = index
+                                    )
+                                }
+                        }
+                        viewModel.setPendingAssets(finalAssets)
+                    }
                 }
             }
 
@@ -1173,12 +1185,11 @@ fun EditorScreen(
                             isEditingImages = false
                             showImagesSheet = false
                         },
-                        onAddImages = {
-                            // Navigate to asset picker in editing mode.
-                            // Pass the project's song + hook start so the picker's duration estimate
-                            // matches what the editor will re-render after assets change.
+                        onAddImages = { updatedAssets ->
+                            // Update pending assets in ViewModel so local deletions are kept
+                            viewModel.setPendingAssets(updatedAssets)
                             val currentAssetUris =
-                                successState.displayAssets.map { it.uri.toString() }
+                                updatedAssets.map { it.uri.toString() }
                             onNavigateToAddAssets(
                                 successState.project.id,
                                 currentAssetUris,
