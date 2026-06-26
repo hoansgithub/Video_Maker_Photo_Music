@@ -3,7 +3,6 @@ package com.videomaker.aimusic.modules.genretemplate
 import android.os.Bundle
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -11,38 +10,34 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import co.alcheclub.lib.acccore.ads.compose.NativeAdView
-import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.R
-import com.videomaker.aimusic.ui.components.LocalAsyncImage
-import com.videomaker.aimusic.core.ads.AdClickDetector
-import com.videomaker.aimusic.core.ads.AdPlacementConfigService
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.ui.BaseOnboardingActivity
 import com.videomaker.aimusic.modules.language.OnboardingCtaButton
+import com.videomaker.aimusic.modules.onboarding.OnboardingAltScreen
+import com.videomaker.aimusic.modules.onboarding.OnboardingNormalScreen
 import com.videomaker.aimusic.modules.onboarding.OnboardingStep
+import com.videomaker.aimusic.ui.components.LocalAsyncImage
 import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import com.videomaker.aimusic.ui.theme.Primary
 import org.koin.androidx.viewmodel.ext.android.viewModel
-import org.koin.compose.koinInject
 
 class ContentExclusiveActivity : BaseOnboardingActivity() {
 
     override val onboardingStep = OnboardingStep.CONTENT_EXCLUSIVE
 
     private val viewModel: GenreTemplateViewModel by viewModel()
+    private var sharedBottomHeight by mutableStateOf(0)
 
     override fun onSetupComplete(savedInstanceState: Bundle?) {
         Analytics.track(name = "content_feed_render")
@@ -50,28 +45,22 @@ class ContentExclusiveActivity : BaseOnboardingActivity() {
 
     @Composable
     override fun Content() {
-        val adClickDetector: AdClickDetector = koinInject()
-        val adPlacementConfigService: AdPlacementConfigService = koinInject()
-        val adSwap = rememberAdSwapState()
-        val coroutineScope = rememberCoroutineScope()
-        var bottomSectionHeight by remember { mutableStateOf(0) }
+        val placements = coordinator.adPlacements(onboardingStep!!)
 
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color(0xFF1A1A1A))
-        ) {
+        val stepContent: @Composable (
+            onUserInteraction: () -> Unit,
+            bottomPadding: Dp,
+            buttonEnabled: Boolean,
+        ) -> Unit = { onUserInteraction, bottomPadding, buttonEnabled ->
             Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .statusBarsPadding(),
-                contentAlignment = Alignment.TopEnd
+                modifier = Modifier.fillMaxSize().statusBarsPadding(),
+                contentAlignment = Alignment.TopEnd,
             ) {
                 ContentExclusiveScreen(
                     selectedId = viewModel.selectedContentFilter.value.orEmpty(),
                     onSelect = { id ->
                         viewModel.selectContentFilter(id)
-                        adSwap.onUserInteraction(coroutineScope)
+                        onUserInteraction()
                         Analytics.track(
                             name = "content_feed_select",
                             params = mapOf("option" to id),
@@ -84,7 +73,7 @@ class ContentExclusiveActivity : BaseOnboardingActivity() {
                         .fillMaxWidth()
                         .align(Alignment.BottomEnd)
                         .then(
-                            if (bottomSectionHeight == 0) Modifier.navigationBarsPadding()
+                            if (bottomPadding == 0.dp) Modifier.navigationBarsPadding()
                             else Modifier
                         )
                         .clickableSingle {}
@@ -111,30 +100,31 @@ class ContentExclusiveActivity : BaseOnboardingActivity() {
                                 )
                                 navigateToNextStep()
                             },
-                            enabled = viewModel.selectedContentFilter.value != null && adSwap.delayedButtonEnabled,
+                            enabled = viewModel.selectedContentFilter.value != null && buttonEnabled,
                             color = Primary,
                             icon = R.drawable.ic_right_arrow
                         )
                     }
                 }
             }
+        }
 
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .onSizeChanged { size ->
-                        bottomSectionHeight = size.height
-                    }
-                    .then(if (adPlacementConfigService.adBottomNavPaddingEnabled) Modifier.navigationBarsPadding() else Modifier)
-            ) {
-                key(adSwap.reloadKey) {
-                    NativeAdView(
-                        placement = adSwap.currentPlacement,
-                        modifier = Modifier.fillMaxWidth(),
-                        isDebug = BuildConfig.DEBUG,
-                        onAdClicked = { adClickDetector.onAdClick(it) }
-                    )
-                }
+        Box(Modifier.fillMaxSize().background(Color(0xFF1A1A1A))) {
+            if (showAlt && placements.size > 1) {
+                OnboardingAltScreen(
+                    altPlacement = placements[1],
+                    initialBottomHeight = sharedBottomHeight,
+                    onBottomHeightChanged = { sharedBottomHeight = it },
+                    content = stepContent,
+                )
+            } else {
+                OnboardingNormalScreen(
+                    placement = placements.firstOrNull().orEmpty(),
+                    onTriggerSwap = ::triggerAltSwap,
+                    initialBottomHeight = sharedBottomHeight,
+                    onBottomHeightChanged = { sharedBottomHeight = it },
+                    content = stepContent,
+                )
             }
         }
     }

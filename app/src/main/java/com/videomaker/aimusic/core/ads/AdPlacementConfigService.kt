@@ -185,8 +185,8 @@ class AdPlacementConfigService(
         // INTERSTITIAL ADS
         // ============================================
 
-        // Splash screen interstitial - first app launch only
-        // Waterfall: Primary unit → Secondary unit
+        // Splash screen interstitial - first app launch only (legacy waterfall)
+        // Kept for backward compatibility — HIGH/LOW placements used in RootViewModel
         registerPlacementWithMultipleUnits(
             placementId = AdPlacement.INTERSTITIAL_SPLASH,
             type = "interstitial",
@@ -197,14 +197,54 @@ class AdPlacementConfigService(
             enabled = true
         )
 
-        // Open app interstitial - second launch onwards (separate ad unit for independent tracking)
-        // Waterfall: Primary unit → Secondary unit
+        // Splash HIGH — single high-eCPM unit, tried first
+        registerPlacementWithMultipleUnits(
+            placementId = AdPlacement.INTERSTITIAL_SPLASH_HIGH,
+            type = "interstitial",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/9920077454"   // Primary (high eCPM)
+            ),
+            enabled = true
+        )
+
+        // Splash LOW — single all-fill unit, fallback when HIGH fails
+        registerPlacementWithMultipleUnits(
+            placementId = AdPlacement.INTERSTITIAL_SPLASH_LOW,
+            type = "interstitial",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/1830520200"   // Secondary (all fill)
+            ),
+            enabled = true
+        )
+
+        // Open app interstitial - second launch onwards (legacy waterfall)
+        // Kept for backward compatibility — HIGH/LOW placements used in RootViewModel
         registerPlacementWithMultipleUnits(
             placementId = AdPlacement.INTERSTITIAL_OPEN_APP,
             type = "interstitial",
             adUnitIds = listOf(
                 "ca-app-pub-7121075950716954/4748771125",  // Inter_high_splash_reopen (Primary)
                 "ca-app-pub-7121075950716954/2676684702"   // Inter_all_splash_reopen (Secondary)
+            ),
+            enabled = true
+        )
+
+        // Open App HIGH — single high-eCPM unit, tried first
+        registerPlacementWithMultipleUnits(
+            placementId = AdPlacement.INTERSTITIAL_OPEN_APP_HIGH,
+            type = "interstitial",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/4748771125"   // Inter_high_splash_reopen
+            ),
+            enabled = true
+        )
+
+        // Open App LOW — single all-fill unit, fallback when HIGH fails
+        registerPlacementWithMultipleUnits(
+            placementId = AdPlacement.INTERSTITIAL_OPEN_APP_LOW,
+            type = "interstitial",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/2676684702"   // Inter_all_splash_reopen
             ),
             enabled = true
         )

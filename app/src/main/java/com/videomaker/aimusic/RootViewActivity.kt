@@ -44,6 +44,7 @@ import com.videomaker.aimusic.modules.featureselection.FeatureSelectionActivity
 import com.videomaker.aimusic.modules.language.LanguageSelectionActivity
 import com.videomaker.aimusic.modules.onboarding.WelcomePage1Activity
 import com.videomaker.aimusic.modules.root.LoadingScreen
+import com.videomaker.aimusic.modules.root.LoadingScreenLow
 import com.videomaker.aimusic.modules.root.LoadingStep
 import com.videomaker.aimusic.modules.root.RootNavigationEvent
 import com.videomaker.aimusic.modules.root.RootViewModel
@@ -113,6 +114,9 @@ class RootViewActivity : AppCompatActivity() {
             val loadingStep by rootViewModel.loadingStep.collectAsStateWithLifecycle()
             val navigationEvent by rootViewModel.navigationEvent.collectAsStateWithLifecycle()
             val showNoInternetDialog by rootViewModel.showNoInternetDialog.collectAsStateWithLifecycle()
+            val showLowPriorityLoading by rootViewModel.showLowPriorityLoading.collectAsStateWithLifecycle()
+            val destination by rootViewModel.destination.collectAsStateWithLifecycle()
+            val isFirstOpen by rootViewModel.isFirstOpen.collectAsStateWithLifecycle()
 
             // Handle navigation events
             LaunchedEffect(navigationEvent) {
@@ -131,10 +135,31 @@ class RootViewActivity : AppCompatActivity() {
 
             VideoMakerTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    LoadingScreen(
-                        isLoading = isLoading,
-                        loadingStep = loadingStep
-                    )
+                    // Show LoadingScreenLow when HIGH priority ad fails,
+                    // otherwise show normal LoadingScreen
+                    if (showLowPriorityLoading) {
+                        destination?.let { dest ->
+                            LoadingScreenLow(
+                                destination = dest,
+                                isFirstOpen = isFirstOpen,
+                                onNavigate = { event ->
+                                    when (event) {
+                                        is RootNavigationEvent.NavigateTo -> {
+                                            handleNavigation(event)
+                                        }
+                                        is RootNavigationEvent.NavigateBack -> {
+                                            // Not applicable for RootViewActivity
+                                        }
+                                    }
+                                }
+                            )
+                        }
+                    } else {
+                        LoadingScreen(
+                            isLoading = isLoading,
+                            loadingStep = loadingStep
+                        )
+                    }
 
                     if (showNoInternetDialog) {
                         Dialog(

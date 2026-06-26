@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -12,37 +11,31 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import co.alcheclub.lib.acccore.ads.compose.NativeAdView
-import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.R
-import com.videomaker.aimusic.ui.components.LocalAsyncImage
-import com.videomaker.aimusic.core.ads.AdClickDetector
-import com.videomaker.aimusic.core.ads.AdPlacementConfigService
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.data.local.PreferencesManager
 import com.videomaker.aimusic.core.ui.BaseOnboardingActivity
 import com.videomaker.aimusic.modules.language.OnboardingCtaButton
+import com.videomaker.aimusic.modules.onboarding.OnboardingAltScreen
+import com.videomaker.aimusic.modules.onboarding.OnboardingNormalScreen
 import com.videomaker.aimusic.modules.onboarding.OnboardingStep
 import com.videomaker.aimusic.modules.onboarding.OnboardingViewModel
 import com.videomaker.aimusic.modules.onboarding.pages.FeatureSurveyPage
+import com.videomaker.aimusic.ui.components.LocalAsyncImage
 import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import com.videomaker.aimusic.ui.theme.Primary
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
-import org.koin.compose.koinInject
 
 class FeatureSelectionActivity : BaseOnboardingActivity() {
 
@@ -50,6 +43,7 @@ class FeatureSelectionActivity : BaseOnboardingActivity() {
 
     private val preferencesManager: PreferencesManager by inject()
     private val onboardingViewModel: OnboardingViewModel by viewModel()
+    private var sharedBottomHeight by mutableStateOf(0)
 
     override fun onSetupComplete(savedInstanceState: Bundle?) {
         Analytics.track(name = EVENT_GENRE_SHOW)
@@ -57,35 +51,27 @@ class FeatureSelectionActivity : BaseOnboardingActivity() {
 
     @Composable
     override fun Content() {
-        val adClickDetector: AdClickDetector = koinInject()
-        val adPlacementConfigService: AdPlacementConfigService = koinInject()
-        val density = LocalDensity.current
         var isSaving by remember { mutableStateOf(false) }
-
-        val adSwap = rememberAdSwapState()
-        val coroutineScope = rememberCoroutineScope()
-
-        var bottomSectionHeight by remember { mutableStateOf(0) }
-        val bottomPaddingDp = with(density) { bottomSectionHeight.toDp() }
+        val placements = coordinator.adPlacements(onboardingStep!!)
 
         // Reset to primary ad when all selections are cleared
         LaunchedEffect(onboardingViewModel.selectedFeatures.isEmpty()) {
-            if (onboardingViewModel.selectedFeatures.isEmpty() && adSwap.hasSwapped) {
-                adSwap.resetSwap()
+            if (onboardingViewModel.selectedFeatures.isEmpty() && showAlt) {
+                resetToNormal()
             }
         }
 
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color(0xFF1A1A1A))
-        ) {
-            Box(modifier = Modifier.weight(1f)) {
+        val stepContent: @Composable (
+            onUserInteraction: () -> Unit,
+            bottomPadding: Dp,
+            buttonEnabled: Boolean,
+        ) -> Unit = { onUserInteraction, bottomPadding, buttonEnabled ->
+            Box(modifier = Modifier.fillMaxSize()) {
                 FeatureSurveyPage(
                     selectedFeatures = onboardingViewModel.selectedFeatures,
                     onFeatureToggle = { selectedFeature ->
                         onboardingViewModel.toggleFeature(selectedFeature)
-                        adSwap.onUserInteraction(coroutineScope)
+                        onUserInteraction()
                         onboardingViewModel.selectedFeatures.firstOrNull()?.let { genre ->
                             Analytics.track(
                                 name = EVENT_GENRE_SELECT,
@@ -93,17 +79,17 @@ class FeatureSelectionActivity : BaseOnboardingActivity() {
                             )
                         }
                     },
-                    bottomPaddingDp = bottomPaddingDp
+                    bottomPaddingDp = bottomPadding
                 )
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .align(Alignment.BottomEnd)
                         .then(
-                            if (bottomSectionHeight == 0) Modifier.navigationBarsPadding()
+                            if (bottomPadding == 0.dp) Modifier.navigationBarsPadding()
                             else Modifier
                         )
-                        .clickableSingle{}
+                        .clickableSingle {}
                 ) {
                     LocalAsyncImage(
                         resId = R.drawable.img_bg_cta_onboard,
@@ -152,30 +138,31 @@ class FeatureSelectionActivity : BaseOnboardingActivity() {
                                     }
                                 }
                             },
-                            enabled = onboardingViewModel.selectedFeatures.isNotEmpty() && adSwap.delayedButtonEnabled && !isSaving,
+                            enabled = onboardingViewModel.selectedFeatures.isNotEmpty() && buttonEnabled && !isSaving,
                             color = Primary,
                             icon = R.drawable.ic_checkmark
                         )
                     }
                 }
             }
+        }
 
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .onSizeChanged { size ->
-                        bottomSectionHeight = size.height
-                    }
-                    .then(if (adPlacementConfigService.adBottomNavPaddingEnabled) Modifier.navigationBarsPadding() else Modifier)
-            ) {
-                key(adSwap.reloadKey) {
-                    NativeAdView(
-                        placement = adSwap.currentPlacement,
-                        modifier = Modifier.fillMaxWidth(),
-                        isDebug = BuildConfig.DEBUG,
-                        onAdClicked = { adClickDetector.onAdClick(it) },
-                    )
-                }
+        Box(Modifier.fillMaxSize().background(Color(0xFF1A1A1A))) {
+            if (showAlt && placements.size > 1) {
+                OnboardingAltScreen(
+                    altPlacement = placements[1],
+                    initialBottomHeight = sharedBottomHeight,
+                    onBottomHeightChanged = { sharedBottomHeight = it },
+                    content = stepContent,
+                )
+            } else {
+                OnboardingNormalScreen(
+                    placement = placements.firstOrNull().orEmpty(),
+                    onTriggerSwap = ::triggerAltSwap,
+                    initialBottomHeight = sharedBottomHeight,
+                    onBottomHeightChanged = { sharedBottomHeight = it },
+                    content = stepContent,
+                )
             }
         }
     }

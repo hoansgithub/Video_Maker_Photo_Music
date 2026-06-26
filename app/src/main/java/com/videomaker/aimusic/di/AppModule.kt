@@ -933,7 +933,16 @@ val presentationModule = module {
             checkLanguageSelectedUseCase = get(),
             preferencesManager = get(),
             remoteConfig = get(),  // Firebase Remote Config (from firebaseModule)
-            adsLoaderService = get()  // Ad loading service (from ACCCore-Ads)
+            adsLoaderService = get(),  // Ad loading service (from ACCCore-Ads)
+            adPlacementConfigService = get()  // Placement enabled/disabled checks
+        )
+    }
+
+    // Loading Screen Low ViewModel (handles LOW priority splash ad independently)
+    viewModel {
+        com.videomaker.aimusic.modules.root.LoadingScreenLowViewModel(
+            adsLoaderService = get(),
+            adPlacementConfigService = get()
         )
     }
 

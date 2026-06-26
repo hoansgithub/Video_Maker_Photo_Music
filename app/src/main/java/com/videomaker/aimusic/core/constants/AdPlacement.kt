@@ -39,6 +39,26 @@ object AdPlacement {
     const val INTERSTITIAL_SPLASH = "ad_interstitial_splash"
 
     /**
+     * HIGH-priority splash interstitial (first install only).
+     * Single high-eCPM ad unit — tried first. If it fails to load, falls back to SPLASH_LOW.
+     *
+     * Ad unit: ca-app-pub-7121075950716954/9920077454 (Primary from INTERSTITIAL_SPLASH)
+     *
+     * Remote Config key: ad_interstitial_splash_high
+     */
+    const val INTERSTITIAL_SPLASH_HIGH = "ad_interstitial_splash_high"
+
+    /**
+     * LOW-priority splash interstitial fallback (first install only).
+     * Single all-fill ad unit — tried only when SPLASH_HIGH fails to load.
+     *
+     * Ad unit: ca-app-pub-7121075950716954/1830520200 (Secondary from INTERSTITIAL_SPLASH)
+     *
+     * Remote Config key: ad_interstitial_splash_low
+     */
+    const val INTERSTITIAL_SPLASH_LOW = "ad_interstitial_splash_low"
+
+    /**
      * Interstitial ad shown after splash screen loading completes (second app open onwards).
      * Timing: Same as INTERSTITIAL_SPLASH but shown from the second launch onward.
      * Uses separate ad unit to allow independent eCPM tracking and frequency capping.
@@ -50,6 +70,26 @@ object AdPlacement {
      * Remote Config key: ad_interstitial_open_app
      */
     const val INTERSTITIAL_OPEN_APP = "ad_interstitial_open_app"
+
+    /**
+     * HIGH-priority open-app interstitial (second+ launch).
+     * Single high-eCPM ad unit — tried first. If it fails to load, falls back to OPEN_APP_LOW.
+     *
+     * Ad unit: ca-app-pub-7121075950716954/4748771125 (Inter_high_splash_reopen)
+     *
+     * Remote Config key: ad_interstitial_open_app_high
+     */
+    const val INTERSTITIAL_OPEN_APP_HIGH = "ad_interstitial_open_app_high"
+
+    /**
+     * LOW-priority open-app interstitial fallback (second+ launch).
+     * Single all-fill ad unit — tried only when OPEN_APP_HIGH fails to load.
+     *
+     * Ad unit: ca-app-pub-7121075950716954/2676684702 (Inter_all_splash_reopen)
+     *
+     * Remote Config key: ad_interstitial_open_app_low
+     */
+    const val INTERSTITIAL_OPEN_APP_LOW = "ad_interstitial_open_app_low"
 
     /**
      * Fullscreen-image interstitial shown at the onboarding ad step
@@ -1226,7 +1266,11 @@ object AdPlacement {
         APP_OPEN_FOREGROUND,
         APP_OPEN_AFTER_AD_CLICK,
         INTERSTITIAL_SPLASH,
+        INTERSTITIAL_SPLASH_HIGH,
+        INTERSTITIAL_SPLASH_LOW,
         INTERSTITIAL_OPEN_APP,
+        INTERSTITIAL_OPEN_APP_HIGH,
+        INTERSTITIAL_OPEN_APP_LOW,
         INTERSTITIAL_TEMPLATE_PREVIEWER_BACK,
         INTERSTITIAL_TEMPLATE_PREVIEWER_SCROLL,
         INTERSTITIAL_TEMPLATE_PREVIEWER_USE,
