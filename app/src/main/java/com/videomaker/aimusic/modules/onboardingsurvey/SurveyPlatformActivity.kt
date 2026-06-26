@@ -97,11 +97,10 @@ class SurveyPlatformActivity : BaseOnboardingActivity() {
 
         Column(
             modifier = Modifier
-                .statusBarsPadding()
                 .fillMaxSize()
                 .background(Color(0xFF1A1A1A))
         ) {
-            Box(modifier = Modifier.weight(1f)) {
+            Box(modifier = Modifier.weight(1f).statusBarsPadding()) {
                 OnboardingSurveyList(
                     config = config,
                     selectedIds = selectedIds,

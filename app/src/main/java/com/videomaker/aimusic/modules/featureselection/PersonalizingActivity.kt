@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
@@ -16,6 +17,7 @@ import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
 import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.MainActivity
 import com.videomaker.aimusic.core.ads.AdClickDetector
+import com.videomaker.aimusic.core.ads.AdPlacementConfigService
 import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.constants.AdPlacement
@@ -79,6 +81,7 @@ class PersonalizingActivity : BaseOnboardingActivity() {
     @Composable
     override fun Content() {
         val adClickDetector: AdClickDetector = koinInject()
+        val adPlacementConfigService: AdPlacementConfigService = koinInject()
 
         Column(
             modifier = Modifier
@@ -88,7 +91,11 @@ class PersonalizingActivity : BaseOnboardingActivity() {
             Box(modifier = Modifier.weight(1f)) {
                 PersonalizingScreen()
             }
-            Box(modifier = Modifier.fillMaxWidth()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .then(if (adPlacementConfigService.adBottomNavPaddingEnabled) Modifier.navigationBarsPadding() else Modifier)
+            ) {
                 NativeAdView(
                     placement = AdPlacement.NATIVE_ONBOARDING_PERSONALIZING,
                     modifier = Modifier.fillMaxWidth(),

@@ -12,8 +12,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -28,6 +30,7 @@ import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.ui.components.LocalAsyncImage
 import com.videomaker.aimusic.core.ads.AdClickDetector
+import com.videomaker.aimusic.core.ads.AdPlacementConfigService
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.data.local.PreferencesManager
 import com.videomaker.aimusic.core.ui.BaseOnboardingActivity
@@ -37,7 +40,6 @@ import com.videomaker.aimusic.modules.onboarding.OnboardingViewModel
 import com.videomaker.aimusic.modules.onboarding.pages.FeatureSurveyPage
 import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import com.videomaker.aimusic.ui.theme.Primary
-import kotlinx.coroutines.delay
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.compose.koinInject
@@ -56,23 +58,15 @@ class FeatureSelectionActivity : BaseOnboardingActivity() {
     @Composable
     override fun Content() {
         val adClickDetector: AdClickDetector = koinInject()
+        val adPlacementConfigService: AdPlacementConfigService = koinInject()
         val density = LocalDensity.current
         var isSaving by remember { mutableStateOf(false) }
 
         val adSwap = rememberAdSwapState()
+        val coroutineScope = rememberCoroutineScope()
 
         var bottomSectionHeight by remember { mutableStateOf(0) }
         val bottomPaddingDp = with(density) { bottomSectionHeight.toDp() }
-
-        var delayedButtonEnabled by remember { mutableStateOf(false) }
-
-        // Enable button 500ms after the screen swap completes
-        LaunchedEffect(adSwap.hasSwapped) {
-            if (adSwap.hasSwapped) {
-                delay(500)
-                delayedButtonEnabled = true
-            }
-        }
 
         // Reset to primary ad when all selections are cleared
         LaunchedEffect(onboardingViewModel.selectedFeatures.isEmpty()) {
@@ -91,7 +85,7 @@ class FeatureSelectionActivity : BaseOnboardingActivity() {
                     selectedFeatures = onboardingViewModel.selectedFeatures,
                     onFeatureToggle = { selectedFeature ->
                         onboardingViewModel.toggleFeature(selectedFeature)
-                        adSwap.triggerSwap()
+                        adSwap.onUserInteraction(coroutineScope)
                         onboardingViewModel.selectedFeatures.firstOrNull()?.let { genre ->
                             Analytics.track(
                                 name = EVENT_GENRE_SELECT,
@@ -158,7 +152,7 @@ class FeatureSelectionActivity : BaseOnboardingActivity() {
                                     }
                                 }
                             },
-                            enabled = onboardingViewModel.selectedFeatures.isNotEmpty() && delayedButtonEnabled && !isSaving,
+                            enabled = onboardingViewModel.selectedFeatures.isNotEmpty() && adSwap.delayedButtonEnabled && !isSaving,
                             color = Primary,
                             icon = R.drawable.ic_checkmark
                         )
@@ -172,13 +166,16 @@ class FeatureSelectionActivity : BaseOnboardingActivity() {
                     .onSizeChanged { size ->
                         bottomSectionHeight = size.height
                     }
+                    .then(if (adPlacementConfigService.adBottomNavPaddingEnabled) Modifier.navigationBarsPadding() else Modifier)
             ) {
-                NativeAdView(
-                    placement = adSwap.currentPlacement,
-                    modifier = Modifier.fillMaxWidth(),
-                    isDebug = BuildConfig.DEBUG,
-                    onAdClicked = { adClickDetector.onAdClick(it) },
-                )
+                key(adSwap.reloadKey) {
+                    NativeAdView(
+                        placement = adSwap.currentPlacement,
+                        modifier = Modifier.fillMaxWidth(),
+                        isDebug = BuildConfig.DEBUG,
+                        onAdClicked = { adClickDetector.onAdClick(it) },
+                    )
+                }
             }
         }
     }

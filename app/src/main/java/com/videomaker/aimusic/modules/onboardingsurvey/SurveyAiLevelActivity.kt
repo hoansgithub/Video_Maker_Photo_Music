@@ -11,8 +11,10 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -52,6 +54,7 @@ class SurveyAiLevelActivity : BaseOnboardingActivity() {
         val selectedId = selectedIds.firstOrNull().orEmpty()
 
         val adSwap = rememberAdSwapState()
+        val coroutineScope = rememberCoroutineScope()
 
         var bottomSectionHeight by remember { mutableStateOf(0) }
         val bottomPaddingDp = with(density) { bottomSectionHeight.toDp() }
@@ -62,16 +65,15 @@ class SurveyAiLevelActivity : BaseOnboardingActivity() {
 
         Column(
             modifier = Modifier
-                .statusBarsPadding()
                 .fillMaxSize()
         ) {
-            Box(modifier = Modifier.weight(1f)) {
+            Box(modifier = Modifier.weight(1f).statusBarsPadding()) {
                 AiLevelScreen(
                     items = AI_LEVEL_ITEMS,
                     selectedId = selectedId,
                     onSelect = { id ->
                         viewModel.selectAiLevel(id)
-                        adSwap.triggerSwap()
+                        adSwap.onUserInteraction(coroutineScope)
                         Analytics.track(
                             name = OnboardingSurveyAnalytics.EVENT_AI_LEVEL_SELECT,
                             params = mapOf(OnboardingSurveyAnalytics.PARAM_AI_LEVEL to id),
@@ -110,7 +112,7 @@ class SurveyAiLevelActivity : BaseOnboardingActivity() {
                                 )
                                 navigateToNextStep()
                             },
-                            enabled = selectedIds.isNotEmpty(),
+                            enabled = selectedIds.isNotEmpty() && adSwap.delayedButtonEnabled,
                             color = Primary,
                             icon = R.drawable.ic_right_arrow,
                         )
@@ -127,12 +129,14 @@ class SurveyAiLevelActivity : BaseOnboardingActivity() {
                     }
                     .then(if (adPlacementConfigService.adBottomNavPaddingEnabled) Modifier.navigationBarsPadding() else Modifier)
             ) {
-                NativeAdView(
-                    placement = adSwap.currentPlacement,
-                    modifier = Modifier.fillMaxWidth(),
-                    isDebug = BuildConfig.DEBUG,
-                    onAdClicked = { adClickDetector.onAdClick(it) }
-                )
+                key(adSwap.reloadKey) {
+                    NativeAdView(
+                        placement = adSwap.currentPlacement,
+                        modifier = Modifier.fillMaxWidth(),
+                        isDebug = BuildConfig.DEBUG,
+                        onAdClicked = { adClickDetector.onAdClick(it) }
+                    )
+                }
             }
         }
     }

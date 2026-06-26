@@ -98,6 +98,18 @@ class OnboardingFlowCoordinator(
         return steps.getOrNull(index + 1)
     }
 
+    /** Previous enabled step before [current], or null if [current] is first. Skips FULLSCREEN_AD. */
+    fun previousStep(current: OnboardingStep): OnboardingStep? {
+        val steps = enabledSteps()
+        val index = steps.indexOf(current)
+        if (index <= 0) return null
+        val prev = steps[index - 1]
+        if (prev == OnboardingStep.FULLSCREEN_AD) {
+            return steps.getOrNull(index - 2)
+        }
+        return prev
+    }
+
     /** Activity class for a given step. */
     fun activityClass(step: OnboardingStep): Class<out BaseOnboardingActivity> = when (step) {
         OnboardingStep.LANGUAGE_SELECTION -> LanguageSelectionActivity::class.java
@@ -279,6 +291,22 @@ class OnboardingFlowCoordinator(
                 putExtra(MainActivity.EXTRA_FROM_ONBOARDING, true)
             }
         }
+    }
+
+    /**
+     * Navigate backward from [current] to the previous enabled step.
+     * Uses slide-from-left animation so the user perceives going back.
+     * No-op if [current] is the first enabled step.
+     */
+    fun navigateToPrevious(activity: BaseOnboardingActivity, current: OnboardingStep) {
+        val prev = previousStep(current) ?: return
+        // Destroy cached ads for the target step so the recreated Activity
+        // gets fresh impressions instead of showing stale cached ads.
+        adPlacements(prev).forEach { placement ->
+            try { adsLoaderService.destroyNative(placement) } catch (_: Exception) {}
+        }
+        preloadAdsForStep(prev)
+        activity.navigateBackward(activityClass(prev))
     }
 
     // ── Private helpers ──────────────────────────────────────────────────

@@ -10,10 +10,11 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -27,6 +28,7 @@ import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.ui.components.LocalAsyncImage
 import com.videomaker.aimusic.core.ads.AdClickDetector
+import com.videomaker.aimusic.core.ads.AdPlacementConfigService
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.ui.BaseOnboardingActivity
 import com.videomaker.aimusic.modules.language.OnboardingCtaButton
@@ -49,82 +51,83 @@ class ContentExclusiveActivity : BaseOnboardingActivity() {
     @Composable
     override fun Content() {
         val adClickDetector: AdClickDetector = koinInject()
+        val adPlacementConfigService: AdPlacementConfigService = koinInject()
         val adSwap = rememberAdSwapState()
+        val coroutineScope = rememberCoroutineScope()
         var bottomSectionHeight by remember { mutableStateOf(0) }
 
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color(0xFF1A1A1A))
         ) {
-            Column(
+            Box(
                 modifier = Modifier
-                    .statusBarsPadding()
-                    .fillMaxSize()
+                    .weight(1f)
+                    .statusBarsPadding(),
+                contentAlignment = Alignment.TopEnd
             ) {
-                Box(
-                    modifier = Modifier.weight(1f),
-                    contentAlignment = Alignment.TopEnd
-                ) {
-                    ContentExclusiveScreen(
-                        selectedId = viewModel.selectedContentFilter.value.orEmpty(),
-                        onSelect = { id ->
-                            viewModel.selectContentFilter(id)
-                            adSwap.triggerSwap()
-                            Analytics.track(
-                                name = "content_feed_select",
-                                params = mapOf("option" to id),
-                            )
-                        },
-                    )
-
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .align(Alignment.BottomEnd)
-                            .then(
-                                if (bottomSectionHeight == 0) Modifier.navigationBarsPadding()
-                                else Modifier
-                            )
-                            .clickableSingle {}
-                    ) {
-                        LocalAsyncImage(
-                            resId = R.drawable.img_bg_cta_onboard,
-                            contentDescription = null,
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.matchParentSize()
+                ContentExclusiveScreen(
+                    selectedId = viewModel.selectedContentFilter.value.orEmpty(),
+                    onSelect = { id ->
+                        viewModel.selectContentFilter(id)
+                        adSwap.onUserInteraction(coroutineScope)
+                        Analytics.track(
+                            name = "content_feed_select",
+                            params = mapOf("option" to id),
                         )
-                        Box(
-                            modifier = Modifier
-                                .align(Alignment.BottomEnd)
-                                .padding(top = 10.dp, bottom = 12.dp)
-                        ) {
-                            OnboardingCtaButton(
-                                text = stringResource(R.string.onboarding_next),
-                                onClick = {
-                                    val selected = viewModel.selectedContentFilter.value
-                                        ?: return@OnboardingCtaButton
-                                    Analytics.track(
-                                        name = "content_feed_next",
-                                        params = mapOf("option" to selected),
-                                    )
-                                    navigateToNextStep()
-                                },
-                                enabled = viewModel.selectedContentFilter.value != null,
-                                color = Primary,
-                                icon = R.drawable.ic_right_arrow
-                            )
-                        }
-                    }
-                }
+                    },
+                )
 
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .onSizeChanged { size ->
-                            bottomSectionHeight = size.height
-                        }
+                        .align(Alignment.BottomEnd)
+                        .then(
+                            if (bottomSectionHeight == 0) Modifier.navigationBarsPadding()
+                            else Modifier
+                        )
+                        .clickableSingle {}
                 ) {
+                    LocalAsyncImage(
+                        resId = R.drawable.img_bg_cta_onboard,
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.matchParentSize()
+                    )
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(top = 10.dp, bottom = 12.dp)
+                    ) {
+                        OnboardingCtaButton(
+                            text = stringResource(R.string.onboarding_next),
+                            onClick = {
+                                val selected = viewModel.selectedContentFilter.value
+                                    ?: return@OnboardingCtaButton
+                                Analytics.track(
+                                    name = "content_feed_next",
+                                    params = mapOf("option" to selected),
+                                )
+                                navigateToNextStep()
+                            },
+                            enabled = viewModel.selectedContentFilter.value != null && adSwap.delayedButtonEnabled,
+                            color = Primary,
+                            icon = R.drawable.ic_right_arrow
+                        )
+                    }
+                }
+            }
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onSizeChanged { size ->
+                        bottomSectionHeight = size.height
+                    }
+                    .then(if (adPlacementConfigService.adBottomNavPaddingEnabled) Modifier.navigationBarsPadding() else Modifier)
+            ) {
+                key(adSwap.reloadKey) {
                     NativeAdView(
                         placement = adSwap.currentPlacement,
                         modifier = Modifier.fillMaxWidth(),

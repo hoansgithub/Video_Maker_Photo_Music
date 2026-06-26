@@ -24,9 +24,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -95,11 +97,10 @@ class SurveyFeatureActivity : BaseOnboardingActivity() {
         }
 
         val adSwap = rememberAdSwapState()
+        val coroutineScope = rememberCoroutineScope()
 
         var bottomSectionHeight by remember { mutableStateOf(0) }
         val bottomPaddingDp = with(density) { bottomSectionHeight.toDp() }
-
-        var delayedButtonEnabled by remember { mutableStateOf(false) }
 
         // --- Cursor overlay state ---
         var interactionKey by remember { mutableStateOf(0L) }
@@ -112,14 +113,6 @@ class SurveyFeatureActivity : BaseOnboardingActivity() {
         // Render event
         LaunchedEffect(Unit) {
             Analytics.track(name = config.eventRender)
-        }
-
-        // Enable button 500ms after the screen swap completes
-        LaunchedEffect(adSwap.hasSwapped) {
-            if (adSwap.hasSwapped) {
-                delay(500)
-                delayedButtonEnabled = true
-            }
         }
 
         // Reset to primary ad when all selections are cleared
@@ -185,7 +178,6 @@ class SurveyFeatureActivity : BaseOnboardingActivity() {
         // Root Box: idle detector resets cursor on touch
         Box(
             modifier = Modifier
-                .statusBarsPadding()
                 .fillMaxSize()
                 .pointerInput(Unit) {
                     awaitPointerEventScope {
@@ -198,7 +190,7 @@ class SurveyFeatureActivity : BaseOnboardingActivity() {
                 }
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
-                Box(modifier = Modifier.weight(1f)) {
+                Box(modifier = Modifier.weight(1f).statusBarsPadding()) {
                     OnboardingSurveyList(
                         config = displayConfig,
                         selectedIds = selectedIds,
@@ -207,7 +199,7 @@ class SurveyFeatureActivity : BaseOnboardingActivity() {
                             interactionKey = System.currentTimeMillis()
                             showCursor = false
                             viewModel.toggle(OnboardingSurveyStep.FEATURE, id)
-                            adSwap.triggerSwap()
+                            adSwap.onUserInteraction(coroutineScope)
                             Analytics.track(
                                 name = config.eventSelect,
                                 params = mapOf(config.paramKey to id),
@@ -257,7 +249,7 @@ class SurveyFeatureActivity : BaseOnboardingActivity() {
                                     )
                                     navigateToNextStep()
                                 },
-                                enabled = selectedIds.isNotEmpty() && delayedButtonEnabled,
+                                enabled = selectedIds.isNotEmpty() && adSwap.delayedButtonEnabled,
                                 color = Primary,
                                 icon = R.drawable.ic_right_arrow,
                             )
@@ -275,12 +267,14 @@ class SurveyFeatureActivity : BaseOnboardingActivity() {
                         }
                         .then(if (adPlacementConfigService.adBottomNavPaddingEnabled) Modifier.navigationBarsPadding() else Modifier)
                 ) {
-                    NativeAdView(
-                        placement = adSwap.currentPlacement,
-                        modifier = Modifier.fillMaxWidth(),
-                        isDebug = BuildConfig.DEBUG,
-                        onAdClicked = { adClickDetector.onAdClick(it) },
-                    )
+                    key(adSwap.reloadKey) {
+                        NativeAdView(
+                            placement = adSwap.currentPlacement,
+                            modifier = Modifier.fillMaxWidth(),
+                            isDebug = BuildConfig.DEBUG,
+                            onAdClicked = { adClickDetector.onAdClick(it) },
+                        )
+                    }
                 }
             }
 

@@ -26,6 +26,7 @@ import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.ui.components.LocalAsyncImage
 import com.videomaker.aimusic.core.ads.AdClickDetector
+import com.videomaker.aimusic.core.ads.AdPlacementConfigService
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.core.data.local.PreferencesManager
@@ -55,88 +56,86 @@ class TemplatePickActivity : BaseOnboardingActivity() {
     @Composable
     override fun Content() {
         val adClickDetector: AdClickDetector = koinInject()
+        val adPlacementConfigService: AdPlacementConfigService = koinInject()
         var bottomSectionHeight by remember { mutableStateOf(0) }
 
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color(0xFF1A1A1A))
         ) {
-            Column(
+            Box(
                 modifier = Modifier
-                    .statusBarsPadding()
-                    .fillMaxSize()
+                    .weight(1f)
+                    .statusBarsPadding(),
+                contentAlignment = Alignment.TopEnd
             ) {
-                Box(
-                    modifier = Modifier.weight(1f),
-                    contentAlignment = Alignment.TopEnd
-                ) {
-                    TemplatePickScreen(
-                        templates = viewModel.suggestedTemplates,
-                        selectedTemplate = viewModel.selectedTemplate.value,
-                        onTemplateSelect = { template ->
-                            viewModel.selectTemplate(template)
-                            Analytics.track(
-                                name = "vibe_template_select",
-                                params = mapOf("template_id" to template.id)
-                            )
-                        }
-                    )
-
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .align(Alignment.BottomEnd)
-                            .then(
-                                if (bottomSectionHeight == 0) Modifier.navigationBarsPadding()
-                                else Modifier
-                            )
-                            .clickableSingle {}
-                    ) {
-                        LocalAsyncImage(
-                            resId = R.drawable.img_bg_cta_onboard,
-                            contentDescription = null,
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.matchParentSize()
+                TemplatePickScreen(
+                    templates = viewModel.suggestedTemplates,
+                    selectedTemplate = viewModel.selectedTemplate.value,
+                    onTemplateSelect = { template ->
+                        viewModel.selectTemplate(template)
+                        Analytics.track(
+                            name = "vibe_template_select",
+                            params = mapOf("template_id" to template.id)
                         )
-                        Box(
-                            modifier = Modifier
-                                .align(Alignment.BottomEnd)
-                                .padding(top = 10.dp, bottom = 12.dp)
-                        ) {
-                            OnboardingCtaButton(
-                                text = stringResource(R.string.onboarding_next),
-                                onClick = {
-                                    val template = viewModel.selectedTemplate.value
-                                        ?: return@OnboardingCtaButton
-                                    Analytics.track(
-                                        name = "vibe_template_next",
-                                        params = mapOf("template_id" to template.id)
-                                    )
-                                    navigateToNextStep()
-                                },
-                                enabled = viewModel.selectedTemplate.value != null,
-                                color = Primary,
-                                icon = R.drawable.ic_right_arrow
-                            )
-                        }
                     }
-                }
+                )
 
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .onSizeChanged { size ->
-                            bottomSectionHeight = size.height
-                        }
+                        .align(Alignment.BottomEnd)
+                        .then(
+                            if (bottomSectionHeight == 0) Modifier.navigationBarsPadding()
+                            else Modifier
+                        )
+                        .clickableSingle {}
                 ) {
-                    NativeAdView(
-                        placement = AdPlacement.NATIVE_ONBOARDING_SELECT_TPT,
-                        modifier = Modifier.fillMaxWidth(),
-                        isDebug = BuildConfig.DEBUG,
-                        onAdClicked = { adClickDetector.onAdClick(it) }
+                    LocalAsyncImage(
+                        resId = R.drawable.img_bg_cta_onboard,
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.matchParentSize()
                     )
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(top = 10.dp, bottom = 12.dp)
+                    ) {
+                        OnboardingCtaButton(
+                            text = stringResource(R.string.onboarding_next),
+                            onClick = {
+                                val template = viewModel.selectedTemplate.value
+                                    ?: return@OnboardingCtaButton
+                                Analytics.track(
+                                    name = "vibe_template_next",
+                                    params = mapOf("template_id" to template.id)
+                                )
+                                navigateToNextStep()
+                            },
+                            enabled = viewModel.selectedTemplate.value != null,
+                            color = Primary,
+                            icon = R.drawable.ic_right_arrow
+                        )
+                    }
                 }
+            }
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onSizeChanged { size ->
+                        bottomSectionHeight = size.height
+                    }
+                    .then(if (adPlacementConfigService.adBottomNavPaddingEnabled) Modifier.navigationBarsPadding() else Modifier)
+            ) {
+                NativeAdView(
+                    placement = AdPlacement.NATIVE_ONBOARDING_SELECT_TPT,
+                    modifier = Modifier.fillMaxWidth(),
+                    isDebug = BuildConfig.DEBUG,
+                    onAdClicked = { adClickDetector.onAdClick(it) }
+                )
             }
         }
     }

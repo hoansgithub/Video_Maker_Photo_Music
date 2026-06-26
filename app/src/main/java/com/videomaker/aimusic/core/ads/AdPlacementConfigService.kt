@@ -1416,4 +1416,35 @@ class AdPlacementConfigService(
         }
     }
 
+    /**
+     * Create a dynamic "_last_only" placement from a source placement's last waterfall unit.
+     *
+     * Used for ad reload after the initial PRIMARY→ALT swap: the last unit in the ALT
+     * waterfall typically has the highest fill rate, so a single-unit placement loads fast.
+     *
+     * Uses [PlacementConfigService.setLocalConfig] (not `registerPlacement()`) so the
+     * dynamic placement is never overridden by Remote Config.
+     *
+     * @param sourcePlacementId The ALT placement to derive the last-only placement from
+     * @return The dynamic placement ID (e.g. "ad_native_onboarding_select_alt_last_only"),
+     *         or null if the source placement doesn't exist or has no units
+     */
+    fun createLastOnlyPlacement(sourcePlacementId: String): String? {
+        return try {
+            val sourceConfig = placementConfigService.getConfig(sourcePlacementId) ?: return null
+            val lastUnit = sourceConfig.units.lastOrNull() ?: return null
+            val dynamicPlacementId = "${sourcePlacementId}_last_only"
+            val dynamicConfig = CorePlacementConfig(
+                enabled = sourceConfig.enabled,
+                type = sourceConfig.type,
+                units = listOf(lastUnit),
+                extras = sourceConfig.extras
+            )
+            placementConfigService.setLocalConfig(dynamicPlacementId, dynamicConfig)
+            dynamicPlacementId
+        } catch (_: Exception) {
+            null
+        }
+    }
+
 }
