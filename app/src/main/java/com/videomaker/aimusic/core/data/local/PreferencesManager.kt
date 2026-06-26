@@ -75,6 +75,7 @@ class PreferencesManager(context: Context) {
         private const val KEY_PREFERRED_FEATURES = "preferred_features"
         private const val KEY_FEATURE_SELECTION_COMPLETE = "feature_selection_complete"
         private const val KEY_HOME_INITIAL_TAB_FROM_ONBOARDING = "home_initial_tab_from_onboarding"
+        private const val KEY_ONBOARDING_SELECTED_GENRE = "onboarding_selected_genre"
         private const val KEY_USER_REGION = "user_region"
         private const val KEY_RATING_VIDEO_CREATE_COUNT = "rating_video_create_count"
         private const val KEY_RATING_SHOWN_COUNT = "rating_shown_count"
@@ -171,6 +172,14 @@ class PreferencesManager(context: Context) {
         prefs.edit { putInt(KEY_HOME_INITIAL_TAB_FROM_ONBOARDING, tab) }
     }
 
+    /** Genre selected during onboarding (persisted across Activities). */
+    fun getOnboardingSelectedGenre(): String? =
+        prefs.getString(KEY_ONBOARDING_SELECTED_GENRE, null)
+
+    fun setOnboardingSelectedGenre(genreId: String) {
+        prefs.edit { putString(KEY_ONBOARDING_SELECTED_GENRE, genreId) }
+    }
+
     /**
      * Check if onboarding has been completed
      */
@@ -185,6 +194,14 @@ class PreferencesManager(context: Context) {
      */
     suspend fun setOnboardingComplete(complete: Boolean) = withContext(Dispatchers.IO) {
         prefs.edit().putBoolean(KEY_ONBOARDING_COMPLETE, complete).commit()
+    }
+
+    /**
+     * Non-suspend variant using apply() (async write). Use when navigating away
+     * immediately and a coroutine scope isn't available.
+     */
+    fun markOnboardingCompleteSync() {
+        prefs.edit { putBoolean(KEY_ONBOARDING_COMPLETE, true) }
     }
 
     fun isOnboardingWelcomeComplete(): Boolean =

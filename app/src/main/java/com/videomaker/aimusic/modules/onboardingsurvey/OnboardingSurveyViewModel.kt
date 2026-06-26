@@ -1,24 +1,11 @@
 package com.videomaker.aimusic.modules.onboardingsurvey
 
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import co.alcheclub.lib.acccore.remoteconfig.RemoteConfig
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.launch
 
-class OnboardingSurveyViewModel(
-    remoteConfig: RemoteConfig,
-) : ViewModel() {
-
-    val enabledSteps: List<OnboardingSurveyStep> = OnboardingSurveyGate.enabledSteps(remoteConfig)
-
-    private val _currentStep = MutableStateFlow(enabledSteps.firstOrNull())
-    val currentStep: StateFlow<OnboardingSurveyStep?> = _currentStep.asStateFlow()
+class OnboardingSurveyViewModel : ViewModel() {
 
     private val _selectedFeatures = MutableStateFlow<Set<String>>(emptySet())
     val selectedFeatures: StateFlow<Set<String>> = _selectedFeatures.asStateFlow()
@@ -32,18 +19,6 @@ class OnboardingSurveyViewModel(
     val selectedAiLevel: StateFlow<Set<String>> = _selectedAiLevel.asStateFlow()
 
     fun selectAiLevel(id: String) { _selectedAiLevel.value = setOf(id) }
-
-    // One-time forward navigation event (collected once in the Activity).
-    private val _navToNext = Channel<Unit>(Channel.BUFFERED)
-    val navToNext = _navToNext.receiveAsFlow()
-
-    init {
-        // Defensive: the Activity is only launched when at least one step is enabled,
-        // but if it is launched empty, leave immediately.
-        if (enabledSteps.isEmpty()) {
-            viewModelScope.launch { _navToNext.send(Unit) }
-        }
-    }
 
     fun selectedFlow(step: OnboardingSurveyStep): StateFlow<Set<String>> = when (step) {
         OnboardingSurveyStep.FEATURE -> selectedFeatures
@@ -83,12 +58,4 @@ class OnboardingSurveyViewModel(
         return true
     }
 
-    fun onNext() {
-        val next = OnboardingSurveyGate.nextStep(enabledSteps, _currentStep.value)
-        if (next == null) {
-            viewModelScope.launch { _navToNext.send(Unit) }
-        } else {
-            _currentStep.value = next
-        }
-    }
 }

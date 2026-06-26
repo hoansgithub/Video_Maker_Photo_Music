@@ -198,6 +198,8 @@ class GPUImagePreprocessor(private val context: Context) {
             return false
         }
 
+        var inputTexture = 0
+        var outputBitmap: Bitmap? = null
         try {
             // Make context current
             if (!EGL14.eglMakeCurrent(eglDisplay, eglSurface, eglSurface, eglContext)) {
@@ -232,7 +234,7 @@ class GPUImagePreprocessor(private val context: Context) {
             }
 
             // Create input texture
-            val inputTexture = createTexture(inputBitmap)
+            inputTexture = createTexture(inputBitmap)
             inputBitmap.recycle()
 
             if (inputTexture == 0) {
@@ -278,7 +280,7 @@ class GPUImagePreprocessor(private val context: Context) {
             // glReadPixels reads bottom-to-top (GL origin is bottom-left), which
             // reverses the row order of the upside-down framebuffer — the resulting
             // bitmap is already in standard top-to-bottom orientation. No flip needed.
-            val outputBitmap = Bitmap.createBitmap(outputWidth, outputHeight, Bitmap.Config.ARGB_8888)
+            outputBitmap = Bitmap.createBitmap(outputWidth, outputHeight, Bitmap.Config.ARGB_8888)
             outputBitmap.copyPixelsFromBuffer(buffer)
 
             // Save to file
@@ -286,10 +288,7 @@ class GPUImagePreprocessor(private val context: Context) {
             FileOutputStream(outputFile).use { out ->
                 outputBitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
             }
-            outputBitmap.recycle()
 
-            // Cleanup
-            GLES20.glDeleteTextures(1, intArrayOf(inputTexture), 0)
             GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0)
 
             return true
@@ -297,6 +296,11 @@ class GPUImagePreprocessor(private val context: Context) {
         } catch (e: Exception) {
             android.util.Log.e(TAG, "Failed to preprocess image", e)
             return false
+        } finally {
+            if (inputTexture != 0) {
+                GLES20.glDeleteTextures(1, intArrayOf(inputTexture), 0)
+            }
+            outputBitmap?.let { if (!it.isRecycled) it.recycle() }
         }
     }
 

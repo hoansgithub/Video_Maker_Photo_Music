@@ -4,19 +4,12 @@ import android.content.res.Configuration
 import android.os.Bundle
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.lifecycleScope
-import co.alcheclub.lib.acccore.remoteconfig.RemoteConfig
-import com.videomaker.aimusic.VideoMakerApplication
-import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.core.ui.BaseOnboardingActivity
 import com.videomaker.aimusic.modules.language.domain.usecase.ApplyLanguageUseCase
 import com.videomaker.aimusic.modules.language.domain.usecase.CompleteLanguageSelectionUseCase
 import com.videomaker.aimusic.modules.language.domain.usecase.SaveLanguagePreferenceUseCase
-import com.videomaker.aimusic.modules.onboarding.OnboardingActivity
 import com.videomaker.aimusic.modules.onboarding.OnboardingContentViewModel
-import com.videomaker.aimusic.modules.onboardingsurvey.OnboardingSurveyActivity
-import com.videomaker.aimusic.modules.onboardingsurvey.OnboardingSurveyGate
-import com.videomaker.aimusic.modules.onboardingsurvey.altAdPlacement
-import com.videomaker.aimusic.modules.onboardingsurvey.primaryAdPlacement
+import com.videomaker.aimusic.modules.onboarding.OnboardingStep
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 
@@ -24,50 +17,19 @@ import org.koin.android.ext.android.inject
  * LanguageSelectionActivity - First-time language selection
  *
  * This Activity is shown only for first-time users who haven't selected a language yet.
- * After selection, it navigates to OnboardingActivity and finishes.
- *
- * Flow:
- * 1. User sees language options grid
- * 2. User taps a language -> preference saved (no recreation, just UI selection state)
- * 3. User taps Continue:
- *    a. Mark selection as complete
- *    b. Apply locale via AppCompatDelegate.setApplicationLocales()
- *    c. Navigate to OnboardingActivity -> starts fresh with the new locale auto-applied
- *    d. This Activity finishes
- *
- * Why a separate Activity?
- * - Language is applied before entering the rest of setup flow
- * - No visible recreation/flicker when moving to next setup step
- * - Clean separation of first-time setup from main app flow
- * - User cannot go back to language selection accidentally
+ * After selection, it navigates to the next enabled onboarding step via the coordinator.
  */
 class LanguageSelectionActivity : BaseOnboardingActivity() {
+
+    override val onboardingStep = OnboardingStep.LANGUAGE_SELECTION
 
     private val saveLanguagePreferenceUseCase: SaveLanguagePreferenceUseCase by inject()
     private val applyLanguageUseCase: ApplyLanguageUseCase by inject()
     private val completeLanguageSelectionUseCase: CompleteLanguageSelectionUseCase by inject()
     private val onboardingContentViewModel: OnboardingContentViewModel by inject()
-    private val remoteConfig: RemoteConfig by inject()
 
     override fun onSetupComplete(savedInstanceState: Bundle?) {
-        // True 1-step-ahead: only preload ads for the IMMEDIATE next screen.
-        // Downstream screens handle their own step-ahead preloading.
-        val firstSurveyStep = OnboardingSurveyGate.enabledSteps(remoteConfig).firstOrNull()
-        if (firstSurveyStep != null) {
-            // Survey is next -> preload first survey step's ads only
-            android.util.Log.d("LanguageSelection", "\uD83D\uDD04 1-step-ahead: preloading ${firstSurveyStep.name} ads")
-            VideoMakerApplication.preloadNativeAd(firstSurveyStep.primaryAdPlacement())
-            firstSurveyStep.altAdPlacement()?.let {
-                VideoMakerApplication.preloadNativeAdDelayed(it, 1000L)
-            }
-        } else {
-            // No survey -> welcome pager is next, preload first two page ads
-            android.util.Log.d("LanguageSelection", "\uD83D\uDD04 1-step-ahead: preloading welcome pager page1+page2 ads")
-            VideoMakerApplication.preloadNativeAd(AdPlacement.NATIVE_ONBOARDING_PAGE1)
-            VideoMakerApplication.preloadNativeAdDelayed(AdPlacement.NATIVE_ONBOARDING_PAGE2, 1000L)
-        }
-
-        // Pre-fetch onboarding thumbnails (data ready when OnboardingActivity opens)
+        // Pre-fetch onboarding thumbnails (data ready when welcome pages open)
         onboardingContentViewModel.preloadContent()
     }
 
@@ -84,7 +46,8 @@ class LanguageSelectionActivity : BaseOnboardingActivity() {
                 lifecycleScope.launch {
                     completeLanguageSelectionUseCase()
                     applyLanguageUseCase()
-                    navigateToOnboarding()
+                    navigateToNextStep()
+                    applyFadeTransition()
                 }
             }
         )
@@ -96,21 +59,5 @@ class LanguageSelectionActivity : BaseOnboardingActivity() {
      */
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
-        // No-op: Activity is finishing immediately after locale is applied
-    }
-
-    /**
-     * After language selection, launch OnboardingActivity.
-     */
-    private fun navigateToOnboarding() {
-        // Route through the survey screens when at least one is enabled; otherwise go straight
-        // to the welcome pager (avoids launching an Activity that would immediately finish).
-        val target = if (OnboardingSurveyGate.isAnyEnabled(remoteConfig)) {
-            OnboardingSurveyActivity::class.java
-        } else {
-            OnboardingActivity::class.java
-        }
-        navigateForward(target)
-        applyFadeTransition()
     }
 }

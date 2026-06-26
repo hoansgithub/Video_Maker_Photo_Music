@@ -126,6 +126,16 @@ object RemoteConfigKeys {
     const val ONBOARDING_PAGE2_SONG_ID = "onboarding_page2_song_id"
 
     // ============================================
+    // ONBOARDING STEP GATES (every step gatable, default=true)
+    // ============================================
+
+    const val ONBOARDING_LANGUAGE_SELECTION_ENABLED = "onboarding_language_selection_enabled"
+    const val ONBOARDING_WELCOME_PAGE_1_ENABLED = "onboarding_welcome_page_1_enabled"
+    const val ONBOARDING_WELCOME_PAGE_2_ENABLED = "onboarding_welcome_page_2_enabled"
+    const val ONBOARDING_WELCOME_PAGE_3_ENABLED = "onboarding_welcome_page_3_enabled"
+    const val ONBOARDING_FEATURE_SELECT_ENABLED = "onboarding_feature_select_enabled"
+
+    // ============================================
     // ONBOARDING GENRE TEMPLATE STEPS
     // ============================================
 

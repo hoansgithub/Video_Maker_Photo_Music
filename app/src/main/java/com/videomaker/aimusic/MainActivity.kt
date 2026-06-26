@@ -70,10 +70,10 @@ import kotlinx.coroutines.launch
  *
  * This Activity is launched by:
  * - RootViewActivity  (returning user, all setup complete)
- * - OnboardingActivity (after first-time onboarding completes)
+ * - PersonalizingActivity (after first-time onboarding completes)
  * - Home screen widgets (via deep-link intents)
  *
- * Onboarding is handled by OnboardingActivity (separate one-time flow).
+ * Onboarding is handled by per-step Activities (separate one-time flow).
  * MainActivity always starts at AppRoute.Home.
  *
  * Extends AppCompatActivity (not ComponentActivity) to support

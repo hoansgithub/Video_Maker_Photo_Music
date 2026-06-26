@@ -211,6 +211,15 @@ val dataModule = module {
         )
     }
 
+    // Onboarding flow coordinator (singleton - manages step sequence, RC gating, ad preloading)
+    single {
+        com.videomaker.aimusic.modules.onboarding.OnboardingFlowCoordinator(
+            remoteConfig = get(),
+            preferencesManager = get(),
+            adsLoaderService = get()
+        )
+    }
+
     // Language config service (singleton - ConfigurableObject for Remote Config)
     // Centralized registration: Explicitly registered in VideoMakerApplication.kt
     single {
@@ -937,8 +946,8 @@ val presentationModule = module {
 
     // Onboarding Content ViewModel — registered as a singleton so that the
     // preload kicked off in LanguageSelectionActivity stays alive and its state
-    // is visible to OnboardingActivity (the spec's "centralized" intent). Using
-    // viewModel { } would create a fresh per-Activity instance and lose the data.
+    // is visible to WelcomePage Activities. Using viewModel { } would create a
+    // fresh per-Activity instance and lose the data.
     single {
         com.videomaker.aimusic.modules.onboarding.OnboardingContentViewModel(
             application = androidContext() as android.app.Application,
@@ -954,16 +963,11 @@ val presentationModule = module {
         com.videomaker.aimusic.modules.genretemplate.GenreTemplateViewModel(
             templateRepository = get(),
             songRepository = get(),
-            remoteConfig = get()
         )
     }
 
-    // Onboarding Survey (feature + platform) ViewModel
-    viewModel {
-        com.videomaker.aimusic.modules.onboardingsurvey.OnboardingSurveyViewModel(
-            remoteConfig = get()
-        )
-    }
+    // Onboarding Survey ViewModel
+    viewModel { com.videomaker.aimusic.modules.onboardingsurvey.OnboardingSurveyViewModel() }
 
     // Song Search ViewModel
     viewModel {

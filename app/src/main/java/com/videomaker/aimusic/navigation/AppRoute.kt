@@ -21,7 +21,7 @@ enum class SearchSection {
  * back stack persistence, so @Parcelize / Parcelable are not required.
  *
  * Routes are also used by RootViewModel as routing signals for Activity-level
- * navigation (e.g. Onboarding → OnboardingActivity, Home → MainActivity).
+ * navigation (e.g. Onboarding → WelcomePage1Activity, Home → MainActivity).
  *
  * NavKey: Required interface for Navigation 3 back stack management.
  */
@@ -37,7 +37,7 @@ sealed interface AppRoute : NavKey {
     @Serializable
     data object LanguageSelection : AppRoute
 
-    /** Routing signal: launch OnboardingActivity */
+    /** Routing signal: launch WelcomePage1Activity (first onboarding step after language) */
     @Serializable
     data object Onboarding : AppRoute
 

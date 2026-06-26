@@ -286,11 +286,8 @@ class RootViewModel(
                          * - On fast networks: splash finishes before native ads start anyway
                          * - Native ads still have plenty of time (load during splash display + navigation)
                          *
-                         * Full onboarding flow:
-                         * Step 0: Language Selection
-                         * Step 1: OnboardingActivity (welcome pages, NO ads)
-                         * Step 2: Feature Selection
-                         * Then: Home
+                         * Full onboarding flow (each step = separate Activity):
+                         * Language → Survey → Welcome Pages → Genre/Template → Feature Selection → Personalizing → Home
                          */
 
                         // Launch native ads with delay (Application scope, survives navigation)

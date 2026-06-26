@@ -6,9 +6,9 @@ import com.videomaker.aimusic.navigation.AppRoute
  * Which onboarding step to resume at when a returning user has partial progress.
  */
 enum class OnboardingResumeStep {
-    /** Resume at OnboardingActivity (welcome pages) or survey if enabled */
+    /** Resume at the first survey or welcome page Activity */
     WELCOME_PAGES,
-    /** Resume at FeatureSelectionActivity (or GenreTemplateActivity if enabled) */
+    /** Resume at the first genre/template or feature selection Activity */
     FEATURE_SELECTION
 }
 

@@ -23,51 +23,31 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.lifecycleScope
 import co.alcheclub.lib.acccore.ads.compose.NativeAdView
-import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
-import co.alcheclub.lib.acccore.remoteconfig.RemoteConfig
 import com.videomaker.aimusic.BuildConfig
-import com.videomaker.aimusic.MainActivity
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.ui.components.LocalAsyncImage
 import com.videomaker.aimusic.core.ads.AdClickDetector
-import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
 import com.videomaker.aimusic.core.analytics.Analytics
-import com.videomaker.aimusic.core.constants.AdPlacement
-import com.videomaker.aimusic.core.constants.RemoteConfigKeys
 import com.videomaker.aimusic.core.data.local.PreferencesManager
 import com.videomaker.aimusic.core.ui.BaseOnboardingActivity
-import com.videomaker.aimusic.modules.genretemplate.getStepEnabled
 import com.videomaker.aimusic.modules.language.OnboardingCtaButton
+import com.videomaker.aimusic.modules.onboarding.OnboardingStep
 import com.videomaker.aimusic.modules.onboarding.OnboardingViewModel
 import com.videomaker.aimusic.modules.onboarding.pages.FeatureSurveyPage
 import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import com.videomaker.aimusic.ui.theme.Primary
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeoutOrNull
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.compose.koinInject
 
-private enum class FeatureSelectionStep { FEATURE_SELECT, PERSONALIZING }
-
-// Personalizing screen: wait until the native ad is ready before ending, but
-// never hold the screen longer than this hard cap (10s) even if no ad arrives.
-private const val PERSONALIZING_AD_TIMEOUT_MS = 10_000L
-// How often to check whether the native ad has loaded.
-private const val PERSONALIZING_AD_POLL_MS = 200L
-// Once the ad is ready, keep it on screen briefly so it actually shows / fires
-// an impression before moving on to the interstitial.
-private const val PERSONALIZING_AD_MIN_DISPLAY_MS = 1_000L
-
 class FeatureSelectionActivity : BaseOnboardingActivity() {
+
+    override val onboardingStep = OnboardingStep.FEATURE_SELECTION
 
     private val preferencesManager: PreferencesManager by inject()
     private val onboardingViewModel: OnboardingViewModel by viewModel()
-    private val adsLoaderService: AdsLoaderService by inject()
-    private val remoteConfig: RemoteConfig by inject()
 
     override fun onSetupComplete(savedInstanceState: Bundle?) {
         Analytics.track(name = EVENT_GENRE_SHOW)
@@ -79,89 +59,39 @@ class FeatureSelectionActivity : BaseOnboardingActivity() {
         val density = LocalDensity.current
         var isSaving by remember { mutableStateOf(false) }
 
-        var step by remember { mutableStateOf(FeatureSelectionStep.FEATURE_SELECT) }
-        val personalizingEnabled = remember {
-            remoteConfig.getStepEnabled(RemoteConfigKeys.ONBOARDING_PERSONALIZING_ENABLED)
-        }
+        val adSwap = rememberAdSwapState()
 
-        // Track bottom section height dynamically (button + ad)
         var bottomSectionHeight by remember { mutableStateOf(0) }
         val bottomPaddingDp = with(density) { bottomSectionHeight.toDp() }
 
-        // Delayed states for ad viewability compliance (0.5-second per ad)
-        // Sequential delays ensuring EACH ad gets at least 0.5 second of display time
-        // Pipeline: FIRST user interaction -> PRIMARY shows 0.5s -> ALT shows 0.5s -> Button enables
-        // Total 1s delay for faster UX while maintaining ad viewability
-        var delayedHasSelection by remember { mutableStateOf(false) }
         var delayedButtonEnabled by remember { mutableStateOf(false) }
-        var hasStartedDelay by remember { mutableStateOf(false) }
 
-        // Sequential delays ensuring EACH ad gets at least 0.5 second of display time
-        // Timer starts on FIRST selection and does NOT reset on subsequent selections
-        LaunchedEffect(hasStartedDelay) {
-            if (hasStartedDelay) {
-                // Step 1: Wait 0.5s from FIRST interaction before switching to ALT ad
-                // NATIVE_ONBOARDING_FEATURE_SELECTION (PRIMARY) gets guaranteed 0.5s visibility
-                delay(500)
-                delayedHasSelection = true
-
-                // Step 2: Wait another 0.5s before enabling button
-                // NATIVE_ONBOARDING_FEATURE_SELECTION_ALT gets guaranteed 0.5s visibility
+        // Enable button 500ms after the screen swap completes
+        LaunchedEffect(adSwap.hasSwapped) {
+            if (adSwap.hasSwapped) {
                 delay(500)
                 delayedButtonEnabled = true
             }
         }
 
-        // Watch for first interaction and reset when all deselected
-        LaunchedEffect(onboardingViewModel.selectedFeatures.size) {
-            if (onboardingViewModel.selectedFeatures.isNotEmpty() && !hasStartedDelay) {
-                // First interaction - start the timer (only happens once)
-                hasStartedDelay = true
-                android.util.Log.d("FeatureSelection", "\uD83C\uDFAC Started IAB viewability timer")
-            } else if (onboardingViewModel.selectedFeatures.isEmpty() && hasStartedDelay) {
-                // User deselected all - reset everything
-                hasStartedDelay = false
-                delayedHasSelection = false
-                delayedButtonEnabled = false
-                android.util.Log.d("FeatureSelection", "\uD83D\uDD04 Reset IAB viewability timer")
+        // Reset to primary ad when all selections are cleared
+        LaunchedEffect(onboardingViewModel.selectedFeatures.isEmpty()) {
+            if (onboardingViewModel.selectedFeatures.isEmpty() && adSwap.hasSwapped) {
+                adSwap.resetSwap()
             }
         }
 
-        if (step == FeatureSelectionStep.PERSONALIZING) {
-            // System renders the personalize (loading) step.
-            LaunchedEffect(Unit) {
-                Analytics.track(name = EVENT_PERSONALIZE_RENDER)
-            }
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color(0xFF1A1A1A))
-            ) {
-                Box(modifier = Modifier.weight(1f)) {
-                    PersonalizingScreen()
-                }
-                Box(modifier = Modifier.fillMaxWidth()) {
-                    NativeAdView(
-                        placement = AdPlacement.NATIVE_ONBOARDING_PERSONALIZING,
-                        modifier = Modifier.fillMaxWidth(),
-                        isDebug = BuildConfig.DEBUG,
-                        onAdClicked = { adClickDetector.onAdClick(it) }
-                    )
-                }
-            }
-            return
-        }
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color(0xFF1A1A1A))
         ) {
-            // Scrollable content with dynamic bottom padding
             Box(modifier = Modifier.weight(1f)) {
                 FeatureSurveyPage(
                     selectedFeatures = onboardingViewModel.selectedFeatures,
                     onFeatureToggle = { selectedFeature ->
                         onboardingViewModel.toggleFeature(selectedFeature)
+                        adSwap.triggerSwap()
                         onboardingViewModel.selectedFeatures.firstOrNull()?.let { genre ->
                             Analytics.track(
                                 name = EVENT_GENRE_SELECT,
@@ -169,9 +99,8 @@ class FeatureSelectionActivity : BaseOnboardingActivity() {
                             )
                         }
                     },
-                    bottomPaddingDp = bottomPaddingDp  // Pass dynamic padding
+                    bottomPaddingDp = bottomPaddingDp
                 )
-                // Button at top right (outside measured section)
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -216,59 +145,8 @@ class FeatureSelectionActivity : BaseOnboardingActivity() {
                                             preferencesManager.setHomeInitialTabFromOnboarding(
                                                 initialTab
                                             )
-
-                                            if (personalizingEnabled) {
-                                                // Show the PERSONALIZING screen until the native ad is
-                                                // ready to be displayed (so the user actually sees it),
-                                                // then complete. If the ad does not become ready within
-                                                // PERSONALIZING_AD_TIMEOUT_MS (10s), end the screen anyway.
-                                                // The timer runs in lifecycleScope so it is decoupled
-                                                // from recomposition.
-                                                step = FeatureSelectionStep.PERSONALIZING
-                                                lifecycleScope.launch {
-                                                    val adShown = withTimeoutOrNull(PERSONALIZING_AD_TIMEOUT_MS) {
-                                                        while (!adsLoaderService.isNativeAdReady(
-                                                                AdPlacement.NATIVE_ONBOARDING_PERSONALIZING
-                                                            )
-                                                        ) {
-                                                            delay(PERSONALIZING_AD_POLL_MS)
-                                                        }
-                                                        true
-                                                    } ?: false
-
-                                                    // Ad became visible -> keep it on screen briefly so it
-                                                    // registers an impression before the interstitial.
-                                                    if (adShown) {
-                                                        delay(PERSONALIZING_AD_MIN_DISPLAY_MS)
-                                                    }
-
-                                                    // System redirects the user to the next step.
-                                                    Analytics.track(name = EVENT_PERSONALIZE_NEXT)
-
-                                                    preferencesManager.setOnboardingComplete(true)
-                                                    InterstitialAdHelperExt.showInterstitial(
-                                                        adsLoaderService = adsLoaderService,
-                                                        activity = this@FeatureSelectionActivity,
-                                                        placement = AdPlacement.INTERSTITIAL_ONBOARDING_COMPLETE,
-                                                        action = { navigateToMain(initialTab) },
-                                                        bypassFrequencyCap = true,
-                                                        showLoadingOverlay = false
-                                                    )
-                                                }
-                                            } else {
-                                                // No personalizing -> mark complete and navigate now.
-                                                lifecycleScope.launch {
-                                                    preferencesManager.setOnboardingComplete(true)
-                                                    InterstitialAdHelperExt.showInterstitial(
-                                                        adsLoaderService = adsLoaderService,
-                                                        activity = this@FeatureSelectionActivity,
-                                                        placement = AdPlacement.INTERSTITIAL_ONBOARDING_COMPLETE,
-                                                        action = { navigateToMain(initialTab) },
-                                                        bypassFrequencyCap = true,
-                                                        showLoadingOverlay = false
-                                                    )
-                                                }
-                                            }
+                                            preferencesManager.setFeatureSelectionComplete(true)
+                                            navigateToNextStep()
                                         }.onFailure {
                                             isSaving = false
                                             Toast.makeText(
@@ -288,40 +166,20 @@ class FeatureSelectionActivity : BaseOnboardingActivity() {
                 }
             }
 
-            // Bottom section: Native ad only (measures its own height)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .onSizeChanged { size ->
-                        bottomSectionHeight =
-                            size.height  // Measure actual height dynamically!
+                        bottomSectionHeight = size.height
                     }
             ) {
-                if (delayedHasSelection) {
-                    // ALT ad - shown after user selects a feature
-                    NativeAdView(
-                        placement = AdPlacement.NATIVE_ONBOARDING_FEATURE_SELECTION_ALT,
-                        modifier = Modifier.fillMaxWidth(),
-                        isDebug = BuildConfig.DEBUG,
-                        onAdClicked = { adClickDetector.onAdClick(it) }
-                    )
-                } else {
-                    // PRIMARY ad - shown before user selects
-                    NativeAdView(
-                        placement = AdPlacement.NATIVE_ONBOARDING_FEATURE_SELECTION,
-                        modifier = Modifier.fillMaxWidth(),
-                        isDebug = BuildConfig.DEBUG,
-                        onAdClicked = { adClickDetector.onAdClick(it) }
-                    )
-                }
+                NativeAdView(
+                    placement = adSwap.currentPlacement,
+                    modifier = Modifier.fillMaxWidth(),
+                    isDebug = BuildConfig.DEBUG,
+                    onAdClicked = { adClickDetector.onAdClick(it) },
+                )
             }
-        }
-    }
-
-    private fun navigateToMain(initialTab: Int) {
-        navigateForward(MainActivity::class.java) {
-            putExtra(MainActivity.EXTRA_INITIAL_TAB, initialTab)
-            putExtra(MainActivity.EXTRA_FROM_ONBOARDING, true)
         }
     }
 }

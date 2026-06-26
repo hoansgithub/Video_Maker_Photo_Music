@@ -42,7 +42,7 @@ import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import com.videomaker.aimusic.modules.featureselection.FeatureSelectionActivity
 import com.videomaker.aimusic.modules.language.LanguageSelectionActivity
-import com.videomaker.aimusic.modules.onboarding.OnboardingActivity
+import com.videomaker.aimusic.modules.onboarding.WelcomePage1Activity
 import com.videomaker.aimusic.modules.root.LoadingScreen
 import com.videomaker.aimusic.modules.root.LoadingStep
 import com.videomaker.aimusic.modules.root.RootNavigationEvent
@@ -105,7 +105,7 @@ class RootViewActivity : AppCompatActivity() {
         val preferencesManager: com.videomaker.aimusic.core.data.local.PreferencesManager by inject()
         val onboardingMusicPlayer: com.videomaker.aimusic.core.playback.OnboardingMusicPlayer by inject()
         if (!preferencesManager.isOnboardingComplete()) {
-            onboardingMusicPlayer.preload()
+            onboardingMusicPlayer.preload() // Buffer early; playback starts at first onboarding step
         }
 
         setContent {
@@ -203,8 +203,8 @@ class RootViewActivity : AppCompatActivity() {
                 finish()
             }
             is AppRoute.Onboarding -> {
-                // Navigate to OnboardingActivity (separate one-time flow)
-                startActivity(Intent(this, OnboardingActivity::class.java))
+                // Navigate to first welcome page (flattened onboarding flow)
+                startActivity(Intent(this, WelcomePage1Activity::class.java))
                 applyDefaultTransition()
                 finish()
             }

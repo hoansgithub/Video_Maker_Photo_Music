@@ -136,6 +136,7 @@ class TextureManager(private val context: Context) {
     }
 
     private fun loadTexture(uri: Uri, textureId: Int, index: Int) {
+        var bitmap: Bitmap? = null
         try {
             // Read entire image into byte array once (single I/O for both EXIF and decode)
             val inputStream = context.contentResolver.openInputStream(uri) ?: run {
@@ -157,7 +158,7 @@ class TextureManager(private val context: Context) {
                 inSampleSize = calculateInSampleSize(boundsOptions.outWidth, boundsOptions.outHeight)
                 inPreferredConfig = Bitmap.Config.RGB_565
             }
-            var bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size, decodeOptions)
+            bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size, decodeOptions)
 
             if (bitmap == null) {
                 Log.w(TAG, "Failed to decode bitmap: $uri")
@@ -218,11 +219,12 @@ class TextureManager(private val context: Context) {
                 return
             }
             GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0)
-            bitmap.recycle()
 
             GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0)
         } catch (e: Exception) {
             Log.e(TAG, "Failed to load texture $uri: ${e.message}")
+        } finally {
+            bitmap?.let { if (!it.isRecycled) it.recycle() }
         }
     }
 

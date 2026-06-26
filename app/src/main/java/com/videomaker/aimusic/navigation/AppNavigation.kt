@@ -127,7 +127,7 @@ private fun <T> MutableList<T>.safeRemoveLast(): Boolean {
  *   (scroll position, pager index, etc.) when navigating back
  * - predictivePopTransitionSpec: Supports Android 14+ predictive-back gesture
  *
- * Onboarding is NOT a route here — it lives in OnboardingActivity (separate one-time flow).
+ * Onboarding is NOT a route here — it lives in per-step Activities (separate one-time flow).
  */
 @SuppressLint("ContextCastToActivity")
 @Composable
