@@ -606,7 +606,7 @@
     <string name="retention_dialog_stay">Bleiben</string>
 
     <!-- Onboarding survey & asset picker -->
-    <string name="ai_level_title">Wähle deinen Kreativstil</string>
+    <string name="ai_level_title">Wie soll die KI Ihr Foto transformieren?</string>
     <string name="ai_level_light_touch_title">Leichte Anpassung</string>
     <string name="ai_level_light_touch_banner">Bleib authentisch.\nSieh aus wie du, nur besser</string>
     <string name="ai_level_deep_swap_title">Deep Swap</string>
@@ -672,4 +672,21 @@
     <string name="text_overlay_desc_rotate_scale">Drehen und Skalieren</string>
     <string name="text_overlay_font_ad_error">Werbung konnte nicht geladen werden. Bitte versuchen Sie es erneut.</string>
     <string name="text_overlay_system_default">Systemstandard</string>
+
+    <!-- Language Setup Dialog -->
+    <string name="language_setting_up">Alles wird in deiner Sprache eingerichtet…</string>
+    <string name="language_setting_up_done">Fertig! Lass uns die App erkunden.</string>
+
+    <!-- Added by translation script -->
+    <string name="personalizing_step_style">Richten Sie Ihren Stil ein</string>
+    <string name="personalizing_step_templates">Vorbereiten von KI-Vorlagen</string>
+    <string name="personalizing_step_songs">Angesagte Songs finden</string>
+    <string name="personalizing_step_effects">Ladeeffekte</string>
+    <string name="personalizing_step_ready">Erledigt! Bereit zum Erstellen</string>
+    <string name="ai_face_swap_title">Cartoonisieren Sie Ihr Porträt</string>
+    <string name="survey_face_swap_title">Erstellen Sie Ihren AI Photo Face Swap</string>
+    <string name="survey_dance_swap_title">Erstellen Sie Ihr KI-Tanzvideo</string>
+    <string name="survey_before">Vor</string>
+    <string name="survey_after">Nach</string>
+    <string name="survey_swipe_hint">Swipe-Hinweis</string>
 </resources>

@@ -108,6 +108,16 @@
             android:exported="false"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.VideoMaker" />
+        <activity
+            android:name=".modules.onboardingsurvey.SurveyFaceSwapActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.VideoMaker" />
+        <activity
+            android:name=".modules.onboardingsurvey.SurveyDanceSwapActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.VideoMaker" />
 
         <!-- Flattened onboarding steps: Genre/Template -->
         <activity

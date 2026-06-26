@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
@@ -24,6 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -35,6 +37,8 @@ import androidx.compose.ui.unit.sp
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import com.videomaker.aimusic.ui.theme.Primary
+import androidx.compose.ui.tooling.preview.Preview
+import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 
 @Composable
 fun AiLevelScreen(
@@ -70,6 +74,54 @@ fun AiLevelScreen(
                     selected = item.id == selectedId,
                     onClick = { onSelect(item.id) },
                     modifier = Modifier.weight(1f),
+                )
+            }
+        }
+
+        Spacer(Modifier.height(16.dp))
+
+        val isExploreLaterSelected = selectedId == "explore_later"
+        val exploreLaterShape = RoundedCornerShape(16.dp)
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(exploreLaterShape)
+                .background(
+                    if (isExploreLaterSelected) Primary.copy(alpha = 0.1f) else Color.Black.copy(
+                        alpha = 0.2f
+                    )
+                )
+                .border(
+                    width = if (isExploreLaterSelected) 2.dp else 1.dp,
+                    color = if (isExploreLaterSelected) Primary else Color(0xFF404040),
+                    shape = exploreLaterShape
+                )
+                .clickableSingle { onSelect("explore_later") }
+                .padding(horizontal = 16.dp, vertical = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Image(
+                painter = painterResource(R.drawable.ic_clock),
+                contentDescription = null,
+                modifier = Modifier.size(24.dp),
+                colorFilter = ColorFilter.tint(
+                    if (isExploreLaterSelected) Primary else Color(0xFF9E9E9E)
+                )
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Text(
+                text = stringResource(R.string.survey_feature_explore_later),
+                color = Color.White,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.weight(1f)
+            )
+            if (isExploreLaterSelected) {
+                Image(
+                    painter = painterResource(R.drawable.img_checkbox),
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp)
                 )
             }
         }
@@ -112,28 +164,8 @@ private fun AiLevelCard(
                 textAlign = TextAlign.Center,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 8.dp, bottom = 12.dp),
+                    .padding(top = 8.dp, bottom = 24.dp),
             )
-            // Banner pill
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 8.dp)
-                    .padding(bottom = 18.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(Color(item.bannerBgColor).copy(alpha = item.bannerBgAlpha)),
-            ) {
-                Text(
-                    text = stringResource(item.bannerRes),
-                    color = Color(item.bannerTextColor),
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Normal,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 10.dp, horizontal = 4.dp),
-                )
-            }
         }
 
         if (selected) {
@@ -148,3 +180,17 @@ private fun AiLevelCard(
         }
     }
 }
+
+@Preview(showBackground = true, backgroundColor = 0xFF1A1A1A)
+@Composable
+private fun AiLevelScreenPreview() {
+    VideoMakerTheme {
+        AiLevelScreen(
+            items = AI_LEVEL_ITEMS,
+            selectedId = "light_touch",
+            onSelect = {},
+            bottomPaddingDp = 0.dp,
+        )
+    }
+}
+

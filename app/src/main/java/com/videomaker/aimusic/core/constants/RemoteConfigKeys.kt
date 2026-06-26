@@ -152,6 +152,8 @@ object RemoteConfigKeys {
     const val ONBOARDING_FEATURE_SELECTION_ENABLED = "onboarding_feature_selection_enabled"
     const val ONBOARDING_PLATFORM_SELECTION_ENABLED = "onboarding_platform_selection_enabled"
     const val ONBOARDING_AI_LEVEL_ENABLED = "onboarding_ai_level_enabled"
+    const val ONBOARDING_AI_FACE_SWAP_ENABLED = "onboarding_ai_face_swap_enabled"
+    const val ONBOARDING_AI_DANCE_ENABLED = "onboarding_ai_dance_enabled"
 
     /**
      * Dynamic sort order for the Feature Survey items (JSON array of item IDs).

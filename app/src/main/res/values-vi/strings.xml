@@ -612,7 +612,7 @@
     <string name="retention_dialog_stay">Ở lại</string>
 
     <!-- Onboarding survey & asset picker -->
-    <string name="ai_level_title">Chọn phong cách sáng tạo của bạn</string>
+    <string name="ai_level_title">Bạn muốn AI biến đổi bức ảnh của bạn như thế nào?</string>
     <string name="ai_level_light_touch_title">Chỉnh nhẹ</string>
     <string name="ai_level_light_touch_banner">Giữ nét tự nhiên.\nVẫn là bạn, chỉ đẹp hơn</string>
     <string name="ai_level_deep_swap_title">Biến hóa sâu</string>
@@ -664,4 +664,21 @@
     <string name="editor_image_dragging">Đang kéo</string>
     <string name="editor_image_drag_to_reorder">Kéo để sắp xếp lại</string>
     <string name="editor_image_content_desc">Ảnh %1$s</string>
+
+    <!-- Language Setup Dialog -->
+    <string name="language_setting_up">Đang thiết lập ngôn ngữ của bạn…</string>
+    <string name="language_setting_up_done">Xong! Hãy khám phá ứng dụng nhé.</string>
+
+    <!-- Added by translation script -->
+    <string name="personalizing_step_style">Thiết lập phong cách của bạn</string>
+    <string name="personalizing_step_templates">Chuẩn bị mẫu AI</string>
+    <string name="personalizing_step_songs">Tìm bài hát đang thịnh hành</string>
+    <string name="personalizing_step_effects">Đang tải hiệu ứng</string>
+    <string name="personalizing_step_ready">Xong! Sẵn sàng để tạo</string>
+    <string name="ai_face_swap_title">Hoạt hình hóa chân dung của bạn</string>
+    <string name="survey_face_swap_title">Tạo hoán đổi khuôn mặt ảnh AI của bạn</string>
+    <string name="survey_dance_swap_title">Tạo video khiêu vũ AI của bạn</string>
+    <string name="survey_before">Trước</string>
+    <string name="survey_after">Sau đó</string>
+    <string name="survey_swipe_hint">Gợi ý vuốt</string>
 </resources>

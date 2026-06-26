@@ -606,7 +606,7 @@
     <string name="retention_dialog_stay">Zauna</string>
 
     <!-- Onboarding survey & asset picker -->
-    <string name="ai_level_title">Zaɓi salon ƙirƙirarka</string>
+    <string name="ai_level_title">Ta yaya kuke son AI ya canza hoton ku?</string>
     <string name="ai_level_light_touch_title">Ɗan Gyara</string>
     <string name="ai_level_light_touch_banner">Ka kasance na zahiri.\nKa yi kama da kanka, kawai mafi kyau</string>
     <string name="ai_level_deep_swap_title">Babban Canji</string>
@@ -672,4 +672,21 @@
     <string name="text_overlay_desc_rotate_scale">Juya kuma auna</string>
     <string name="text_overlay_font_ad_error">Gaza loda Talla, da fatan za a sake gwadawa.</string>
     <string name="text_overlay_system_default">Tsoho na Tsarin</string>
+
+    <!-- Language Setup Dialog -->
+    <string name="language_setting_up">Ana saita abubuwa a yarenku…</string>
+    <string name="language_setting_up_done">An gama! Bari mu bincika app.</string>
+
+    <!-- Added by translation script -->
+    <string name="personalizing_step_style">Saita salon ku</string>
+    <string name="personalizing_step_templates">Ana shirya samfuran AI</string>
+    <string name="personalizing_step_songs">Nemo wakoki masu tasowa</string>
+    <string name="personalizing_step_effects">Tasirin lodi</string>
+    <string name="personalizing_step_ready">Anyi! Shirye don ƙirƙira</string>
+    <string name="ai_face_swap_title">Yi zanen hoton ku</string>
+    <string name="survey_face_swap_title">Ƙirƙiri Musanya Fuskar Hoto na AI</string>
+    <string name="survey_dance_swap_title">Ƙirƙiri Bidiyon Rawarku na AI</string>
+    <string name="survey_before">Kafin</string>
+    <string name="survey_after">Bayan</string>
+    <string name="survey_swipe_hint">Shafa Alamun</string>
 </resources>

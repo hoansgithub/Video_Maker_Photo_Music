@@ -606,7 +606,7 @@
     <string name="retention_dialog_stay">Tetep</string>
 
     <!-- Onboarding survey & asset picker -->
-    <string name="ai_level_title">Pilih gaya kreasi anjeun</string>
+    <string name="ai_level_title">Kumaha anjeun hoyong AI ngarobih poto anjeun?</string>
     <string name="ai_level_light_touch_title">Sentuhan Hampang</string>
     <string name="ai_level_light_touch_banner">Tetep alami.\nKatingali kawas anjeun, ngan leuwih alus</string>
     <string name="ai_level_deep_swap_title">Robahan Jero</string>
@@ -672,4 +672,21 @@
     <string name="text_overlay_desc_rotate_scale">Puter sareng skala</string>
     <string name="text_overlay_font_ad_error">Gagal ngamuat Iklan, mangga cobian deui.</string>
     <string name="text_overlay_system_default">Bawaan Sistem</string>
+
+    <!-- Language Setup Dialog -->
+    <string name="language_setting_up">Nyiapkeun sadayana dina basa anjeun…</string>
+    <string name="language_setting_up_done">Réngsé! Hayu urang ngajalajah aplikasi.</string>
+
+    <!-- Added by translation script -->
+    <string name="personalizing_step_style">Nyetél gaya anjeun</string>
+    <string name="personalizing_step_templates">Nyiapkeun template AI</string>
+    <string name="personalizing_step_songs">Manggihan lagu trending</string>
+    <string name="personalizing_step_effects">épék ngamuat</string>
+    <string name="personalizing_step_ready">Réngsé! Siap nyieun</string>
+    <string name="ai_face_swap_title">Kartunkeun potret anjeun</string>
+    <string name="survey_face_swap_title">Jieun AI Photo Face swap Anjeun</string>
+    <string name="survey_dance_swap_title">Jieun Video Tari AI Anjeun</string>
+    <string name="survey_before">Sateuacanna</string>
+    <string name="survey_after">Sanggeus</string>
+    <string name="survey_swipe_hint">Gesek Pitunjuk</string>
 </resources>

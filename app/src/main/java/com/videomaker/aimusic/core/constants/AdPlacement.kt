@@ -1059,6 +1059,19 @@ object AdPlacement {
     const val NATIVE_ONBOARDING_MEDIA_PRIVACY_ALT = "ad_native_onboarding_media_privacy_alt"
 
     /**
+     * Native ad shown at bottom of Face Swap survey screen.
+     * RC key: ad_native_onboarding_face_swap
+     */
+    const val NATIVE_ONBOARDING_FACE_SWAP = "ad_native_onboarding_face_swap"
+
+    /**
+     * Native ad shown at bottom of AI Dance survey screen.
+     * RC key: ad_native_onboarding_ai_dance
+     */
+    const val NATIVE_ONBOARDING_AI_DANCE = "ad_native_onboarding_ai_dance"
+
+
+    /**
      * Rewarded ad shown when user wants to download video to gallery.
      * Timing: User clicks download button → dialog appears → user watches ad → download proceeds.
      * User MUST watch the full ad to earn the reward (download permission).
@@ -1367,6 +1380,7 @@ object AdPlacement {
         NATIVE_ONBOARDING_CONTENT_EXCLUSIVE_ALT,
         NATIVE_ONBOARDING_MEDIA_PRIVACY,
         NATIVE_ONBOARDING_MEDIA_PRIVACY_ALT,
+        NATIVE_ONBOARDING_FACE_SWAP,
         NATIVE_ONBOARDING_SELECT,
         NATIVE_ONBOARDING_SELECT_ALT,
         NATIVE_ONBOARDING_SOCIAL,

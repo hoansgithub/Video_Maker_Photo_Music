@@ -17,6 +17,8 @@ import com.videomaker.aimusic.modules.genretemplate.MediaPrivacyActivity
 import com.videomaker.aimusic.modules.genretemplate.TemplatePickActivity
 import com.videomaker.aimusic.modules.language.LanguageSelectionActivity
 import com.videomaker.aimusic.modules.onboardingsurvey.SurveyAiLevelActivity
+import com.videomaker.aimusic.modules.onboardingsurvey.SurveyDanceSwapActivity
+import com.videomaker.aimusic.modules.onboardingsurvey.SurveyFaceSwapActivity
 import com.videomaker.aimusic.modules.onboardingsurvey.SurveyFeatureActivity
 import com.videomaker.aimusic.modules.onboardingsurvey.SurveyPlatformActivity
 
@@ -49,6 +51,8 @@ class OnboardingFlowCoordinator(
         OnboardingStep.SURVEY_FEATURE to RemoteConfigKeys.ONBOARDING_FEATURE_SELECTION_ENABLED,
         OnboardingStep.SURVEY_PLATFORM to RemoteConfigKeys.ONBOARDING_PLATFORM_SELECTION_ENABLED,
         OnboardingStep.SURVEY_AI_LEVEL to RemoteConfigKeys.ONBOARDING_AI_LEVEL_ENABLED,
+        OnboardingStep.SURVEY_AI_FACE_SWAP to RemoteConfigKeys.ONBOARDING_AI_FACE_SWAP_ENABLED,
+        OnboardingStep.SURVEY_AI_DANCE to RemoteConfigKeys.ONBOARDING_AI_DANCE_ENABLED,
         OnboardingStep.WELCOME_PAGE_1 to RemoteConfigKeys.ONBOARDING_WELCOME_PAGE_1_ENABLED,
         OnboardingStep.WELCOME_PAGE_2 to RemoteConfigKeys.ONBOARDING_WELCOME_PAGE_2_ENABLED,
         OnboardingStep.WELCOME_PAGE_3 to RemoteConfigKeys.ONBOARDING_WELCOME_PAGE_3_ENABLED,
@@ -116,6 +120,8 @@ class OnboardingFlowCoordinator(
         OnboardingStep.SURVEY_FEATURE -> SurveyFeatureActivity::class.java
         OnboardingStep.SURVEY_PLATFORM -> SurveyPlatformActivity::class.java
         OnboardingStep.SURVEY_AI_LEVEL -> SurveyAiLevelActivity::class.java
+        OnboardingStep.SURVEY_AI_FACE_SWAP -> SurveyFaceSwapActivity::class.java
+        OnboardingStep.SURVEY_AI_DANCE -> SurveyDanceSwapActivity::class.java
         OnboardingStep.WELCOME_PAGE_1 -> WelcomePage1Activity::class.java
         OnboardingStep.WELCOME_PAGE_2 -> WelcomePage2Activity::class.java
         OnboardingStep.FULLSCREEN_AD -> FullscreenAdActivity::class.java
@@ -144,6 +150,12 @@ class OnboardingFlowCoordinator(
         OnboardingStep.SURVEY_AI_LEVEL -> listOf(
             AdPlacement.NATIVE_ONBOARDING_AI_LEVEL,
             AdPlacement.NATIVE_ONBOARDING_AI_LEVEL_ALT,
+        )
+        OnboardingStep.SURVEY_AI_FACE_SWAP -> listOf(
+            AdPlacement.NATIVE_ONBOARDING_FACE_SWAP,
+        )
+        OnboardingStep.SURVEY_AI_DANCE -> listOf(
+            AdPlacement.NATIVE_ONBOARDING_AI_DANCE,
         )
         OnboardingStep.WELCOME_PAGE_1 -> listOf(
             AdPlacement.NATIVE_ONBOARDING_PAGE1,
@@ -208,7 +220,9 @@ class OnboardingFlowCoordinator(
                 val firstSurvey = steps.firstOrNull {
                     it == OnboardingStep.SURVEY_FEATURE ||
                     it == OnboardingStep.SURVEY_PLATFORM ||
-                    it == OnboardingStep.SURVEY_AI_LEVEL
+                    it == OnboardingStep.SURVEY_AI_LEVEL ||
+                    it == OnboardingStep.SURVEY_AI_FACE_SWAP ||
+                    it == OnboardingStep.SURVEY_AI_DANCE
                 }
                 firstSurvey ?: steps.firstOrNull { it == OnboardingStep.WELCOME_PAGE_1 }
             }

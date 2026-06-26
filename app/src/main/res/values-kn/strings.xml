@@ -606,7 +606,7 @@
     <string name="retention_dialog_stay">ಉಳಿಯಿರಿ</string>
 
     <!-- Onboarding survey & asset picker -->
-    <string name="ai_level_title">ನಿಮ್ಮ ಸೃಷ್ಟಿ ಶೈಲಿಯನ್ನು ಆಯ್ಕೆಮಾಡಿ</string>
+    <string name="ai_level_title">AI ನಿಮ್ಮ ಫೋಟೋವನ್ನು ಹೇಗೆ ಪರಿವರ್ತಿಸಬೇಕೆಂದು ನೀವು ಬಯಸುತ್ತೀರಿ?</string>
     <string name="ai_level_light_touch_title">ಲಘು ಸ್ಪರ್ಶ</string>
     <string name="ai_level_light_touch_banner">ಸಹಜವಾಗಿರಿಸಿ.\nನೀವಂತೆಯೇ ಕಾಣಿರಿ, ಸ್ವಲ್ಪ ಉತ್ತಮವಾಗಿ</string>
     <string name="ai_level_deep_swap_title">ಡೀಪ್ ಸ್ವ್ಯಾಪ್</string>
@@ -672,4 +672,21 @@
     <string name="text_overlay_desc_rotate_scale">ತಿರುಗಿಸಿ ಮತ್ತು ಸ್ಕೇಲ್ ಮಾಡಿ</string>
     <string name="text_overlay_font_ad_error">ಜಾಹೀರಾತು ಲೋಡ್ ಮಾಡಲು ವಿಫಲವಾಗಿದೆ, ದಯವಿಟ್ಟು ಮತ್ತೊಮ್ಮೆ ಪ್ರಯತ್ನಿಸಿ.</string>
     <string name="text_overlay_system_default">ಸಿಸ್ಟಂ ಡಿಫಾಲ್ಟ್</string>
+
+    <!-- Language Setup Dialog -->
+    <string name="language_setting_up">ನಿಮ್ಮ ಭಾಷೆಯಲ್ಲಿ ಎಲ್ಲವನ್ನೂ ಹೊಂದಿಸಲಾಗುತ್ತಿದೆ…</string>
+    <string name="language_setting_up_done">ಮುಗಿದಿದೆ! ಅಪ್ಲಿಕೇಶನ್ ಅನ್ವೇಷಿಸೋಣ.</string>
+
+    <!-- Added by translation script -->
+    <string name="personalizing_step_style">ನಿಮ್ಮ ಶೈಲಿಯನ್ನು ಹೊಂದಿಸಲಾಗುತ್ತಿದೆ</string>
+    <string name="personalizing_step_templates">AI ಟೆಂಪ್ಲೇಟ್‌ಗಳನ್ನು ಸಿದ್ಧಪಡಿಸಲಾಗುತ್ತಿದೆ</string>
+    <string name="personalizing_step_songs">ಟ್ರೆಂಡಿಂಗ್ ಹಾಡುಗಳನ್ನು ಹುಡುಕಲಾಗುತ್ತಿದೆ</string>
+    <string name="personalizing_step_effects">ಪರಿಣಾಮಗಳನ್ನು ಲೋಡ್ ಮಾಡಲಾಗುತ್ತಿದೆ</string>
+    <string name="personalizing_step_ready">ಮುಗಿದಿದೆ! ರಚಿಸಲು ಸಿದ್ಧವಾಗಿದೆ</string>
+    <string name="ai_face_swap_title">ನಿಮ್ಮ ಭಾವಚಿತ್ರವನ್ನು ಕಾರ್ಟೂನ್ ಮಾಡಿ</string>
+    <string name="survey_face_swap_title">ನಿಮ್ಮ AI ಫೋಟೋ ಫೇಸ್ ಸ್ವಾಪ್ ಅನ್ನು ರಚಿಸಿ</string>
+    <string name="survey_dance_swap_title">ನಿಮ್ಮ AI ನೃತ್ಯ ವೀಡಿಯೊವನ್ನು ರಚಿಸಿ</string>
+    <string name="survey_before">ಮೊದಲು</string>
+    <string name="survey_after">ನಂತರ</string>
+    <string name="survey_swipe_hint">ಸ್ವೈಪ್ ಸುಳಿವು</string>
 </resources>

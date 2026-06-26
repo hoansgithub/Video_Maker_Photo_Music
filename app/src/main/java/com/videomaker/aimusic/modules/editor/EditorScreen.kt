@@ -621,6 +621,7 @@ fun EditorScreen(
                     val defaultText = context.getString(R.string.text_overlay_placeholder)
                     textOverlayViewModel.addTextOverlay(defaultText, state.displaySettings.stickers)
                     showTextSheet = true
+                    textFocusTrigger = System.currentTimeMillis()
                 },
                 onRatioClick = {
                     val state = currentState() ?: return@EditorMainContent
@@ -844,25 +845,41 @@ fun EditorScreen(
                 textFocusTrigger = textFocusTrigger,
                 textOverlayViewModel = textOverlayViewModel,
                 onDoubleTapText = { id ->
+                    if (showStickerSheet) {
+                        showStickerSheet = false
+                        selectedStickerId = null
+                    }
                     textOverlayViewModel.setSelectedTextOverlayId(id)
                     showTextSheet = true
                     textFocusTrigger = System.currentTimeMillis()
                 },
-                // Tapping a text while the sticker panel is open → switch to editing that text:
-                // commit/keep the stickers, hide the sticker panel, show only the text panel.
                 onTextTapped = { id ->
+                    val isSheetOpen = showTextSheet
+                    val isAlreadySelected = (textOverlayViewModel.selectedTextOverlayId.value == id)
+
                     if (showStickerSheet) {
                         showStickerSheet = false
                         selectedStickerId = null
+                    }
+
+                    if (!isSheetOpen) {
                         textOverlayViewModel.setSelectedTextOverlayId(id)
                         showTextSheet = true
-                        textFocusTrigger = System.currentTimeMillis()
+                        textFocusTrigger = 0L
+                    } else {
+                        if (isAlreadySelected) {
+                            textFocusTrigger = System.currentTimeMillis()
+                        } else {
+                            textOverlayViewModel.setSelectedTextOverlayId(id)
+                            textFocusTrigger = 0L
+                        }
                     }
                 },
                 onTextPanelDismiss = {
                     Analytics.trackTextClose()
                     textOverlayViewModel.setSelectedTextOverlayId(null)
                     showTextSheet = false
+                    textFocusTrigger = 0L
                 },
                 onTextPanelConfirm = {
                     val selectedId = textOverlayViewModel.selectedTextOverlayId.value
@@ -878,6 +895,7 @@ fun EditorScreen(
                     Analytics.trackTextClose()
                     textOverlayViewModel.setSelectedTextOverlayId(null)
                     showTextSheet = false
+                    textFocusTrigger = 0L
                 },
                 onFirstFrameRendered = {
                     hasBeenReady = true
