@@ -945,7 +945,8 @@ val presentationModule = module {
             preferencesManager = get(),
             remoteConfig = get(),  // Firebase Remote Config (from firebaseModule)
             adsLoaderService = get(),  // Ad loading service (from ACCCore-Ads)
-            adPlacementConfigService = get()  // Placement enabled/disabled checks
+            adPlacementConfigService = get(),  // Placement enabled/disabled checks
+            notificationPermissionCoordinator = get()
         )
     }
 

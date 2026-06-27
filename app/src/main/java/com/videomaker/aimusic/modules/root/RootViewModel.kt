@@ -16,17 +16,20 @@ import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.core.constants.RemoteConfigKeys
 import com.videomaker.aimusic.core.data.local.PreferencesManager
+import com.videomaker.aimusic.core.permission.NotificationPermissionCoordinator
 import com.videomaker.aimusic.modules.language.domain.usecase.CheckLanguageSelectedUseCase
 import com.videomaker.aimusic.modules.onboarding.domain.usecase.CheckOnboardingStatusUseCase
 import com.videomaker.aimusic.navigation.AppRoute
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.async
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
-import kotlinx.coroutines.TimeoutCancellationException
 import java.lang.ref.WeakReference
 
 /**
@@ -59,7 +62,8 @@ class RootViewModel(
     private val preferencesManager: PreferencesManager,
     private val remoteConfig: RemoteConfig,
     private val adsLoaderService: AdsLoaderService,
-    private val adPlacementConfigService: AdPlacementConfigService
+    private val adPlacementConfigService: AdPlacementConfigService,
+    private val notificationPermissionCoordinator: NotificationPermissionCoordinator
 ) : ViewModel() {
 
     // ============================================
@@ -97,6 +101,21 @@ class RootViewModel(
     /** Whether this is first open, exposed for LoadingScreenLow placement selection. */
     private val _isFirstOpen = MutableStateFlow(false)
     val isFirstOpen: StateFlow<Boolean> = _isFirstOpen.asStateFlow()
+
+    // ============================================
+    // NOTIFICATION PERMISSION EVENTS (Channel-based one-shot)
+    // ============================================
+
+    private val _permissionRequestChannel = Channel<String>(Channel.BUFFERED)
+
+    /** Collect in Activity to launch the system permission dialog. */
+    val permissionRequestEvent = _permissionRequestChannel.receiveAsFlow()
+
+    @Volatile
+    private var permissionDeferred: CompletableDeferred<Boolean>? = null
+
+    @Volatile
+    private var isPermissionRequestInProgress = false
 
     // ============================================
     // INTERNAL STATE
@@ -148,8 +167,11 @@ class RootViewModel(
         activityRef = WeakReference(activity)
 
         if (isInitialized) {
-            // Already initialized — if LoadingScreenLow is active, let it handle things
-            if (!_showLowPriorityLoading.value) {
+            // Already initialized — if LoadingScreenLow is active, let it handle things.
+            // If the notification permission dialog is currently showing (Activity recreation
+            // while OS dialog is up), do NOT navigate — the suspended loadInitialData()
+            // coroutine will resume when the user responds and handle navigation itself.
+            if (!_showLowPriorityLoading.value && !isPermissionRequestInProgress) {
                 proceedWithHighAd()
             }
             return
@@ -197,6 +219,48 @@ class RootViewModel(
      */
     fun onNavigationHandled() {
         _navigationEvent.value = null
+    }
+
+    /**
+     * Called from Activity when the system permission dialog returns a result.
+     * Completes the deferred so [requestNotificationPermission] can resume.
+     */
+    fun onPermissionResult(granted: Boolean) {
+        permissionDeferred?.complete(granted)
+        permissionDeferred = null
+        isPermissionRequestInProgress = false
+    }
+
+    // ============================================
+    // PRIVATE: NOTIFICATION PERMISSION
+    // ============================================
+
+    /**
+     * Request notification permission during splash loading.
+     * Suspends until the user responds to the system dialog (or skips if not needed).
+     *
+     * Uses Channel to send the permission string to the Activity, then awaits
+     * the result via CompletableDeferred. The Activity collects [permissionRequestEvent]
+     * and calls [onPermissionResult] when the dialog returns.
+     */
+    private suspend fun requestNotificationPermission() {
+        if (isPermissionRequestInProgress) return
+
+        val context = activityRef?.get() ?: return
+        if (!notificationPermissionCoordinator.shouldRequestOnboardingPermission(context)) return
+
+        isPermissionRequestInProgress = true
+        notificationPermissionCoordinator.markOnboardingPermissionDialogShown()
+
+        // Small delay so the splash screen is visible before the dialog appears
+        kotlinx.coroutines.delay(300)
+
+        val deferred = CompletableDeferred<Boolean>()
+        permissionDeferred = deferred
+        _permissionRequestChannel.send(android.Manifest.permission.POST_NOTIFICATIONS)
+
+        // Suspend until Activity calls onPermissionResult()
+        deferred.await()
     }
 
     // ============================================
@@ -273,21 +337,26 @@ class RootViewModel(
 
                         preloadNativeAds()
 
-                        // Step 5: Load HIGH interstitial only (no LOW fallback here)
-                        val highEnabled = adPlacementConfigService.isPlacementEnabled(highPlacement)
-                        if (highEnabled) {
-                            android.util.Log.d("RootViewModel", "📺 Loading splash interstitial HIGH ($highPlacement)")
-                            runCatching {
-                                InterstitialAdHelperExt.preloadInterstitial(
-                                    adsLoaderService = adsLoaderService,
-                                    placement = highPlacement,
-                                    loadTimeoutMillis = initTimeoutMs,
-                                    showLoadingOverlay = false
-                                )
+                        // Step 5: Load HIGH interstitial + request notification permission in parallel
+                        val adLoadJob = async {
+                            val highEnabled = adPlacementConfigService.isPlacementEnabled(highPlacement)
+                            if (highEnabled) {
+                                android.util.Log.d("RootViewModel", "📺 Loading splash interstitial HIGH ($highPlacement)")
+                                runCatching {
+                                    InterstitialAdHelperExt.preloadInterstitial(
+                                        adsLoaderService = adsLoaderService,
+                                        placement = highPlacement,
+                                        loadTimeoutMillis = initTimeoutMs,
+                                        showLoadingOverlay = false
+                                    )
+                                }
+                            } else {
+                                android.util.Log.d("RootViewModel", "⏭️ HIGH placement disabled, skipping ($highPlacement)")
                             }
-                        } else {
-                            android.util.Log.d("RootViewModel", "⏭️ HIGH placement disabled, skipping ($highPlacement)")
                         }
+
+                        requestNotificationPermission()
+                        adLoadJob.await()
 
                     } catch (e: Exception) {
                         android.util.Log.e("RootViewModel", "Initialization error: ${e.message}")
