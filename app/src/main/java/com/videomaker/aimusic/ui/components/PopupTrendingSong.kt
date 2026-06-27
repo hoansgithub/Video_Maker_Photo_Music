@@ -33,8 +33,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import co.alcheclub.lib.acccore.ads.compose.NativeAdView
 import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.R
@@ -47,6 +45,7 @@ import com.videomaker.aimusic.ui.theme.FoundationBlack_200
 import com.videomaker.aimusic.ui.theme.Neutral_N200
 import com.videomaker.aimusic.ui.theme.Neutral_N800
 import com.videomaker.aimusic.ui.theme.Primary
+import com.videomaker.aimusic.ui.theme.SplashBackground
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 import com.videomaker.aimusic.core.ads.AdClickDetector
 import org.koin.compose.koinInject
@@ -67,184 +66,177 @@ fun PopupTrendingSong(
             )
         )
     }
-    Dialog(
-        onDismissRequest = {
-        },
-        properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)
+    Column(
+        modifier = Modifier
+            .clickableSingle {
+            }
+            .fillMaxSize()
+            .background(SplashBackground)
+            .padding(top = 81.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Column(
             modifier = Modifier
-                .clickableSingle {
-                }
-                .fillMaxSize()
-                .background(Color(0xFF000000).copy(0.56f))
-                .padding(top = 81.dp),
+                .fillMaxWidth()
+                .weight(1f)
+                .padding(horizontal = 34.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Column(
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f)
-                    .padding(horizontal = 34.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                    .height(74.5.dp)
             ) {
-                Box(
+                Icon(
+                    painter = painterResource(R.drawable.ic_circle_cross),
+                    contentDescription = null,
+                    tint = Neutral_N800,
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .height(74.5.dp)
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_circle_cross),
-                        contentDescription = null,
-                        tint = Neutral_N800,
-                        modifier = Modifier
-                            .size(44.dp)
-                            .clickableSingle {
-                                Analytics.track(
-                                    AnalyticsEvent.REWARD_SONG_EXIT,
-                                    mapOf(
-                                        AnalyticsEvent.Param.SONG_ID to item.id.toString(),
-                                        AnalyticsEvent.Param.SONG_NAME to item.name
-                                    )
+                        .size(44.dp)
+                        .clickableSingle {
+                            Analytics.track(
+                                AnalyticsEvent.REWARD_SONG_EXIT,
+                                mapOf(
+                                    AnalyticsEvent.Param.SONG_ID to item.id.toString(),
+                                    AnalyticsEvent.Param.SONG_NAME to item.name
                                 )
-                                onDismiss.invoke()
-                            }
-                            .align(Alignment.TopEnd)
-                            .padding(4.dp)
-                    )
-                    Image(
-                        painter = painterResource(R.drawable.img_start_trending),
-                        contentDescription = null,
-                        modifier = Modifier
-                            .size(31.dp)
-                            .align(Alignment.BottomStart),
-                        contentScale = ContentScale.Crop
-                    )
-                }
-
-                Text(
-                    text = stringResource(R.string.popup_dont_miss_it),
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.W900,
-                    fontSize = 34.sp,
-                    color = Primary,
-                    textAlign = TextAlign.Center
-                )
-
-                Box(
-                    modifier = Modifier
-                        .width(246.dp)
-                        .height(260.dp)
-                ) {
-                    Image(
-                        painter = painterResource(R.drawable.img_border_song_trend),
-                        contentDescription = null,
-                        modifier = Modifier
-                            .padding(top = 41.dp, end = 42.dp)
-                            .width(189.98.dp)
-                            .height(204.37.dp)
-                            .rotate(-10.8f)
-                            .align(Alignment.TopEnd),
-                        contentScale = ContentScale.Crop
-                    )
-
-                    Box(
-                        modifier = Modifier
-                            .padding(top = 49.dp, end = 62.dp)
-                            .rotate(-10.8f)
-                            .clip(RoundedCornerShape(18.35.dp))
-                            .size(133.dp)
-                            .border(1.dp, Color.White, RoundedCornerShape(18.35.dp))
-                            .align(Alignment.TopEnd),
-                    ) {
-                        AppAsyncImage(
-                            imageUrl = item.coverUrl,
-                            contentDescription = item.name,
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier
-                                .matchParentSize()
-                                .clip(RoundedCornerShape(18.35.dp))
-                        )
-                        ContentTags(
-                            tags = listOf(ContentTag.HOT),
-                            modifier = Modifier
-                                .align(Alignment.TopStart)
-                                .padding(12.dp)
-                        )
-                    }
-
-                    Image(
-                        painter = painterResource(R.drawable.img_pop_trending_song),
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.matchParentSize()
-                    )
-                }
-
-
-                Spacer(Modifier.height(12.dp))
-                Text(
-                    text = stringResource(R.string.popup_premium_song).uppercase(),
-                    fontWeight = FontWeight.W500,
-                    fontStyle = FontStyle.Italic,
-                    fontSize = 12.sp,
-                    textAlign = TextAlign.Center,
-                    style = MaterialTheme.typography.titleLarge.copy(
-                        brush = Brush.verticalGradient(
-                            colors = listOf(
-                                Color(0xFFCCE8FE),
-                                Color(0xFFCDA0FF),
-                                Color(0xFFCDF1FF),
-                                Color(0xFFB591E9)
                             )
-                        )
-                    ),
+                            onDismiss.invoke()
+                        }
+                        .align(Alignment.TopEnd)
+                        .padding(4.dp)
+                )
+                Image(
+                    painter = painterResource(R.drawable.img_start_trending),
+                    contentDescription = null,
                     modifier = Modifier
-                        .background(Color.White.copy(0.12f))
-                        .padding(horizontal = 12.dp, vertical = 4.dp)
+                        .size(31.dp)
+                        .align(Alignment.BottomStart),
+                    contentScale = ContentScale.Crop
                 )
-
-                Spacer(Modifier.height(11.dp))
-
-                Text(
-                    text = item.name,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.W700,
-                    fontSize = 28.sp,
-                    color = Neutral_N200,
-                    textAlign = TextAlign.Center
-                )
-                Spacer(Modifier.height(6.dp))
-                Text(
-                    text = item.artist,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.W400,
-                    fontSize = 15.sp,
-                    color = FoundationBlack_200,
-                    textAlign = TextAlign.Center
-                )
-                Spacer(Modifier.height(32.dp))
-                CTAPrimaryButton(
-                    text = stringResource(R.string.popup_try_it_now)
-                ) {
-                    Analytics.track(
-                        AnalyticsEvent.REWARD_SONG_CLICK,
-                        mapOf(
-                            AnalyticsEvent.Param.SONG_ID to item.id.toString(),
-                            AnalyticsEvent.Param.SONG_NAME to item.name
-                        )
-                    )
-                    onCTA()
-                }
             }
 
-            NativeAdView(
-                placement = AdPlacement.NATIVE_POPUP_TRENDING_SONG,
-                modifier = Modifier.fillMaxWidth().height(100.dp),
-                isDebug = BuildConfig.DEBUG,
-                onAdClicked = { adClickDetector.onAdClick(it) }
+            Text(
+                text = stringResource(R.string.popup_dont_miss_it),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.W900,
+                fontSize = 34.sp,
+                color = Primary,
+                textAlign = TextAlign.Center
             )
+
+            Box(
+                modifier = Modifier
+                    .width(246.dp)
+                    .height(260.dp)
+            ) {
+                Image(
+                    painter = painterResource(R.drawable.img_border_song_trend),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .padding(top = 41.dp, end = 42.dp)
+                        .width(189.98.dp)
+                        .height(204.37.dp)
+                        .rotate(-10.8f)
+                        .align(Alignment.TopEnd),
+                    contentScale = ContentScale.Crop
+                )
+
+                Box(
+                    modifier = Modifier
+                        .padding(top = 49.dp, end = 62.dp)
+                        .rotate(-10.8f)
+                        .clip(RoundedCornerShape(18.35.dp))
+                        .size(133.dp)
+                        .border(1.dp, Color.White, RoundedCornerShape(18.35.dp))
+                        .align(Alignment.TopEnd),
+                ) {
+                    AppAsyncImage(
+                        imageUrl = item.coverUrl,
+                        contentDescription = item.name,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .matchParentSize()
+                            .clip(RoundedCornerShape(18.35.dp))
+                    )
+                    ContentTags(
+                        tags = listOf(ContentTag.HOT),
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .padding(12.dp)
+                    )
+                }
+
+                Image(
+                    painter = painterResource(R.drawable.img_pop_trending_song),
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.matchParentSize()
+                )
+            }
+
+            Spacer(Modifier.height(12.dp))
+            Text(
+                text = stringResource(R.string.popup_premium_song).uppercase(),
+                fontWeight = FontWeight.W500,
+                fontStyle = FontStyle.Italic,
+                fontSize = 12.sp,
+                textAlign = TextAlign.Center,
+                style = MaterialTheme.typography.titleLarge.copy(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            Color(0xFFCCE8FE),
+                            Color(0xFFCDA0FF),
+                            Color(0xFFCDF1FF),
+                            Color(0xFFB591E9)
+                        )
+                    )
+                ),
+                modifier = Modifier
+                    .background(Color.White.copy(0.12f))
+                    .padding(horizontal = 12.dp, vertical = 4.dp)
+            )
+
+            Spacer(Modifier.height(11.dp))
+
+            Text(
+                text = item.name,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.W700,
+                fontSize = 28.sp,
+                color = Neutral_N200,
+                textAlign = TextAlign.Center
+            )
+            Spacer(Modifier.height(6.dp))
+            Text(
+                text = item.artist,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.W400,
+                fontSize = 15.sp,
+                color = FoundationBlack_200,
+                textAlign = TextAlign.Center
+            )
+            Spacer(Modifier.height(32.dp))
+            CTAPrimaryButton(
+                text = stringResource(R.string.popup_try_it_now)
+            ) {
+                Analytics.track(
+                    AnalyticsEvent.REWARD_SONG_CLICK,
+                    mapOf(
+                        AnalyticsEvent.Param.SONG_ID to item.id.toString(),
+                        AnalyticsEvent.Param.SONG_NAME to item.name
+                    )
+                )
+                onCTA()
+            }
         }
+
+        NativeAdView(
+            placement = AdPlacement.NATIVE_POPUP_TRENDING_SONG,
+            modifier = Modifier.fillMaxWidth().height(100.dp),
+            isDebug = BuildConfig.DEBUG,
+            onAdClicked = { adClickDetector.onAdClick(it) }
+        )
     }
 }
 
