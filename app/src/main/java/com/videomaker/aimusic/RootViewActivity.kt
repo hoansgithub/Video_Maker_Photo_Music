@@ -1,10 +1,13 @@
 package com.videomaker.aimusic
 
+import android.Manifest
 import android.app.Activity
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
@@ -23,9 +26,13 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -40,6 +47,8 @@ import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import org.koin.compose.koinInject
+import com.videomaker.aimusic.core.permission.NotificationPermissionCoordinator
 import com.videomaker.aimusic.modules.featureselection.FeatureSelectionActivity
 import com.videomaker.aimusic.modules.language.LanguageSelectionActivity
 import com.videomaker.aimusic.modules.onboarding.WelcomePage1Activity
@@ -118,18 +127,66 @@ class RootViewActivity : AppCompatActivity() {
             val destination by rootViewModel.destination.collectAsStateWithLifecycle()
             val isFirstOpen by rootViewModel.isFirstOpen.collectAsStateWithLifecycle()
 
+            val permissionContext = LocalContext.current
+            val notificationPermissionCoordinator = koinInject<NotificationPermissionCoordinator>()
+            var pendingNavRoute by remember { mutableStateOf<RootNavigationEvent.NavigateTo?>(null) }
+
+            // OS notification-permission dialog shown after splash, before Language.
+            // The dialog blocks until the user answers (Allow/Deny); only then do we navigate.
+            val notificationPermissionLauncher = rememberLauncherForActivityResult(
+                contract = ActivityResultContracts.RequestPermission()
+            ) { granted ->
+                Analytics.trackPermissionClick(
+                    button = if (granted) AnalyticsEvent.Value.Option.ALLOW else AnalyticsEvent.Value.Option.NO_ALLOW,
+                    perType = AnalyticsEvent.Value.PerType.NOTI,
+                    popType = AnalyticsEvent.Value.PopType.SYSTEM
+                )
+                notificationPermissionCoordinator.onSystemPermissionResult(granted)
+                Analytics.trackPermissionCheck(allow = granted)
+                pendingNavRoute?.let {
+                    handleNavigation(it)
+                    pendingNavRoute = null
+                    // Consume the event only after navigation has actually happened.
+                    rootViewModel.onNavigationHandled()
+                }
+            }
+
             // Handle navigation events
             LaunchedEffect(navigationEvent) {
                 navigationEvent?.let { event ->
                     when (event) {
                         is RootNavigationEvent.NavigateTo -> {
-                            handleNavigation(event)
+                            val isLanguage = event.route is AppRoute.LanguageSelection
+                            // If a recreation happened while the OS dialog was up, the dialog is
+                            // still in flight; re-enter the waiting state instead of navigating past
+                            // the gate (the re-registered launcher will receive the re-delivered result).
+                            val dialogInFlight = notificationPermissionCoordinator.isOnboardingPermissionDialogInFlight()
+                            val shouldRequest = isLanguage && !dialogInFlight &&
+                                notificationPermissionCoordinator.shouldRequestOnboardingPermission(permissionContext)
+                            if (isLanguage && (shouldRequest || dialogInFlight)) {
+                                // Deferred path: keep the event in the (ViewModel-backed) StateFlow
+                                // until the user answers. onNavigationHandled() is called in the
+                                // launcher callback, NOT here.
+                                pendingNavRoute = event
+                                if (shouldRequest) {
+                                    notificationPermissionCoordinator.markOnboardingPermissionDialogShown()
+                                    Analytics.trackPermissionRender(
+                                        perType = AnalyticsEvent.Value.PerType.NOTI,
+                                        popType = AnalyticsEvent.Value.PopType.SYSTEM
+                                    )
+                                    notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                                }
+                                // else: dialog already in flight after a recreation — just wait.
+                            } else {
+                                handleNavigation(event)
+                                rootViewModel.onNavigationHandled()
+                            }
                         }
                         is RootNavigationEvent.NavigateBack -> {
                             // Not applicable for RootViewActivity
+                            rootViewModel.onNavigationHandled()
                         }
                     }
-                    rootViewModel.onNavigationHandled()
                 }
             }
 

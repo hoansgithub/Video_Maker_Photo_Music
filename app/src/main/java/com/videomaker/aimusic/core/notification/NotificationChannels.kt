@@ -32,6 +32,13 @@ class NotificationChannels {
                 NotificationManager.IMPORTANCE_DEFAULT
             ).apply {
                 description = "Reminders to return and create a new video"
+            },
+            NotificationChannel(
+                CHANNEL_ONBOARDING_RESUME,
+                "Getting Started",
+                NotificationManager.IMPORTANCE_DEFAULT
+            ).apply {
+                description = "Reminders to finish setting up the app"
             }
         )
         manager.createNotificationChannels(channels)
@@ -41,5 +48,6 @@ class NotificationChannels {
         const val CHANNEL_TREND_ALERTS = "channel_trend_alerts"
         const val CHANNEL_MY_VIDEO_RETENTION = "channel_my_video_retention"
         const val CHANNEL_CREATION_REMINDERS = "channel_creation_reminders"
+        const val CHANNEL_ONBOARDING_RESUME = "channel_onboarding_resume"
     }
 }

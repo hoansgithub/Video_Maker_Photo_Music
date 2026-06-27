@@ -471,4 +471,22 @@
     <key>region_detection_config</key>
     <value>{"use_ip_geolocation":true,"ip_timeout_ms":10000}</value>
   </entry>
+
+  <!-- Onboarding Resume Notifications -->
+  <entry>
+    <key>ob_resume_noti_enabled</key>
+    <value>true</value>
+  </entry>
+  <entry>
+    <key>ob_resume_noti_1_delay_minutes</key>
+    <value>5</value>
+  </entry>
+  <entry>
+    <key>ob_resume_noti_2_delay_minutes</key>
+    <value>5</value>
+  </entry>
+  <entry>
+    <key>ob_resume_noti_3_delay_minutes</key>
+    <value>5</value>
+  </entry>
 </defaults>
