@@ -12,10 +12,10 @@ import kotlinx.coroutines.flow.asStateFlow
 /**
  * Manager for post-interstitial fullscreen native ad (Drama app pattern).
  *
- * Triggered by specific interstitial placements:
- * - INTERSTITIAL_SPLASH_HIGH / SPLASH_LOW (first install) → NATIVE_AFTER_SPLASH
- * - INTERSTITIAL_OPEN_APP_HIGH / OPEN_APP_LOW (returning users) → NATIVE_AFTER_SPLASH
- * - INTERSTITIAL_ONBOARDING_COMPLETE (end of onboarding) → NATIVE_AFTER_ONBOARDING
+ * Triggered by ALL interstitial placements:
+ * - SPLASH_HIGH / SPLASH_LOW, OPEN_APP_HIGH / OPEN_APP_LOW → NATIVE_AFTER_SPLASH
+ * - ONBOARDING_COMPLETE → NATIVE_AFTER_ONBOARDING
+ * - All other interstitials → NATIVE_AFTER_INTER
  *
  * Flow:
  * 1. Interstitial shown on screen → start loading native ad in background
@@ -36,7 +36,10 @@ class PostInterNativeAdManager(
     companion object {
         private const val TAG = "PostInterNativeAdMgr"
 
-        /** Mapping from interstitial placement → native ad placement */
+        /**
+         * Mapping from interstitial placement → native ad placement.
+         * Specific placements have dedicated native ads; all others fall back to NATIVE_AFTER_INTER.
+         */
         private val INTERSTITIAL_TO_NATIVE = mapOf(
             AdPlacement.INTERSTITIAL_SPLASH_HIGH to AdPlacement.NATIVE_AFTER_SPLASH,
             AdPlacement.INTERSTITIAL_SPLASH_LOW to AdPlacement.NATIVE_AFTER_SPLASH,
@@ -45,11 +48,9 @@ class PostInterNativeAdManager(
             AdPlacement.INTERSTITIAL_ONBOARDING_COMPLETE to AdPlacement.NATIVE_AFTER_ONBOARDING
         )
 
-        /** Check if an interstitial placement should trigger post-interstitial native ad */
-        fun isEligiblePlacement(placement: String): Boolean = placement in INTERSTITIAL_TO_NATIVE
-
-        /** Get the native ad placement for an interstitial placement */
-        fun nativePlacementFor(placement: String): String? = INTERSTITIAL_TO_NATIVE[placement]
+        /** Get the native ad placement for an interstitial placement (falls back to NATIVE_AFTER_INTER) */
+        fun nativePlacementFor(placement: String): String =
+            INTERSTITIAL_TO_NATIVE[placement] ?: AdPlacement.NATIVE_AFTER_INTER
     }
 
     private val _showNativeAd = MutableStateFlow(false)
@@ -66,7 +67,7 @@ class PostInterNativeAdManager(
      * @param interstitialPlacement The interstitial placement now showing
      */
     fun onInterstitialShown(interstitialPlacement: String) {
-        val nativePlacement = nativePlacementFor(interstitialPlacement) ?: return
+        val nativePlacement = nativePlacementFor(interstitialPlacement)
         val isEnabled = adPlacementConfigService.isPlacementEnabled(nativePlacement)
         if (!isEnabled) {
             Log.d(TAG, "onInterstitialShown: $nativePlacement disabled, skipping preload")
@@ -92,11 +93,6 @@ class PostInterNativeAdManager(
      */
     fun onInterstitialClosed(interstitialPlacement: String) {
         val nativePlacement = nativePlacementFor(interstitialPlacement)
-        if (nativePlacement == null) {
-            Log.d(TAG, "onInterstitialClosed: no native mapping for $interstitialPlacement")
-            return
-        }
-
         val isEnabled = adPlacementConfigService.isPlacementEnabled(nativePlacement)
         Log.d(TAG, "onInterstitialClosed: placement=$nativePlacement enabled=$isEnabled")
 

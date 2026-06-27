@@ -626,6 +626,21 @@ object AdPlacement {
     const val NATIVE_AFTER_ONBOARDING = "ad_native_after_onboarding"
 
     /**
+     * Fullscreen native ad shown after all other interstitials close (Drama app pattern).
+     * Triggered by every interstitial placement not covered by NATIVE_AFTER_SPLASH
+     * or NATIVE_AFTER_ONBOARDING.
+     * Native ad starts loading when showInterstitial() is called.
+     * Non-blocking: if native ad isn't loaded when interstitial closes, skip silently.
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/4336509440
+     * - Secondary: ca-app-pub-7121075950716954/9906576495
+     *
+     * Remote Config key: ad_native_after_inter
+     */
+    const val NATIVE_AFTER_INTER = "ad_native_after_inter"
+
+    /**
      * Native ad shown in search screens (in-feed at top).
      * Displayed as first item in search results list.
      * Shown on all search states: idle, loading, results, empty.
@@ -1299,6 +1314,7 @@ object AdPlacement {
         NATIVE_POST_REWARD,
         NATIVE_AFTER_SPLASH,
         NATIVE_AFTER_ONBOARDING,
+        NATIVE_AFTER_INTER,
         NATIVE_ONBOARDING_FEATURE_SELECTION,
         NATIVE_ONBOARDING_FEATURE_SELECTION_ALT,
         NATIVE_SEARCH_INFEED,

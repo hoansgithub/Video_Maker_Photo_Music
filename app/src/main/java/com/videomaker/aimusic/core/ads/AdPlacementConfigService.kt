@@ -724,6 +724,22 @@ class AdPlacementConfigService(
             enabled = true
         )
 
+        // Fullscreen native ad shown after all other interstitials close (Drama app pattern)
+        // Triggered by every interstitial not covered by NATIVE_AFTER_SPLASH/ONBOARDING
+        // Native ad starts loading when showInterstitial() is called
+        // Non-blocking: skipped if not loaded when interstitial closes
+        // Layout: native_full_screen_bait (fullscreen with prominent CTA button)
+        // Waterfall: Primary (high) → Secondary (all)
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_AFTER_INTER,
+            layoutName = "native_full_screen_bait",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/4336509440",  // Primary
+                "ca-app-pub-7121075950716954/9906576495"   // Secondary
+            ),
+            enabled = true
+        )
+
         // Search in-feed native ad (template search + song search)
         // Displayed at top of search results on all search states
         // Layout: native_small_row (horizontal row matching search list items)

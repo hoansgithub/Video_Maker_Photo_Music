@@ -98,9 +98,7 @@ object InterstitialAdHelperExt : KoinComponent {
         showLoadingOverlay: Boolean = true
     ) {
         // Start loading native ad as soon as show is called (Drama app pattern)
-        if (PostInterNativeAdManager.isEligiblePlacement(placement)) {
-            postInterNativeAdManager.onInterstitialShown(placement)
-        }
+        postInterNativeAdManager.onInterstitialShown(placement)
 
         InterstitialAdHelper.showInterstitial(
             adsLoaderService = adsLoaderService,
@@ -108,14 +106,11 @@ object InterstitialAdHelperExt : KoinComponent {
             activity = activity,
             placement = placement,
             action = {
-                // HOOK: show native ad after eligible interstitial closes
+                // HOOK: show native ad after interstitial closes
                 // Wait for user to close it before proceeding with navigation
-                if (PostInterNativeAdManager.isEligiblePlacement(placement)) {
-                    postInterNativeAdManager.onInterstitialClosed(placement)
-                    // If native ad is showing, wait for user to close it before navigating
-                    if (postInterNativeAdManager.showNativeAd.value) {
-                        postInterNativeAdManager.showNativeAd.first { !it }
-                    }
+                postInterNativeAdManager.onInterstitialClosed(placement)
+                if (postInterNativeAdManager.showNativeAd.value) {
+                    postInterNativeAdManager.showNativeAd.first { !it }
                 }
                 action()
             },

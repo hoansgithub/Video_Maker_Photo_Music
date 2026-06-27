@@ -167,6 +167,18 @@
     <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/5630360530","enabled":true},{"id":"ca-app-pub-7121075950716954/4143842872","enabled":true}],"extras":{"layout":"native_full_screen_bait","click_reload_enabled":true,"click_reload_max_count":10}}</value>
   </entry>
   <entry>
+    <key>ad_native_after_splash</key>
+    <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/6220436755","enabled":true},{"id":"ca-app-pub-7121075950716954/3594273415","enabled":true}],"extras":{"layout":"native_full_screen_bait","click_reload_enabled":true,"click_reload_max_count":10}}</value>
+  </entry>
+  <entry>
+    <key>ad_native_after_onboarding</key>
+    <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/9968110073","enabled":true},{"id":"ca-app-pub-7121075950716954/7341946732","enabled":true}],"extras":{"layout":"native_full_screen_bait","click_reload_enabled":true,"click_reload_max_count":10}}</value>
+  </entry>
+  <entry>
+    <key>ad_native_after_inter</key>
+    <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/4336509440","enabled":true},{"id":"ca-app-pub-7121075950716954/9906576495","enabled":true}],"extras":{"layout":"native_full_screen_bait","click_reload_enabled":true,"click_reload_max_count":10}}</value>
+  </entry>
+  <entry>
     <key>ad_native_home_banner</key>
     <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/1192669490","enabled":true},{"id":"ca-app-pub-7121075950716954/7566506155","enabled":true}],"extras":{"layout":"native_big_bait","click_reload_enabled":true,"click_reload_max_count":10}}</value>
   </entry>
