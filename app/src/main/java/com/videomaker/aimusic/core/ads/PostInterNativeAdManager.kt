@@ -48,6 +48,12 @@ class PostInterNativeAdManager(
             AdPlacement.INTERSTITIAL_ONBOARDING_COMPLETE to AdPlacement.NATIVE_AFTER_ONBOARDING
         )
 
+        /** Interstitial placements that should NOT trigger post-inter native ads.
+         *  Onboarding transition ads are hosted in Activities without the native overlay. */
+        private val SKIP_NATIVE_PLACEMENTS = setOf(
+            AdPlacement.INTERSTITIAL_ONBOARDING
+        )
+
         /** Get the native ad placement for an interstitial placement (falls back to NATIVE_AFTER_INTER) */
         fun nativePlacementFor(placement: String): String =
             INTERSTITIAL_TO_NATIVE[placement] ?: AdPlacement.NATIVE_AFTER_INTER
@@ -67,6 +73,11 @@ class PostInterNativeAdManager(
      * @param interstitialPlacement The interstitial placement now showing
      */
     fun onInterstitialShown(interstitialPlacement: String) {
+        if (interstitialPlacement in SKIP_NATIVE_PLACEMENTS) {
+            Log.d(TAG, "onInterstitialShown: $interstitialPlacement excluded, skipping")
+            return
+        }
+
         val nativePlacement = nativePlacementFor(interstitialPlacement)
         val isEnabled = adPlacementConfigService.isPlacementEnabled(nativePlacement)
         if (!isEnabled) {
@@ -92,6 +103,11 @@ class PostInterNativeAdManager(
      * @param interstitialPlacement The interstitial placement that just closed
      */
     fun onInterstitialClosed(interstitialPlacement: String) {
+        if (interstitialPlacement in SKIP_NATIVE_PLACEMENTS) {
+            Log.d(TAG, "onInterstitialClosed: $interstitialPlacement excluded, skipping")
+            return
+        }
+
         val nativePlacement = nativePlacementFor(interstitialPlacement)
         val isEnabled = adPlacementConfigService.isPlacementEnabled(nativePlacement)
         Log.d(TAG, "onInterstitialClosed: placement=$nativePlacement enabled=$isEnabled")
