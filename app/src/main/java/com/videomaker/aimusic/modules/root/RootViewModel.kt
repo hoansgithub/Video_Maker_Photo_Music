@@ -244,10 +244,21 @@ class RootViewModel(
      * and calls [onPermissionResult] when the dialog returns.
      */
     private suspend fun requestNotificationPermission() {
-        if (isPermissionRequestInProgress) return
+        if (isPermissionRequestInProgress) {
+            android.util.Log.d("RootViewModel", "🔔 Permission: skip — already in progress")
+            return
+        }
 
-        val context = activityRef?.get() ?: return
-        if (!notificationPermissionCoordinator.shouldRequestOnboardingPermission(context)) return
+        val context = activityRef?.get()
+        if (context == null) {
+            android.util.Log.w("RootViewModel", "🔔 Permission: skip — activityRef is null (GC'd)")
+            return
+        }
+        val shouldRequest = notificationPermissionCoordinator.shouldRequestOnboardingPermission(context)
+        android.util.Log.d("RootViewModel", "🔔 Permission: shouldRequest=$shouldRequest" +
+            " (granted=${notificationPermissionCoordinator.isNotificationGranted(context)}" +
+            ", SDK=${android.os.Build.VERSION.SDK_INT})")
+        if (!shouldRequest) return
 
         isPermissionRequestInProgress = true
         notificationPermissionCoordinator.markOnboardingPermissionDialogShown()
