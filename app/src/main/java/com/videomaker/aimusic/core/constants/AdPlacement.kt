@@ -26,23 +26,10 @@ package com.videomaker.aimusic.core.constants
 object AdPlacement {
 
     /**
-     * Interstitial ad shown after splash screen loading completes (first app install only).
-     * Timing: After all data loaded (Remote Config, status checks), before navigating to next screen.
-     * Shown once per app session (splash screen only appears once).
-     *
-     * Ad units (priority order):
-     * - Primary: ca-app-pub-7121075950716954/9920077454
-     * - Secondary: ca-app-pub-7121075950716954/1830520200
-     *
-     * Remote Config key: ad_interstitial_splash
-     */
-    const val INTERSTITIAL_SPLASH = "ad_interstitial_splash"
-
-    /**
      * HIGH-priority splash interstitial (first install only).
      * Single high-eCPM ad unit — tried first. If it fails to load, falls back to SPLASH_LOW.
      *
-     * Ad unit: ca-app-pub-7121075950716954/9920077454 (Primary from INTERSTITIAL_SPLASH)
+     * Ad unit: ca-app-pub-7121075950716954/9920077454
      *
      * Remote Config key: ad_interstitial_splash_high
      */
@@ -52,24 +39,11 @@ object AdPlacement {
      * LOW-priority splash interstitial fallback (first install only).
      * Single all-fill ad unit — tried only when SPLASH_HIGH fails to load.
      *
-     * Ad unit: ca-app-pub-7121075950716954/1830520200 (Secondary from INTERSTITIAL_SPLASH)
+     * Ad unit: ca-app-pub-7121075950716954/1830520200
      *
      * Remote Config key: ad_interstitial_splash_low
      */
     const val INTERSTITIAL_SPLASH_LOW = "ad_interstitial_splash_low"
-
-    /**
-     * Interstitial ad shown after splash screen loading completes (second app open onwards).
-     * Timing: Same as INTERSTITIAL_SPLASH but shown from the second launch onward.
-     * Uses separate ad unit to allow independent eCPM tracking and frequency capping.
-     *
-     * Ad units (priority order):
-     * - Primary: ca-app-pub-7121075950716954/4748771125 (Inter_high_splash_reopen)
-     * - Secondary: ca-app-pub-7121075950716954/2676684702 (Inter_all_splash_reopen)
-     *
-     * Remote Config key: ad_interstitial_open_app
-     */
-    const val INTERSTITIAL_OPEN_APP = "ad_interstitial_open_app"
 
     /**
      * HIGH-priority open-app interstitial (second+ launch).
@@ -622,6 +596,20 @@ object AdPlacement {
      * Remote Config key: ad_native_post_reward
      */
     const val NATIVE_POST_REWARD = "ad_native_post_reward"
+
+    /**
+     * Fullscreen native ad shown after splash/open-app interstitial closes (Drama app pattern).
+     * Only triggered by INTERSTITIAL_SPLASH_HIGH, SPLASH_LOW, OPEN_APP_HIGH, OPEN_APP_LOW.
+     * Preloaded when interstitial is shown, displayed after interstitial closes if ready.
+     * Non-blocking: if native ad isn't loaded when interstitial closes, skip silently.
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/6220436755
+     * - Secondary: ca-app-pub-7121075950716954/3594273415
+     *
+     * Remote Config key: ad_native_after_splash
+     */
+    const val NATIVE_AFTER_SPLASH = "ad_native_after_splash"
 
     /**
      * Native ad shown in search screens (in-feed at top).
@@ -1265,10 +1253,8 @@ object AdPlacement {
         APP_OPEN_AOA,
         APP_OPEN_FOREGROUND,
         APP_OPEN_AFTER_AD_CLICK,
-        INTERSTITIAL_SPLASH,
         INTERSTITIAL_SPLASH_HIGH,
         INTERSTITIAL_SPLASH_LOW,
-        INTERSTITIAL_OPEN_APP,
         INTERSTITIAL_OPEN_APP_HIGH,
         INTERSTITIAL_OPEN_APP_LOW,
         INTERSTITIAL_TEMPLATE_PREVIEWER_BACK,
@@ -1297,6 +1283,7 @@ object AdPlacement {
         NATIVE_ONBOARDING_PAGE3,
         NATIVE_ONBOARDING_FULLSCREEN,
         NATIVE_POST_REWARD,
+        NATIVE_AFTER_SPLASH,
         NATIVE_ONBOARDING_FEATURE_SELECTION,
         NATIVE_ONBOARDING_FEATURE_SELECTION_ALT,
         NATIVE_SEARCH_INFEED,

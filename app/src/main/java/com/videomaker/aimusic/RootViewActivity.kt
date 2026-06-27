@@ -135,30 +135,42 @@ class RootViewActivity : AppCompatActivity() {
 
             VideoMakerTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    // Show LoadingScreenLow when HIGH priority ad fails,
-                    // otherwise show normal LoadingScreen
-                    if (showLowPriorityLoading) {
-                        destination?.let { dest ->
-                            LoadingScreenLow(
-                                destination = dest,
-                                isFirstOpen = isFirstOpen,
-                                onNavigate = { event ->
-                                    when (event) {
-                                        is RootNavigationEvent.NavigateTo -> {
-                                            handleNavigation(event)
-                                        }
-                                        is RootNavigationEvent.NavigateBack -> {
-                                            // Not applicable for RootViewActivity
+                    androidx.compose.foundation.layout.Box(modifier = Modifier.fillMaxSize()) {
+                        // Show LoadingScreenLow when HIGH priority ad fails,
+                        // otherwise show normal LoadingScreen
+                        if (showLowPriorityLoading) {
+                            destination?.let { dest ->
+                                LoadingScreenLow(
+                                    destination = dest,
+                                    isFirstOpen = isFirstOpen,
+                                    onNavigate = { event ->
+                                        when (event) {
+                                            is RootNavigationEvent.NavigateTo -> {
+                                                handleNavigation(event)
+                                            }
+                                            is RootNavigationEvent.NavigateBack -> {
+                                                // Not applicable for RootViewActivity
+                                            }
                                         }
                                     }
-                                }
+                                )
+                            }
+                        } else {
+                            LoadingScreen(
+                                isLoading = isLoading,
+                                loadingStep = loadingStep
                             )
                         }
-                    } else {
-                        LoadingScreen(
-                            isLoading = isLoading,
-                            loadingStep = loadingStep
-                        )
+
+                        // Post-splash native ad overlay (shown after splash/open-app interstitial closes)
+                        val postInterNativeAdManager = org.koin.compose.koinInject<com.videomaker.aimusic.core.ads.PostInterNativeAdManager>()
+                        val showPostInterNativeAd by postInterNativeAdManager.showNativeAd
+                            .collectAsStateWithLifecycle()
+                        if (showPostInterNativeAd) {
+                            com.videomaker.aimusic.core.ads.PostInterNativeAd(
+                                onClose = postInterNativeAdManager::onNativeAdClosed
+                            )
+                        }
                     }
 
                     if (showNoInternetDialog) {

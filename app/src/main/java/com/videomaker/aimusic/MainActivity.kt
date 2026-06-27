@@ -245,6 +245,17 @@ class MainActivity : AppCompatActivity() {
                                     onClose = postRewardNativeAdManager::onNativeAdClosed
                                 )
                             }
+
+                            // Global post-interstitial fullscreen native ad (Drama app pattern)
+                            // Splash ads render in RootViewActivity; kept here for future non-splash placements
+                            val postInterNativeAdManager = koinInject<com.videomaker.aimusic.core.ads.PostInterNativeAdManager>()
+                            val showPostInterNativeAd by postInterNativeAdManager.showNativeAd
+                                .collectAsStateWithLifecycle()
+                            if (showPostInterNativeAd) {
+                                com.videomaker.aimusic.core.ads.PostInterNativeAd(
+                                    onClose = postInterNativeAdManager::onNativeAdClosed
+                                )
+                            }
                         }
                     }
                 }

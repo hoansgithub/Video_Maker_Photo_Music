@@ -111,7 +111,7 @@ class RootViewModel(
     private var onboardingResumeStep: OnboardingResumeStep? = null
 
     // Captured once in loadInitialData() before any ad logic runs.
-    // true = first ever launch → INTERSTITIAL_SPLASH; false = second+ → INTERSTITIAL_OPEN_APP
+    // true = first ever launch → INTERSTITIAL_SPLASH_HIGH; false = second+ → INTERSTITIAL_OPEN_APP_HIGH
     @Volatile
     private var firstOpen = false
 
@@ -355,6 +355,12 @@ class RootViewModel(
      * Called once during initialization — survives ViewModel destruction.
      */
     private fun preloadNativeAds() {
+        // Preload post-splash native ad (shown after splash/open-app interstitial closes)
+        // Preloaded for all launches — native ad renders in RootViewActivity before navigating
+        com.videomaker.aimusic.VideoMakerApplication.preloadNativeAd(
+            placement = AdPlacement.NATIVE_AFTER_SPLASH
+        )
+
         if (!this@RootViewModel.onboardingComplete) {
             if (this@RootViewModel.onboardingResumeStep != null) {
                 // Partial progress → Preload welcome-back ad

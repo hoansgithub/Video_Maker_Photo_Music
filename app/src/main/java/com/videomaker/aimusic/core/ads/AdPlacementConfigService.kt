@@ -185,18 +185,6 @@ class AdPlacementConfigService(
         // INTERSTITIAL ADS
         // ============================================
 
-        // Splash screen interstitial - first app launch only (legacy waterfall)
-        // Kept for backward compatibility — HIGH/LOW placements used in RootViewModel
-        registerPlacementWithMultipleUnits(
-            placementId = AdPlacement.INTERSTITIAL_SPLASH,
-            type = "interstitial",
-            adUnitIds = listOf(
-                "ca-app-pub-7121075950716954/9920077454",  // Primary
-                "ca-app-pub-7121075950716954/1830520200"   // Secondary
-            ),
-            enabled = true
-        )
-
         // Splash HIGH — single high-eCPM unit, tried first
         registerPlacementWithMultipleUnits(
             placementId = AdPlacement.INTERSTITIAL_SPLASH_HIGH,
@@ -213,18 +201,6 @@ class AdPlacementConfigService(
             type = "interstitial",
             adUnitIds = listOf(
                 "ca-app-pub-7121075950716954/1830520200"   // Secondary (all fill)
-            ),
-            enabled = true
-        )
-
-        // Open app interstitial - second launch onwards (legacy waterfall)
-        // Kept for backward compatibility — HIGH/LOW placements used in RootViewModel
-        registerPlacementWithMultipleUnits(
-            placementId = AdPlacement.INTERSTITIAL_OPEN_APP,
-            type = "interstitial",
-            adUnitIds = listOf(
-                "ca-app-pub-7121075950716954/4748771125",  // Inter_high_splash_reopen (Primary)
-                "ca-app-pub-7121075950716954/2676684702"   // Inter_all_splash_reopen (Secondary)
             ),
             enabled = true
         )
@@ -712,6 +688,22 @@ class AdPlacementConfigService(
             adUnitIds = listOf(
                 "ca-app-pub-7121075950716954/5630360530",  // Primary (Pro_NAFS_high_after RW)
                 "ca-app-pub-7121075950716954/4143842872"   // Secondary (Pro_NAFS_all_after RW)
+            ),
+            enabled = true
+        )
+
+        // Fullscreen native ad shown after splash/open-app interstitial closes (Drama app pattern)
+        // Only triggered by SPLASH_HIGH, SPLASH_LOW, OPEN_APP_HIGH, OPEN_APP_LOW
+        // Preloaded when interstitial is shown, displayed after close if ready
+        // Non-blocking: skipped if not loaded when interstitial closes
+        // Layout: native_full_screen_bait (fullscreen with prominent CTA button)
+        // Waterfall: Primary (high) → Secondary (all)
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_AFTER_SPLASH,
+            layoutName = "native_full_screen_bait",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/6220436755",  // Primary
+                "ca-app-pub-7121075950716954/3594273415"   // Secondary
             ),
             enabled = true
         )

@@ -401,6 +401,16 @@ val adsModule = module {
         )
     }
 
+    // Post-Interstitial Native Ad Manager (splash/open-app interstitials only)
+    // Native ad preloaded early during splash loading, shown after interstitial closes
+    // Non-blocking: skipped if native ad not loaded when interstitial closes
+    single {
+        com.videomaker.aimusic.core.ads.PostInterNativeAdManager(
+            adsLoaderService = get(),
+            adPlacementConfigService = get()
+        )
+    }
+
     // Ad Click Context Tracker (singleton - tracks ad click background state)
     single { com.videomaker.aimusic.core.ads.AdClickContextTracker() }
 

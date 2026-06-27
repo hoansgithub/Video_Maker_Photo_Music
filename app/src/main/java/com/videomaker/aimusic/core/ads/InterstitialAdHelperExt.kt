@@ -4,6 +4,7 @@ import android.app.Activity
 import co.alcheclub.lib.acccore.ads.helpers.InterstitialAdHelper
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
 import co.alcheclub.lib.acccore.ads.mediators.admob.AdMobMediator
+import kotlinx.coroutines.flow.first
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
@@ -24,7 +25,7 @@ import org.koin.core.component.inject
  * // Preload during initialization
  * InterstitialAdHelperExt.preloadInterstitial(
  *     adsLoaderService = adsLoaderService,
- *     placement = AdPlacement.INTERSTITIAL_SPLASH,
+ *     placement = AdPlacement.INTERSTITIAL_SPLASH_HIGH,
  *     loadTimeoutMillis = 30000L,
  *     showLoadingOverlay = false
  * )
@@ -33,7 +34,7 @@ import org.koin.core.component.inject
  * InterstitialAdHelperExt.showInterstitial(
  *     adsLoaderService = adsLoaderService,
  *     activity = activity,
- *     placement = AdPlacement.INTERSTITIAL_SPLASH,
+ *     placement = AdPlacement.INTERSTITIAL_SPLASH_HIGH,
  *     action = { proceedToNextScreen() },
  *     bypassFrequencyCap = true
  * )
@@ -43,6 +44,7 @@ object InterstitialAdHelperExt : KoinComponent {
 
     private val adMobMediator: AdMobMediator by inject()
     private val adPlacementConfigService: AdPlacementConfigService by inject()
+    private val postInterNativeAdManager: PostInterNativeAdManager by inject()
 
     /**
      * Preload interstitial ad
@@ -51,7 +53,7 @@ object InterstitialAdHelperExt : KoinComponent {
      * Use during app initialization or screen transitions.
      *
      * @param adsLoaderService Ad loading service from ACCCore
-     * @param placement Ad placement ID (e.g., AdPlacement.INTERSTITIAL_SPLASH)
+     * @param placement Ad placement ID (e.g., AdPlacement.INTERSTITIAL_SPLASH_HIGH)
      * @param loadTimeoutMillis Max time to wait for ad load (null = no timeout)
      * @param showLoadingOverlay Whether to show loading overlay during load
      * @return true if ad loaded successfully, false if failed or timed out
@@ -78,7 +80,7 @@ object InterstitialAdHelperExt : KoinComponent {
      *
      * @param adsLoaderService Ad loading service from ACCCore
      * @param activity Activity context for showing the ad
-     * @param placement Ad placement ID (e.g., AdPlacement.INTERSTITIAL_SPLASH)
+     * @param placement Ad placement ID (e.g., AdPlacement.INTERSTITIAL_SPLASH_HIGH)
      * @param action Callback executed when ad closes (use for navigation)
      * @param onShown Optional callback when ad is shown (before user closes it)
      * @param bypassFrequencyCap If true, ignore frequency cap (use for splash ads)
@@ -100,7 +102,18 @@ object InterstitialAdHelperExt : KoinComponent {
             adMobMediator = adMobMediator,
             activity = activity,
             placement = placement,
-            action = action,
+            action = {
+                // HOOK: show native ad after splash/open-app interstitial closes
+                // Wait for user to close it before proceeding with navigation
+                if (PostInterNativeAdManager.isSplashPlacement(placement)) {
+                    postInterNativeAdManager.onInterstitialClosed()
+                    // If native ad is showing, wait for user to close it before navigating
+                    if (postInterNativeAdManager.showNativeAd.value) {
+                        postInterNativeAdManager.showNativeAd.first { !it }
+                    }
+                }
+                action()
+            },
             onShown = onShown,
             bypassFrequencyCap = bypassFrequencyCap,
             loadTimeoutMillis = loadTimeoutMillis,
