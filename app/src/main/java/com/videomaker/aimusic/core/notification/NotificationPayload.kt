@@ -21,6 +21,9 @@ data class NotificationPayload(
     // different small (collapsed) vs large (expanded) artwork.
     val collapsedImageRes: Int? = null,
     val expandedImageRes: Int? = null,
+    // When true, [expandedImageRes] is letterbox-fit (whole image visible, centered) into the wide
+    // expanded frame instead of being center-cropped. Use for square/non-banner artwork.
+    val expandedImageFit: Boolean = false,
 )
 
 data class NotificationText(

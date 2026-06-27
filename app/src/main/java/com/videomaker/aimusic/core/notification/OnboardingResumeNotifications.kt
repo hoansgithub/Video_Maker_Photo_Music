@@ -91,6 +91,7 @@ object OnboardingResumeNotifications {
         var candidates: List<String> = emptyList()
         var collapsedRes: Int? = null
         var expandedRes: Int? = null
+        var expandedFit = false
 
         when (attempt) {
             1 -> {
@@ -115,6 +116,8 @@ object OnboardingResumeNotifications {
                 collapsedRes = R.drawable.img_noti_trigger_3
                 expandedRes = R.drawable.img_noti_trigger_3
                 fallbackRes = R.drawable.img_noti_trigger_3
+                // Square artwork → fit (don't crop) in the wide expanded frame.
+                expandedFit = true
             }
         }
 
@@ -131,7 +134,8 @@ object OnboardingResumeNotifications {
             imageCandidates = candidates,
             fallbackImageRes = fallbackRes,
             collapsedImageRes = collapsedRes,
-            expandedImageRes = expandedRes
+            expandedImageRes = expandedRes,
+            expandedImageFit = expandedFit
         )
     }
 }
