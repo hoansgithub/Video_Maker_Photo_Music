@@ -226,4 +226,20 @@ object RemoteConfigKeys {
      * Default: 3.
      */
     const val RATING_POPUP_DAILY_CAP = "rating_popup_daily_cap"
+
+    // ============================================
+    // ONBOARDING RESUME NOTIFICATIONS
+    // ============================================
+
+    /** Master toggle for the entire onboarding-resume notification sequence. Default: true. */
+    const val OB_RESUME_NOTI_ENABLED = "ob_resume_noti_enabled"
+
+    /** Delay (minutes) before the 1st onboarding-resume notification fires. Default: 5. Set to 0 to disable this notification. */
+    const val OB_RESUME_NOTI_1_DELAY_MINUTES = "ob_resume_noti_1_delay_minutes"
+
+    /** Delay (minutes) before the 2nd onboarding-resume notification fires. Default: 5. Set to 0 to disable this notification. */
+    const val OB_RESUME_NOTI_2_DELAY_MINUTES = "ob_resume_noti_2_delay_minutes"
+
+    /** Delay (minutes) before the 3rd onboarding-resume notification fires. Default: 5. Set to 0 to disable this notification. */
+    const val OB_RESUME_NOTI_3_DELAY_MINUTES = "ob_resume_noti_3_delay_minutes"
 }

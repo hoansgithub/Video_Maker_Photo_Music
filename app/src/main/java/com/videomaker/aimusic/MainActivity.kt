@@ -118,8 +118,14 @@ class MainActivity : AppCompatActivity() {
         val preferencesManager: PreferencesManager by inject()
         if (!preferencesManager.isOnboardingComplete()) {
             android.util.Log.w(TAG, "Onboarding not complete — redirecting to RootViewActivity (action=${intent.action})")
-            // Save widget/shortcut deep link to SharedPreferences (survives Activity chain)
-            if (intent.action != null && intent.action != Intent.ACTION_MAIN) {
+            // Track an onboarding-resume notification tap here: the early return below means
+            // handleEntryIntent() (which normally tracks) never runs on this redirect path.
+            trackNotificationClickIfNeeded(intent)
+            // Save widget/shortcut deep link to SharedPreferences (survives Activity chain).
+            // Exclude the OB-resume action: it only needs to resume onboarding, not restore a deep link.
+            if (intent.action != null &&
+                intent.action != Intent.ACTION_MAIN &&
+                intent.action != NotificationDeepLinkFactory.ACTION_NOTIF_ONBOARDING_RESUME) {
                 val templateId = intent.getStringExtra(WidgetActions.EXTRA_TEMPLATE_ID)
                 val songId = intent.getLongExtra(WidgetActions.EXTRA_SONG_ID, -1L).takeIf { it > 0L }
                 preferencesManager.setPendingDeepLink(
@@ -138,6 +144,8 @@ class MainActivity : AppCompatActivity() {
         }
 
         notificationScheduler.scheduleDailyBootstrap()
+        // Onboarding is complete (we reached Home) → drop any pending OB-resume nudge.
+        notificationScheduler.cancelOnboardingResume()
 
         // Reset home ad tracker states on activity creation (start of a new session)
         val homeAdTracker: HomeAdTracker by inject()
@@ -478,7 +486,8 @@ class MainActivity : AppCompatActivity() {
             NotificationDeepLinkFactory.ACTION_NOTIF_TRENDING_SONG,
             NotificationDeepLinkFactory.ACTION_NOTIF_VIRAL_TEMPLATE,
             NotificationDeepLinkFactory.ACTION_NOTIF_MY_VIDEO,
-            NotificationDeepLinkFactory.ACTION_NOTIF_RESUME_TEMPLATE
+            NotificationDeepLinkFactory.ACTION_NOTIF_RESUME_TEMPLATE,
+            NotificationDeepLinkFactory.ACTION_NOTIF_ONBOARDING_RESUME
         )
     }
 }

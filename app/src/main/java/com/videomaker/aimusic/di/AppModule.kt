@@ -243,7 +243,7 @@ val dataModule = module {
     single { NotificationChannels() }
     single { NotificationRenderer(androidContext(), get()) }
     single { NotificationConversionTracker(get()) }
-    single { AppSessionTracker(get(), get()) }
+    single { AppSessionTracker(get(), get(), get()) }
 
     // Project Database
     single { ProjectDatabase.getInstance(androidContext()) }
