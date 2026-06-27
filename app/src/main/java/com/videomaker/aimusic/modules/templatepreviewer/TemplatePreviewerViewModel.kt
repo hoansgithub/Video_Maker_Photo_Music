@@ -173,6 +173,14 @@ class TemplatePreviewerViewModel(
     private var isLoadingMore = false
     private var hasMorePages = true
 
+    // Scroll interstitial: only attempt every Nth page change
+    private var scrollCount = 0
+    private val scrollInterval: Int by lazy {
+        val config = adsLoaderService.getPlacementConfig(AdPlacement.INTERSTITIAL_TEMPLATE_PREVIEWER_SCROLL)
+        val value = config?.extras?.get("scroll_interval")
+        value?.toString()?.trim('"')?.toIntOrNull() ?: 3
+    }
+
     init {
         loadInitialTemplates()
 
@@ -278,8 +286,11 @@ class TemplatePreviewerViewModel(
         // Library handles duplicate checks - safe to call repeatedly
         preloadScrollInterstitial()
 
-        // Trigger scroll ad check (ACCCore enforces interval automatically)
-        tryShowScrollInterstitial()
+        // Only attempt scroll interstitial every Nth page change
+        scrollCount++
+        if (scrollCount % scrollInterval == 0) {
+            tryShowScrollInterstitial()
+        }
     }
 
     fun onUseThisTemplate(template: VideoTemplate, aspectRatio: AspectRatio) {

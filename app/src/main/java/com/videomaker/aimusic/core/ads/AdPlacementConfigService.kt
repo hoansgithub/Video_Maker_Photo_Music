@@ -264,6 +264,7 @@ class AdPlacementConfigService(
 
         // Template previewer scroll interstitial (shown while browsing templates)
         // Frequency controlled by ad_interstitial_interval_seconds (default 60s)
+        // + scroll_interval: only attempt every Nth page change (default 3)
         // Waterfall: Primary unit → Secondary unit
         registerPlacementWithMultipleUnits(
             placementId = AdPlacement.INTERSTITIAL_TEMPLATE_PREVIEWER_SCROLL,
@@ -272,6 +273,7 @@ class AdPlacementConfigService(
                 "ca-app-pub-7121075950716954/8224075141",  // Primary
                 "ca-app-pub-7121075950716954/3051639510"   // Secondary
             ),
+            extras = mapOf("scroll_interval" to 3),
             enabled = true
         )
 
