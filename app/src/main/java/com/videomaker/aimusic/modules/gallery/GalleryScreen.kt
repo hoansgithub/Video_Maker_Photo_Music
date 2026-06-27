@@ -116,7 +116,7 @@ import org.koin.compose.koinInject
 @Immutable
 private sealed class GalleryGridItem {
     data class TemplateItem(val template: VideoTemplate, val index: Int) : GalleryGridItem()
-    data object AdItem : GalleryGridItem()
+    data class AdItem(val adIndex: Int) : GalleryGridItem()
 }
 
 /**
@@ -124,11 +124,8 @@ private sealed class GalleryGridItem {
  */
 private fun galleryItemKey(item: GalleryGridItem): String = when (item) {
     is GalleryGridItem.TemplateItem -> "template_${item.template.id}"
-    is GalleryGridItem.AdItem -> "ad_native_gallery"
+    is GalleryGridItem.AdItem -> "ad_native_gallery_${item.adIndex}"
 }
-
-// Ad insertion position - 4th position (after 3rd template at index 2)
-private const val AD_INSERTION_INDEX = 3
 
 // ============================================
 // GALLERY SCREEN
@@ -378,7 +375,14 @@ private fun GalleryContent(
     onLoadMore: () -> Unit = {}
 ) {
     val dimens = AppDimens.current
+    val adsLoaderService = koinInject<co.alcheclub.lib.acccore.ads.loader.AdsLoaderService>()
     var lastTrackedTemplateScroll by remember { mutableStateOf(false) }
+
+    val galleryInfeedInterval = remember {
+        val config = adsLoaderService.getPlacementConfig(AdPlacement.NATIVE_GALLERY_GRID)
+        val value = config?.extras?.get("infeed_interval")
+        value?.toString()?.trim('"')?.toIntOrNull() ?: 6
+    }
 
     // ✅ FIX: Scroll-based pagination detection
     LaunchedEffect(listState.canScrollForward) {
@@ -501,18 +505,15 @@ private fun GalleryContent(
                     is TemplateListState.Success -> {
                         val templates = templateListState.templates
                         val gridItems = buildList {
-                            if (templates.size < AD_INSERTION_INDEX) {
-                                templates.forEachIndexed { index, template ->
-                                    add(GalleryGridItem.TemplateItem(template, index))
+                            var adCount = 0
+                            templates.forEachIndexed { index, template ->
+                                add(GalleryGridItem.TemplateItem(template, index))
+                                if ((index + 1) % galleryInfeedInterval == 0) {
+                                    add(GalleryGridItem.AdItem(adCount++))
                                 }
-                                add(GalleryGridItem.AdItem)
-                            } else {
-                                templates.forEachIndexed { index, template ->
-                                    add(GalleryGridItem.TemplateItem(template, index))
-                                    if (index == AD_INSERTION_INDEX - 1) {
-                                        add(GalleryGridItem.AdItem)
-                                    }
-                                }
+                            }
+                            if (templates.isNotEmpty() && templates.size < galleryInfeedInterval) {
+                                add(GalleryGridItem.AdItem(0))
                             }
                         }
 

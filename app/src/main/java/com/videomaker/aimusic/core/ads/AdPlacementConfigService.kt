@@ -725,7 +725,8 @@ class AdPlacementConfigService(
                 "ca-app-pub-7121075950716954/7251804638",  // Primary
                 "ca-app-pub-7121075950716954/1185923881"   // Secondary
             ),
-            enabled = true
+            enabled = true,
+            additionalExtras = mapOf("infeed_interval" to 10)
         )
 
         // Uninstall screen native ad (shown at bottom before uninstalling)
@@ -824,7 +825,8 @@ class AdPlacementConfigService(
                 "ca-app-pub-7121075950716954/4667301062",  // Pro_NA_high_liked content
                 "ca-app-pub-7121075950716954/6996887879"   // Pro_NA_all_liked content
             ),
-            enabled = true
+            enabled = true,
+            additionalExtras = mapOf("infeed_interval" to 6)
         )
 
         // Gallery templates grid native ad (shown as item in staggered templates grid)
@@ -840,7 +842,8 @@ class AdPlacementConfigService(
                 "ca-app-pub-7121075950716954/1251475281",  // Primary
                 "ca-app-pub-7121075950716954/7733500455"   // Secondary
             ),
-            enabled = true
+            enabled = true,
+            additionalExtras = mapOf("infeed_interval" to 6)
         )
 
         // Featured templates carousel native ad (shown at 2nd position)
@@ -853,7 +856,8 @@ class AdPlacementConfigService(
                 "ca-app-pub-7121075950716954/1840370904",  // Primary
                 "ca-app-pub-7121075950716954/5831815710"   // Secondary
             ),
-            enabled = true
+            enabled = true,
+            additionalExtras = mapOf("infeed_interval" to 3)
         )
 
         // Songs station native ad (shown as item in station songs list)
@@ -1349,7 +1353,8 @@ class AdPlacementConfigService(
         placementId: String,
         layoutName: String,
         adUnitIds: List<String>,
-        enabled: Boolean = true
+        enabled: Boolean = true,
+        additionalExtras: Map<String, Any> = emptyMap()
     ) {
         try {
             // Register placement with PlacementConfigService
@@ -1364,11 +1369,23 @@ class AdPlacementConfigService(
             }
 
             // Set local fallback config with layout in extras
+            val jsonExtras = buildMap<String, JsonPrimitive> {
+                put("layout", JsonPrimitive(layoutName))
+                additionalExtras.forEach { (k, v) ->
+                    when (v) {
+                        is Int -> put(k, JsonPrimitive(v))
+                        is Long -> put(k, JsonPrimitive(v))
+                        is String -> put(k, JsonPrimitive(v))
+                        is Boolean -> put(k, JsonPrimitive(v))
+                        else -> put(k, JsonPrimitive(v.toString()))
+                    }
+                }
+            }
             val config = CorePlacementConfig(
                 enabled = enabled,
                 type = "native",
                 units = units,
-                extras = mapOf("layout" to JsonPrimitive(layoutName))
+                extras = jsonExtras
             )
             placementConfigService.setLocalConfig(placementId, config)
 
