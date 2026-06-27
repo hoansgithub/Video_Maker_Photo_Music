@@ -750,6 +750,20 @@ object AdPlacement {
     const val NATIVE_LIBRARY_CREATED_VIDEO = "ad_native_library_created_video"
 
     /**
+     * Native ad shown in "Music for you" list in Liked Songs screen (in-feed placement).
+     * Repeats every N songs based on infeed_interval config (default: 6).
+     *
+     * Layout: native_small_row
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/4524211708
+     * - Secondary: ca-app-pub-7121075950716954/6274453243
+     *
+     * Remote Config key: ad_native_music_for_you_infeed
+     */
+    const val NATIVE_MUSIC_FOR_YOU_INFEED = "ad_native_music_for_you_infeed"
+
+    /**
      * Native ad shown in gallery templates staggered grid (in-feed placement).
      * Displayed as an item within the gallery templates staggered grid.
      * Position: 4th position (index 3), or last position if total items < 3.
@@ -1321,6 +1335,7 @@ object AdPlacement {
         NATIVE_UNINSTALL_BOTTOM,
         NATIVE_WIDGET_BOTTOM,
         NATIVE_LIBRARY_CREATED_VIDEO,
+        NATIVE_MUSIC_FOR_YOU_INFEED,
         NATIVE_HOME_BANNER,
         NATIVE_HOME_COLLAPSIBLE,
         NATIVE_TEMPLATE_PREVIEWER_BANNER,

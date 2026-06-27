@@ -50,7 +50,7 @@ fun ContentSong(
     val sessionManager: MusicPlaybackSessionManager = koinInject()
 
     val infeedInterval = remember {
-        val config = adsLoaderService.getPlacementConfig(AdPlacement.NATIVE_LIBRARY_CREATED_VIDEO)
+        val config = adsLoaderService.getPlacementConfig(AdPlacement.NATIVE_MUSIC_FOR_YOU_INFEED)
         val value = config?.extras?.get("infeed_interval")
         value?.toString()?.trim('"')?.toIntOrNull() ?: 6
     }
@@ -120,7 +120,7 @@ fun ContentSong(
                 }
                 is SongListItemType.AdItem -> {
                     NativeAdView(
-                        placement = AdPlacement.NATIVE_LIBRARY_CREATED_VIDEO,
+                        placement = AdPlacement.NATIVE_MUSIC_FOR_YOU_INFEED,
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 22.dp),

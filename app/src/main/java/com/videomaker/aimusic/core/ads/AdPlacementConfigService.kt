@@ -855,6 +855,21 @@ class AdPlacementConfigService(
             additionalExtras = mapOf("infeed_interval" to 6)
         )
 
+        // "Music for you" section in-feed native ad (liked songs empty state + songs list)
+        // Repeats every N songs based on infeed_interval config
+        // Layout: native_project_card
+        // Waterfall: Primary unit → Secondary unit
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_MUSIC_FOR_YOU_INFEED,
+            layoutName = "native_small_row",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/4524211708",  // Primary
+                "ca-app-pub-7121075950716954/6274453243"   // Secondary
+            ),
+            enabled = true,
+            additionalExtras = mapOf("infeed_interval" to 6)
+        )
+
         // Gallery templates grid native ad (shown as item in staggered templates grid)
         // In-feed placement that blends with template cards
         // Position: 4th position (index 3), or last if < 3 items
