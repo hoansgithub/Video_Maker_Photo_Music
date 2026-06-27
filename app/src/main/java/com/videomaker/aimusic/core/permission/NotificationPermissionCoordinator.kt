@@ -16,6 +16,18 @@ class NotificationPermissionCoordinator(
     // reset only when process is killed and recreated.
     private var hasConsumedPermissionUiSlotInCurrentProcess = false
 
+    // True while the OB system permission dialog is showing and awaiting a result. Survives
+    // Activity recreation (this is a process-scoped singleton), so a splash recreation while the
+    // dialog is up can re-enter the waiting state instead of navigating past the gate.
+    @Volatile
+    private var onboardingPermissionDialogInFlight = false
+
+    fun markOnboardingPermissionDialogShown() {
+        onboardingPermissionDialogInFlight = true
+    }
+
+    fun isOnboardingPermissionDialogInFlight(): Boolean = onboardingPermissionDialogInFlight
+
     private fun tryConsumePermissionUiSlotInCurrentProcess(): Boolean {
         if (hasConsumedPermissionUiSlotInCurrentProcess) return false
         hasConsumedPermissionUiSlotInCurrentProcess = true
@@ -83,6 +95,7 @@ class NotificationPermissionCoordinator(
     }
 
     fun onSystemPermissionResult(granted: Boolean) {
+        onboardingPermissionDialogInFlight = false
         val newRequestCount = preferencesManager.getNotificationPermissionRequestCount() + 1
         preferencesManager.setNotificationPermissionRequestCount(newRequestCount)
         if (granted) {

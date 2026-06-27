@@ -131,7 +131,10 @@ class NotificationRenderer(
             }
             BitmapFactory.decodeResource(context.resources, payload.fallbackImageRes)
         }
-        if (payload.type == NotificationType.TRENDING_SONG) {
+        // No badge/gradient decoration for these — use the raw artwork as-is.
+        // (ONBOARDING_RESUME attempt 2 = Top-1-song-by-GEO cover, falling back to img_song1
+        // when the cover can't be fetched; attempts 1 & 3 already short-circuit above.)
+        if (payload.type == NotificationType.TRENDING_SONG || payload.type == NotificationType.ONBOARDING_RESUME) {
             return@withContext resolvedBitmap
         }
         decorateHeroBitmap(payload.type, resolvedBitmap, resolvedCtaText)

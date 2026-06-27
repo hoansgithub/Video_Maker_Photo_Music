@@ -19,6 +19,7 @@ object NotificationDeepLinkFactory {
     const val ACTION_NOTIF_VIRAL_TEMPLATE = "com.videomaker.aimusic.action.NOTIF_VIRAL_TEMPLATE"
     const val ACTION_NOTIF_MY_VIDEO = "com.videomaker.aimusic.action.NOTIF_MY_VIDEO"
     const val ACTION_NOTIF_RESUME_TEMPLATE = "com.videomaker.aimusic.action.NOTIF_RESUME_TEMPLATE"
+    const val ACTION_NOTIF_ONBOARDING_RESUME = "com.videomaker.aimusic.action.NOTIF_ONBOARDING_RESUME"
 
     const val EXTRA_SONG_ID = "extra_song_id"
     const val EXTRA_TEMPLATE_ID = "extra_template_id"
@@ -66,10 +67,11 @@ object NotificationDeepLinkFactory {
     }
 
     fun onboardingResume(): NotificationDeepLink {
-        // action = ACTION_MAIN so MainActivity's "onboarding incomplete" guard
-        // redirects to RootViewActivity (resuming OB) without saving a pending deep link.
+        // Dedicated action so MainActivity can track the tap (analytics + conversion). The
+        // onboarding-incomplete redirect resumes OB; MainActivity excludes this action from the
+        // pending-deep-link save path so no bogus deep link is persisted.
         return NotificationDeepLink(
-            action = Intent.ACTION_MAIN,
+            action = ACTION_NOTIF_ONBOARDING_RESUME,
             deepLinkDestination = "onboarding_resume"
         )
     }

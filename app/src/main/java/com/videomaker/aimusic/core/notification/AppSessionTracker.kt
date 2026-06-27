@@ -58,7 +58,9 @@ class AppSessionTracker(
             }
         )
         // Persist any attempts skipped because their delay is configured to 0 (disabled).
-        if (resolution.firedCount != preferencesManager.obResumeFiredCount) {
+        // ADVANCE-ONLY: use '>' (not '!=') so a worker that concurrently posted a notification
+        // and advanced the counter on a background thread is never reset backward by this read.
+        if (resolution.firedCount > preferencesManager.obResumeFiredCount) {
             preferencesManager.obResumeFiredCount = resolution.firedCount
         }
         val request = resolution.request

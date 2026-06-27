@@ -52,7 +52,8 @@ class OnboardingResumeWorker(
         val attempt = OnboardingResumeNotifications.nextAttempt(firedCount)
             ?: return Result.success()
         // Guard against a stale scheduled attempt that no longer matches progress.
-        val requestedAttempt = inputData.getInt(NotificationScheduler.KEY_OB_RESUME_ATTEMPT, attempt)
+        // Default -1 (invalid) so a malformed/missing key fails CLOSED rather than open.
+        val requestedAttempt = inputData.getInt(NotificationScheduler.KEY_OB_RESUME_ATTEMPT, -1)
         if (requestedAttempt != attempt) {
             return Result.success()
         }

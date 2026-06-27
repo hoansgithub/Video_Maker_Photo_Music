@@ -152,19 +152,27 @@ class RootViewActivity : AppCompatActivity() {
                 navigationEvent?.let { event ->
                     when (event) {
                         is RootNavigationEvent.NavigateTo -> {
-                            if (event.route is AppRoute.LanguageSelection &&
+                            val isLanguage = event.route is AppRoute.LanguageSelection
+                            // If a recreation happened while the OS dialog was up, the dialog is
+                            // still in flight; re-enter the waiting state instead of navigating past
+                            // the gate (the re-registered launcher will receive the re-delivered result).
+                            val dialogInFlight = notificationPermissionCoordinator.isOnboardingPermissionDialogInFlight()
+                            val shouldRequest = isLanguage && !dialogInFlight &&
                                 notificationPermissionCoordinator.shouldRequestOnboardingPermission(permissionContext)
-                            ) {
+                            if (isLanguage && (shouldRequest || dialogInFlight)) {
                                 // Deferred path: keep the event in the (ViewModel-backed) StateFlow
-                                // until the user answers, so an Activity recreation while the system
-                                // dialog is showing can recover and still navigate. onNavigationHandled()
-                                // is therefore called in the launcher callback, NOT here.
+                                // until the user answers. onNavigationHandled() is called in the
+                                // launcher callback, NOT here.
                                 pendingNavRoute = event
-                                Analytics.trackPermissionRender(
-                                    perType = AnalyticsEvent.Value.PerType.NOTI,
-                                    popType = AnalyticsEvent.Value.PopType.SYSTEM
-                                )
-                                notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                                if (shouldRequest) {
+                                    notificationPermissionCoordinator.markOnboardingPermissionDialogShown()
+                                    Analytics.trackPermissionRender(
+                                        perType = AnalyticsEvent.Value.PerType.NOTI,
+                                        popType = AnalyticsEvent.Value.PopType.SYSTEM
+                                    )
+                                    notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                                }
+                                // else: dialog already in flight after a recreation — just wait.
                             } else {
                                 handleNavigation(event)
                                 rootViewModel.onNavigationHandled()
