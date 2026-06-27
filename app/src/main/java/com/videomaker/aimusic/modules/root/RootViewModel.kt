@@ -355,12 +355,6 @@ class RootViewModel(
      * Called once during initialization — survives ViewModel destruction.
      */
     private fun preloadNativeAds() {
-        // Preload post-splash native ad (shown after splash/open-app interstitial closes)
-        // Preloaded for all launches — native ad renders in RootViewActivity before navigating
-        com.videomaker.aimusic.VideoMakerApplication.preloadNativeAd(
-            placement = AdPlacement.NATIVE_AFTER_SPLASH
-        )
-
         if (!this@RootViewModel.onboardingComplete) {
             if (this@RootViewModel.onboardingResumeStep != null) {
                 // Partial progress → Preload welcome-back ad

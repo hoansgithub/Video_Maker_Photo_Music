@@ -21,15 +21,17 @@ import com.videomaker.aimusic.core.constants.AdPlacement
 import org.koin.compose.koinInject
 
 /**
- * Fullscreen native ad shown after splash/open-app interstitial closes (Drama app pattern).
+ * Fullscreen native ad shown after eligible interstitial closes (Drama app pattern).
  *
- * Non-blocking: only shown if native ad was successfully preloaded during interstitial.
+ * Non-blocking: only shown if native ad was successfully preloaded.
  * Includes a close button (shown immediately, no delay).
  *
+ * @param placement The native ad placement to render.
  * @param onClose Called when user taps the close button.
  */
 @Composable
 fun PostInterNativeAd(
+    placement: String,
     onClose: () -> Unit
 ) {
     val adClickDetector: AdClickDetector = koinInject()
@@ -39,7 +41,7 @@ fun PostInterNativeAd(
             .background(Color.Black)
     ) {
         NativeAdView(
-            placement = AdPlacement.NATIVE_AFTER_SPLASH,
+            placement = placement,
             modifier = Modifier.fillMaxSize(),
             isDebug = BuildConfig.DEBUG,
             onAdClicked = { adClickDetector.onAdClick(it) }

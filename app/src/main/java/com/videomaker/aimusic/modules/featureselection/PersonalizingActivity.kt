@@ -8,9 +8,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import co.alcheclub.lib.acccore.ads.compose.NativeAdView
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
@@ -82,26 +83,41 @@ class PersonalizingActivity : BaseOnboardingActivity() {
     override fun Content() {
         val adClickDetector: AdClickDetector = koinInject()
         val adPlacementConfigService: AdPlacementConfigService = koinInject()
+        val postInterNativeAdManager = koinInject<com.videomaker.aimusic.core.ads.PostInterNativeAdManager>()
+        val showPostInterNativeAd by postInterNativeAdManager.showNativeAd
+            .collectAsStateWithLifecycle()
 
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color(0xFF1A1A1A))
-        ) {
-            Box(modifier = Modifier.weight(1f)) {
-                PersonalizingScreen()
-            }
-            Box(
+        Box(modifier = Modifier.fillMaxSize()) {
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .then(if (adPlacementConfigService.adBottomNavPaddingEnabled) Modifier.navigationBarsPadding() else Modifier)
+                    .fillMaxSize()
+                    .background(Color(0xFF1A1A1A))
             ) {
-                NativeAdView(
-                    placement = AdPlacement.NATIVE_ONBOARDING_PERSONALIZING,
-                    modifier = Modifier.fillMaxWidth(),
-                    isDebug = BuildConfig.DEBUG,
-                    onAdClicked = { adClickDetector.onAdClick(it) }
-                )
+                Box(modifier = Modifier.weight(1f)) {
+                    PersonalizingScreen()
+                }
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .then(if (adPlacementConfigService.adBottomNavPaddingEnabled) Modifier.navigationBarsPadding() else Modifier)
+                ) {
+                    NativeAdView(
+                        placement = AdPlacement.NATIVE_ONBOARDING_PERSONALIZING,
+                        modifier = Modifier.fillMaxWidth(),
+                        isDebug = BuildConfig.DEBUG,
+                        onAdClicked = { adClickDetector.onAdClick(it) }
+                    )
+                }
+            }
+
+            // Post-interstitial native ad overlay (shown after onboarding-complete interstitial closes)
+            if (showPostInterNativeAd) {
+                postInterNativeAdManager.getActiveNativePlacement()?.let { placement ->
+                    com.videomaker.aimusic.core.ads.PostInterNativeAd(
+                        placement = placement,
+                        onClose = postInterNativeAdManager::onNativeAdClosed
+                    )
+                }
             }
         }
     }

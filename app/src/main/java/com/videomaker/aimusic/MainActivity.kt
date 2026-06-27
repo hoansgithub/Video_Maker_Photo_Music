@@ -252,9 +252,12 @@ class MainActivity : AppCompatActivity() {
                             val showPostInterNativeAd by postInterNativeAdManager.showNativeAd
                                 .collectAsStateWithLifecycle()
                             if (showPostInterNativeAd) {
-                                com.videomaker.aimusic.core.ads.PostInterNativeAd(
-                                    onClose = postInterNativeAdManager::onNativeAdClosed
-                                )
+                                postInterNativeAdManager.getActiveNativePlacement()?.let { activePlacement ->
+                                    com.videomaker.aimusic.core.ads.PostInterNativeAd(
+                                        placement = activePlacement,
+                                        onClose = postInterNativeAdManager::onNativeAdClosed
+                                    )
+                                }
                             }
                         }
                     }

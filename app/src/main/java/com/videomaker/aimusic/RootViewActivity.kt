@@ -162,14 +162,17 @@ class RootViewActivity : AppCompatActivity() {
                             )
                         }
 
-                        // Post-splash native ad overlay (shown after splash/open-app interstitial closes)
+                        // Post-interstitial native ad overlay (shown after splash/open-app interstitial closes)
                         val postInterNativeAdManager = org.koin.compose.koinInject<com.videomaker.aimusic.core.ads.PostInterNativeAdManager>()
                         val showPostInterNativeAd by postInterNativeAdManager.showNativeAd
                             .collectAsStateWithLifecycle()
                         if (showPostInterNativeAd) {
-                            com.videomaker.aimusic.core.ads.PostInterNativeAd(
-                                onClose = postInterNativeAdManager::onNativeAdClosed
-                            )
+                            postInterNativeAdManager.getActiveNativePlacement()?.let { placement ->
+                                com.videomaker.aimusic.core.ads.PostInterNativeAd(
+                                    placement = placement,
+                                    onClose = postInterNativeAdManager::onNativeAdClosed
+                                )
+                            }
                         }
                     }
 

@@ -401,13 +401,14 @@ val adsModule = module {
         )
     }
 
-    // Post-Interstitial Native Ad Manager (splash/open-app interstitials only)
-    // Native ad preloaded early during splash loading, shown after interstitial closes
+    // Post-Interstitial Native Ad Manager (Drama app pattern)
+    // Native ad starts loading when showInterstitial() is called
     // Non-blocking: skipped if native ad not loaded when interstitial closes
     single {
         com.videomaker.aimusic.core.ads.PostInterNativeAdManager(
             adsLoaderService = get(),
-            adPlacementConfigService = get()
+            adPlacementConfigService = get(),
+            coroutineScope = (androidContext().applicationContext as com.videomaker.aimusic.VideoMakerApplication).applicationScope
         )
     }
 
