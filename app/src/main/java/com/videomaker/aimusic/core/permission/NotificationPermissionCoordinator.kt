@@ -40,6 +40,16 @@ class NotificationPermissionCoordinator(
         return tryConsumePermissionUiSlotInCurrentProcess()
     }
 
+    fun shouldRequestOnboardingPermission(context: Context): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return false
+        if (isNotificationGranted(context)) {
+            onSystemPermissionGranted()
+            return false
+        }
+        if (preferencesManager.getNotificationPermissionRequestCount() != 0) return false
+        return tryConsumePermissionUiSlotInCurrentProcess()
+    }
+
     fun shouldShowExportContextualPopup(context: Context): Boolean {
         if (isNotificationGranted(context)) {
             onSystemPermissionGranted()

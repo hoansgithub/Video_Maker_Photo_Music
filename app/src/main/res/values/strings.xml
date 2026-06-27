@@ -614,10 +614,18 @@
     <string name="notif_abandoned_select_photos_body">Your \'Not Like Us\' edit is almost ready. Just pick a few photos to see the magic happen!</string>
     <string name="notif_draft_completion_nudge_title">Finish what you started!</string>
     <string name="notif_draft_completion_nudge_body">You are only one step away from a viral video. Come back and add your photos now!</string>
+    <string name="notif_ob_resume_1_title">Don\'t miss it! Trending songs for you.</string>
+    <string name="notif_ob_resume_1_body">Complete setup today and turn your photos into a music video with today\'s trending song.</string>
+    <string name="notif_ob_resume_2_title">You\'re one step away ✨</string>
+    <string name="notif_ob_resume_2_body">Unlock hundreds of AI templates and create your first music video for free.</string>
+    <string name="notif_ob_resume_3_title">We\'ve missed you ...❤️</string>
+    <string name="notif_ob_resume_3_body">Turn your favorite songs into amazing music videos with our AI templates.</string>
     <string name="notif_cta_play_song">Play Song</string>
     <string name="notif_cta_discover_templates">Discover Templates</string>
     <string name="notif_cta_continue_editing">Continue Editing</string>
     <string name="notif_cta_view_template">View Template</string>
+    <string name="notif_cta_discover_now">Discover Now</string>
+    <string name="notif_cta_see_now">See now</string>
 
     <!-- Genre Template Onboarding -->
     <string name="genre_step_title">What music do you like?</string>

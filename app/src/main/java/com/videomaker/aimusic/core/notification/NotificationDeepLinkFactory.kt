@@ -65,6 +65,15 @@ object NotificationDeepLinkFactory {
         )
     }
 
+    fun onboardingResume(): NotificationDeepLink {
+        // action = ACTION_MAIN so MainActivity's "onboarding incomplete" guard
+        // redirects to RootViewActivity (resuming OB) without saving a pending deep link.
+        return NotificationDeepLink(
+            action = Intent.ACTION_MAIN,
+            deepLinkDestination = "onboarding_resume"
+        )
+    }
+
     fun toMainActivityIntent(context: Context, deepLink: NotificationDeepLink): Intent {
         return Intent(context, MainActivity::class.java).apply {
             action = deepLink.action

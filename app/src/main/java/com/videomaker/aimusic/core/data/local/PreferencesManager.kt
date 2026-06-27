@@ -86,6 +86,7 @@ class PreferencesManager(context: Context) {
         private const val KEY_RATING_DAILY_SHOWN_COUNT = "rating_daily_shown_count"
         private const val KEY_NOTIFICATION_PERMISSION_REQUEST_COUNT = "notification_permission_request_count"
         private const val KEY_NOTIFICATION_PERMISSION_BLOCKED = "notification_permission_blocked"
+        private const val KEY_OB_RESUME_FIRED_COUNT = "ob_resume_fired_count"
         private const val KEY_NOTIFICATION_DAILY_SHOWN_EPOCH_DAY = "notification_daily_shown_epoch_day"
         private const val KEY_NOTIFICATION_DAILY_SHOWN_COUNT = "notification_daily_shown_count"
         private const val KEY_NOTIFICATION_TYPE_DAILY_SHOWN_EPOCH_DAY_PREFIX = "notification_type_daily_epoch_day_"
@@ -325,6 +326,15 @@ class PreferencesManager(context: Context) {
             remove(KEY_NOTIFICATION_PERMISSION_BLOCKED)
         }
     }
+
+    /**
+     * How many onboarding-resume notifications have actually been posted (0..3).
+     * Advanced only when a notification is successfully shown, so the sequence
+     * stays strictly ordered 1 -> 2 -> 3.
+     */
+    var obResumeFiredCount: Int
+        get() = prefs.getInt(KEY_OB_RESUME_FIRED_COUNT, 0)
+        set(value) = prefs.edit { putInt(KEY_OB_RESUME_FIRED_COUNT, value.coerceIn(0, 3)) }
 
     fun getNotificationDailyShownCount(nowMs: Long = System.currentTimeMillis()): Int {
         val today = epochDay(nowMs)

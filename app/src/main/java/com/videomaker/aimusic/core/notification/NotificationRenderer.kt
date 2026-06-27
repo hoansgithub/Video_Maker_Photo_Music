@@ -113,6 +113,11 @@ class NotificationRenderer(
         payload: NotificationPayload,
         resolvedCtaText: String
     ): Bitmap = withContext(Dispatchers.IO) {
+        // Pre-designed expanded artwork: use it as-is, no badge/gradient decoration.
+        payload.expandedImageRes?.let { res ->
+            return@withContext BitmapFactory.decodeResource(context.resources, res)
+        }
+
         val baseBitmap = if (payload.type == NotificationType.VIRAL_TEMPLATE && payload.imageCandidates.size > 1) {
             val bitmaps = payload.imageCandidates.take(3).mapNotNull { loadBitmapFromSource(it) }
             if (bitmaps.isNotEmpty()) composeTemplateCollage(bitmaps) else null
@@ -152,7 +157,11 @@ class NotificationRenderer(
             setTextViewText(R.id.tvBody, resolvedBody)
             setTextColor(R.id.tvTitle, textColors.titleColor)
             setTextColor(R.id.tvBody, textColors.bodyColor)
-            setImageViewBitmap(R.id.ivThumb, scaleBitmapToFit(heroBitmap, dp(56), dp(56)))
+            if (payload.collapsedImageRes != null) {
+                setImageViewResource(R.id.ivThumb, payload.collapsedImageRes)
+            } else {
+                setImageViewBitmap(R.id.ivThumb, scaleBitmapToFit(heroBitmap, dp(56), dp(56)))
+            }
             setOnClickPendingIntent(R.id.rootContainer, contentIntent)
             setOnClickPendingIntent(R.id.ivThumb, contentIntent)
         }
@@ -349,6 +358,14 @@ class NotificationRenderer(
                 badgeText = "1 STEP LEFT",
                 badgeColor = Color.parseColor("#FF8A00"),
                 ctaColor = Color.parseColor("#FFFFFF"),
+                ctaTextColor = Color.parseColor("#111111"),
+                gradientColor = Color.argb(215, 0, 0, 0)
+            )
+
+            NotificationType.ONBOARDING_RESUME -> HeroStyle(
+                badgeText = "HOT",
+                badgeColor = Color.parseColor("#FF4C2E"),
+                ctaColor = Color.parseColor("#DDFF33"),
                 ctaTextColor = Color.parseColor("#111111"),
                 gradientColor = Color.argb(215, 0, 0, 0)
             )
