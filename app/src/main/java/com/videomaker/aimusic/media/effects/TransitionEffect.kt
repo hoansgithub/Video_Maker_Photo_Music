@@ -3,7 +3,7 @@ package com.videomaker.aimusic.media.effects
 import android.content.Context
 import android.graphics.Bitmap
 import android.opengl.GLES20
-import android.opengl.GLUtils
+import com.videomaker.aimusic.media.renderer.GLTextureUploader
 import androidx.media3.common.util.GlProgram
 import androidx.media3.common.util.GlUtil
 import androidx.media3.common.util.Size
@@ -251,6 +251,8 @@ void main() {
      * This guarantees identical color handling for both textures.
      */
     private fun createTextureFromBitmap(bitmap: Bitmap): Int {
+        if (bitmap.isRecycled) return -1
+
         return try {
             val textureIds = IntArray(1)
             GLES20.glGenTextures(1, textureIds, 0)
@@ -266,10 +268,7 @@ void main() {
             GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE)
             GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE)
 
-            GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0)
-
-            val error = GLES20.glGetError()
-            if (error != GLES20.GL_NO_ERROR) {
+            if (!GLTextureUploader.safeTexImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0)) {
                 GLES20.glDeleteTextures(1, textureIds, 0)
                 return -1
             }

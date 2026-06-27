@@ -10,7 +10,7 @@ import android.opengl.EGLContext
 import android.opengl.EGLDisplay
 import android.opengl.EGLSurface
 import android.opengl.GLES20
-import android.opengl.GLUtils
+import com.videomaker.aimusic.media.renderer.GLTextureUploader
 import android.media.ExifInterface
 import android.content.Context
 import java.io.File
@@ -413,7 +413,10 @@ class GPUImagePreprocessor(private val context: Context) {
             GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE)
             GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE)
 
-            GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0)
+            if (!GLTextureUploader.safeTexImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0)) {
+                GLES20.glDeleteTextures(1, textureIds, 0)
+                return 0
+            }
         } catch (e: Exception) {
             android.util.Log.e(TAG, "Failed to upload texture: ${e.message}")
             GLES20.glDeleteTextures(1, textureIds, 0)

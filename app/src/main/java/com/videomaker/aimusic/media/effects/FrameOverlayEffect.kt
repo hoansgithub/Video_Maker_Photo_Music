@@ -4,7 +4,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.opengl.GLES20
-import android.opengl.GLUtils
+import com.videomaker.aimusic.media.renderer.GLTextureUploader
 import androidx.media3.common.util.GlProgram
 import androidx.media3.common.util.GlUtil
 import androidx.media3.common.util.Size
@@ -102,7 +102,10 @@ private class FrameOverlayShaderProgram(
             GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE)
             GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE)
 
-            GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGBA, bitmap, 0)
+            if (!GLTextureUploader.safeTexImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0)) {
+                GLES20.glDeleteTextures(1, textureIds, 0)
+                return -1
+            }
         } catch (e: Exception) {
             android.util.Log.e("FrameOverlayEffect", "Failed to upload texture: ${e.message}")
             GLES20.glDeleteTextures(1, textureIds, 0)

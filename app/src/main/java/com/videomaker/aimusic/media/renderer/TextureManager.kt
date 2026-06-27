@@ -6,7 +6,7 @@ import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.net.Uri
 import android.opengl.GLES20
-import android.opengl.GLUtils
+
 import android.util.Log
 import android.media.ExifInterface
 import java.io.ByteArrayInputStream
@@ -114,14 +114,12 @@ class TextureManager(private val context: Context) {
      */
     fun setViewportSize(width: Int, height: Int) {
         if (glMaxTextureSize == 0) {
-            val buf = IntArray(1)
-            GLES20.glGetIntegerv(GLES20.GL_MAX_TEXTURE_SIZE, buf, 0)
-            glMaxTextureSize = buf[0].coerceAtLeast(1024)
+            glMaxTextureSize = GLTextureUploader.querySafeMaxTextureSize()
         }
         // 1x viewport — minimum for sharp preview, maximum for frame rate
         maxTextureWidth = width.coerceAtMost(glMaxTextureSize)
         maxTextureHeight = height.coerceAtMost(glMaxTextureSize)
-        Log.d(TAG, "Texture limit: ${maxTextureWidth}x$maxTextureHeight (1x viewport, glMax=$glMaxTextureSize)")
+        Log.d(TAG, "Texture limit: ${maxTextureWidth}x$maxTextureHeight (1x viewport, safeMax=$glMaxTextureSize)")
     }
 
     /**
@@ -213,12 +211,13 @@ class TextureManager(private val context: Context) {
             GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE)
             GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE)
 
-            // Upload bitmap to GPU
-            if (bitmap.isRecycled) {
-                Log.w(TAG, "Bitmap recycled before upload, skipping texture $index")
+            // Upload bitmap to GPU via safe pre-allocation path.
+            // Pre-allocates GPU memory first, then copies pixels — prevents
+            // native SIGSEGV in Mali/Adreno drivers on GPU OOM.
+            if (!GLTextureUploader.safeTexImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0)) {
+                Log.w(TAG, "Safe texture upload failed for index $index, skipping")
                 return
             }
-            GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0)
 
             GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0)
         } catch (e: Exception) {
