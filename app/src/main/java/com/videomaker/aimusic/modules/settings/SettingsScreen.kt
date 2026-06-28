@@ -30,13 +30,13 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -44,6 +44,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -87,6 +88,7 @@ private const val PRIVACY_POLICY_URL = "https://alcheclub.co/privacy-policy/"
 @Composable
 fun SettingsScreen(
     onNavigateBack: () -> Unit,
+    onNavigateToMyVideos: () -> Unit = {},
     onNavigateToLanguageSettings: () -> Unit = {},
     onNavigateToWidgetScreen: () -> Unit = {},
     onNavigateToNotificationTest: () -> Unit = {},
@@ -101,26 +103,27 @@ fun SettingsScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            CenterAlignedTopAppBar(
                 title = {
                     Text(
                         text = stringResource(R.string.settings_title),
                         fontWeight = FontWeight.Bold
                     )
                 },
-                actions = {
+                navigationIcon = {
                     Icon(
-                        painter = painterResource(R.drawable.ic_close),
+                        painter = painterResource(R.drawable.ic_arrow_down),
                         tint = MaterialTheme.colorScheme.onSurface,
                         contentDescription = null,
                         modifier = Modifier
-                            .padding(end = 16.dp)
+                            .padding(start = 16.dp)
                             .size(48.dp)
                             .background(MaterialTheme.colorScheme.onSurface.copy(0.1f), CircleShape)
                             .clickableSingle(
                                 onClick = { onNavigateBack.invoke() }
                             )
                             .padding(12.dp)
+                            .rotate(90f)
                     )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -139,6 +142,30 @@ fun SettingsScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            Text(
+                text = stringResource(R.string.settings_library),
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Medium,
+                color = TextInactive
+            )
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(CtaText, RoundedCornerShape(16.dp))
+                    .padding(start = 24.dp)
+            ) {
+                SettingsItem(
+                    icon = R.drawable.ic_video_time,
+                    title = stringResource(R.string.settings_my_videos),
+                    subtitle = "",
+                    onClick = {
+                        Analytics.trackSettingOptionClick("my_videos", settingLocation)
+                        onNavigateToMyVideos()
+                    }
+                )
+            }
+
+            Spacer(Modifier.height(12.dp))
             Text(
                 text = stringResource(R.string.settings_account),
                 fontSize = 18.sp,

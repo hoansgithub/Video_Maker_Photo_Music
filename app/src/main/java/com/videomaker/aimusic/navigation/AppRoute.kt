@@ -72,6 +72,19 @@ sealed interface AppRoute : NavKey {
         val hintMode: String? = null
     ) : AppRoute
 
+    /**
+     * My Videos screen: the user's library (Created Video / Liked Template / Liked Song).
+     * Reached from Settings → Library → My Videos, and from My-Video deep links / post-export.
+     *
+     * @param highlightProjectId Optional project id to focus in the Created Video list
+     * @param hintMode Optional hint mode to guide save/share action
+     */
+    @Serializable
+    data class MyVideos(
+        val highlightProjectId: String? = null,
+        val hintMode: String? = null
+    ) : AppRoute
+
     @Serializable
     data class UnifiedSearch(
         val initialSection: SearchSection = SearchSection.TEMPLATES

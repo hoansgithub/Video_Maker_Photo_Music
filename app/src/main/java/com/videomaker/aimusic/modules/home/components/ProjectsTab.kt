@@ -60,7 +60,6 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -74,7 +73,6 @@ import androidx.media3.common.util.UnstableApi
 import co.alcheclub.lib.acccore.ads.compose.NativeAdView
 import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.R
-import com.videomaker.aimusic.ui.components.LocalAsyncImage
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.ads.RewardedAdPresenter
 import com.videomaker.aimusic.core.constants.AdPlacement
@@ -94,12 +92,16 @@ import com.videomaker.aimusic.ui.components.ProjectCard
 import com.videomaker.aimusic.ui.components.StaggeredGrid
 import com.videomaker.aimusic.ui.components.rememberHideOnScrollConnection
 import com.videomaker.aimusic.ui.theme.AppDimens
+import com.videomaker.aimusic.ui.theme.FoundationBlack
 import com.videomaker.aimusic.ui.theme.Neutral_Black
 import com.videomaker.aimusic.ui.theme.Primary
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import com.videomaker.aimusic.core.ads.AdClickDetector
+
+/** Created Video thumbnails render at a fixed landscape ratio (W/H = 192/128). */
+private const val CREATED_VIDEO_THUMBNAIL_RATIO = 192f / 128f
 
 @OptIn(UnstableApi::class)
 @Composable
@@ -321,16 +323,9 @@ fun ProjectsTabContent(
 
     Box(modifier = Modifier
         .fillMaxSize()
+        .background(FoundationBlack)
         .nestedScroll(scrollHideConnection)
     ) {
-        // Background image — edge-to-edge, behind everything
-        LocalAsyncImage(
-            resId = R.drawable.bg_projects,
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxSize()
-        )
-
         // Content with top padding
         Column(
             modifier = Modifier
@@ -842,7 +837,7 @@ private fun calculateAspectRatio(
 ): Float {
     return when (item) {
         is ProjectGridItem.ProjectItem -> {
-            val thumbnailRatio = item.project.settings.aspectRatio.ratio
+            val thumbnailRatio = CREATED_VIDEO_THUMBNAIL_RATIO
             val cardWidth = 180f
             val thumbnailHeight = cardWidth / thumbnailRatio
             val totalCardHeight = thumbnailHeight + infoSectionHeightDp
@@ -895,7 +890,7 @@ private fun ProjectsStaggeredGrid(
 
     // Aspect ratios adjusted for 40dp info section (date + menu)
     val infoSectionHeightDp = 40f
-    val adAspectRatio = 9f / 16f  // Ad media uses 9:16 portrait
+    val adAspectRatio = CREATED_VIDEO_THUMBNAIL_RATIO  // Match created-video items (W/H 192/128)
 
     val aspectRatios = remember(gridItems.size, gridItems.firstOrNull()) {
         gridItems.map { item ->
@@ -919,6 +914,7 @@ private fun ProjectsStaggeredGrid(
             is ProjectGridItem.ProjectItem -> {
                 ProjectCard(
                     project = item.project,
+                    thumbnailAspectRatioOverride = CREATED_VIDEO_THUMBNAIL_RATIO,
                     onClick = { onProjectClick(item.project) },
                     onOptionClick = { onProjectOption(item.project) },
                     onDelete = { onDeleteProject(item.project) },

@@ -445,6 +445,7 @@ object AnalyticsEvent {
             const val GALLERY = "gallery"
             const val SONG = "song"
             const val LIBRARY = "library"
+            const val AI = "ai"
         }
 
         object LibraryTab {
