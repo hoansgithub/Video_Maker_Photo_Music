@@ -12,32 +12,34 @@ import android.media.ExifInterface
 import java.io.ByteArrayInputStream
 
 /**
- * TextureManager - Loads and caches images as GL textures.
+ * TextureManager - Loads and caches images as GL textures using a sliding window.
+ *
+ * Only keeps up to [MAX_CACHED_TEXTURES] textures loaded around the current
+ * playback position. At any frame, only 2 textures are needed (current + next
+ * during transition). The window pre-loads 1-2 ahead for smooth transitions.
  *
  * Optimized for preview frame rate over texture resolution:
  * - Textures are 1x viewport size (minimum needed for sharp preview).
  * - Decoded as RGB_565 (2 bytes/pixel vs 4 bytes for ARGB_8888).
  * - GL_NEAREST minification filter (faster sampling).
  *
- * Textures are loaded on first use and cached by image index.
- * Only reloads when the image list changes (not on effect/ratio change).
- * Tracks each texture's original aspect ratio for blur-background rendering.
  * Must be called from the GL thread.
  */
 class TextureManager(private val context: Context) {
 
     companion object {
         private const val TAG = "TextureManager"
+        private const val MAX_CACHED_TEXTURES = 4
     }
 
-    // Cached GL texture IDs indexed by image position
-    private var textureIds: IntArray = IntArray(0)
+    // Cached GL texture IDs by image index (sliding window)
+    private val textureCache = mutableMapOf<Int, Int>()
 
-    // Original aspect ratio (width/height) of each loaded texture
-    private var textureAspectRatios: FloatArray = FloatArray(0)
+    // Original aspect ratio (width/height) by image index
+    private val aspectRatioCache = mutableMapOf<Int, Float>()
 
     // URIs that produced the current textures — used to detect changes
-    private var loadedUris: List<Uri> = emptyList()
+    private var currentUris: List<Uri> = emptyList()
 
     // Max texture dimensions for downsampling (set from actual viewport)
     private var maxTextureWidth = 0
@@ -47,62 +49,82 @@ class TextureManager(private val context: Context) {
     private var glMaxTextureSize = 0
 
     /**
-     * Ensure textures are loaded for the given image URIs.
-     * If URIs haven't changed, reuses cached textures.
+     * Detect if the image URI list has changed. If so, invalidate cache.
+     * Does NOT load any textures — call [ensureTexturesForFrame] after.
      * Must be called on GL thread.
      */
-    fun ensureTextures(imageUris: List<Uri>) {
-        if (imageUris == loadedUris && textureIds.size == imageUris.size) {
-            return // Already loaded
-        }
+    fun updateImageUris(imageUris: List<Uri>) {
+        if (imageUris == currentUris) return
 
-        // Release old textures
+        // URI list changed — release all cached textures
         releaseTextures()
+        currentUris = imageUris.toList()
+    }
 
-        if (imageUris.isEmpty()) return
+    /**
+     * Ensure textures are loaded for the given image indices.
+     * Loads missing textures on demand and evicts excess beyond [MAX_CACHED_TEXTURES].
+     * Must be called on GL thread.
+     */
+    fun ensureTexturesForFrame(neededIndices: Set<Int>) {
+        if (currentUris.isEmpty()) return
 
-        // Allocate new texture IDs
-        textureIds = IntArray(imageUris.size)
-        textureAspectRatios = FloatArray(imageUris.size) { 1f }
-        GLES20.glGenTextures(imageUris.size, textureIds, 0)
-
-        for (i in imageUris.indices) {
-            loadTexture(imageUris[i], textureIds[i], i)
+        // Load any missing textures
+        for (index in neededIndices) {
+            if (index < 0 || index >= currentUris.size) continue
+            if (textureCache.containsKey(index)) continue
+            loadTexture(currentUris[index], index)
         }
 
-        loadedUris = imageUris.toList()
-        Log.d(TAG, "Loaded ${imageUris.size} textures (1x viewport, RGB565)")
+        // Evict if over capacity
+        if (textureCache.size > MAX_CACHED_TEXTURES) {
+            val toEvict = textureCache.keys
+                .filter { it !in neededIndices }
+                .sortedBy { key ->
+                    // Evict furthest from any needed index first
+                    neededIndices.minOf { needed -> kotlin.math.abs(key - needed) }
+                }
+                .reversed()
+
+            val evictCount = textureCache.size - MAX_CACHED_TEXTURES
+            for (i in 0 until evictCount.coerceAtMost(toEvict.size)) {
+                val evictIndex = toEvict[i]
+                val texId = textureCache.remove(evictIndex) ?: continue
+                val ids = intArrayOf(texId)
+                GLES20.glDeleteTextures(1, ids, 0)
+                aspectRatioCache.remove(evictIndex)
+            }
+        }
     }
 
     /**
      * Get the GL texture ID for a given image index.
-     * Returns 0 if index is out of bounds.
+     * Returns 0 if not currently cached.
      */
     fun getTexture(index: Int): Int {
-        if (index < 0 || index >= textureIds.size) return 0
-        return textureIds[index]
+        return textureCache[index] ?: 0
     }
 
     /**
      * Get the original aspect ratio (width/height) of the texture at the given index.
-     * Returns 1.0 if index is out of bounds.
+     * Returns 1.0 if not currently cached.
      */
     fun getAspectRatio(index: Int): Float {
-        if (index < 0 || index >= textureAspectRatios.size) return 1f
-        return textureAspectRatios[index]
+        return aspectRatioCache[index] ?: 1f
     }
 
     /**
      * Release all GL textures. Must be called on GL thread.
      */
     fun releaseTextures() {
-        if (textureIds.isNotEmpty()) {
-            GLES20.glDeleteTextures(textureIds.size, textureIds, 0)
-            textureIds = IntArray(0)
-            textureAspectRatios = FloatArray(0)
-            loadedUris = emptyList()
+        if (textureCache.isNotEmpty()) {
+            val ids = textureCache.values.toIntArray()
+            GLES20.glDeleteTextures(ids.size, ids, 0)
+            textureCache.clear()
+            aspectRatioCache.clear()
             Log.d(TAG, "Released all textures")
         }
+        currentUris = emptyList()
     }
 
     /**
@@ -128,12 +150,12 @@ class TextureManager(private val context: Context) {
      */
     fun onContextLost() {
         // Don't delete textures (already invalid), just clear tracking state
-        textureIds = IntArray(0)
-        textureAspectRatios = FloatArray(0)
-        loadedUris = emptyList()
+        textureCache.clear()
+        aspectRatioCache.clear()
+        currentUris = emptyList()
     }
 
-    private fun loadTexture(uri: Uri, textureId: Int, index: Int) {
+    private fun loadTexture(uri: Uri, index: Int) {
         var bitmap: Bitmap? = null
         try {
             // Read entire image into byte array once (single I/O for both EXIF and decode)
@@ -200,7 +222,12 @@ class TextureManager(private val context: Context) {
             }
 
             // Store original aspect ratio (width / height)
-            textureAspectRatios[index] = bitmap.width.toFloat() / bitmap.height.toFloat()
+            aspectRatioCache[index] = bitmap.width.toFloat() / bitmap.height.toFloat()
+
+            // Generate a single texture ID for this entry
+            val texIds = IntArray(1)
+            GLES20.glGenTextures(1, texIds, 0)
+            val textureId = texIds[0]
 
             GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureId)
 
@@ -216,10 +243,14 @@ class TextureManager(private val context: Context) {
             // native SIGSEGV in Mali/Adreno drivers on GPU OOM.
             if (!GLTextureUploader.safeTexImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0)) {
                 Log.w(TAG, "Safe texture upload failed for index $index, skipping")
+                GLES20.glDeleteTextures(1, texIds, 0)
                 return
             }
 
             GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0)
+
+            // Store in cache only after successful upload
+            textureCache[index] = textureId
         } catch (e: Exception) {
             Log.e(TAG, "Failed to load texture $uri: ${e.message}")
         } finally {

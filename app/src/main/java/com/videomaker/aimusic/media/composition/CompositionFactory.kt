@@ -1,8 +1,6 @@
 package com.videomaker.aimusic.media.composition
 
 import android.content.Context
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.net.Uri
 import androidx.media3.common.Effect
 import androidx.media3.common.MediaItem
@@ -71,31 +69,10 @@ class CompositionFactory(
     )
 
     /**
-     * Data class holding both FROM and TO bitmaps for a clip's transition
-     */
-    private data class TransitionBitmapPair(
-        val fromBitmap: Bitmap,
-        val toBitmap: Bitmap
-    )
-
-    /**
-     * Tracks the last set of transition bitmap pairs (FROM + TO) for memory management.
-     * Thread-safe using AtomicReference for concurrent access from UI and background threads.
-     */
-    private val lastTransitionBitmaps = AtomicReference<Map<Int, TransitionBitmapPair>?>(null)
-
-    /**
      * Tracks cache files for cleanup.
      * Thread-safe using AtomicReference for concurrent access.
      */
     private val lastCacheFiles = AtomicReference<List<File>?>(null)
-
-    /**
-     * Track beat-sync bitmaps loaded dynamically in createBeatSyncVideoSequence().
-     * These are separate from lastTransitionBitmaps and need separate cleanup.
-     * Thread-safe using AtomicReference for concurrent access.
-     */
-    private val beatSyncLoadedBitmaps = AtomicReference<MutableList<Bitmap>?>(null)
 
     /** Decodes sticker assets (incl. animated GIF frames) for export compositing. */
     private val stickerDecoder by lazy { AnimatedStickerDecoder(context) }
@@ -108,19 +85,22 @@ class CompositionFactory(
         AtomicReference<List<Pair<StickerPlacement, DecodedSticker>>?>(null)
 
     /**
-     * Recycle all tracked transition bitmaps (both FROM and TO).
+     * Recycle tracked bitmap resources.
      * Thread-safe - can be called from any thread.
+     *
+     * Transition bitmaps no longer need tracking — TransitionEffect loads from
+     * file paths on demand and recycles immediately after GPU upload.
+     *
+     * Sticker bitmaps are NOT explicitly recycled here. CompositeStickerOverlay
+     * reads them every frame via DecodedSticker.frameAt() for the entire export
+     * duration, and Media3's Effect:DefaultV thread may still be processing frames
+     * when this method is called. Explicit recycle() causes SIGABRT:
+     *   "cannot access an invalid/free'd bitmap here!"
+     * Instead, we clear the AtomicReference so GC collects them once Media3
+     * releases its overlay references.
      */
     fun recycleBitmaps() {
-        // Clear references only — do NOT call recycle().
-        // CompositionFactory is a Koin singleton shared between preview and export.
-        // Calling recycle() here can free bitmaps that the export's GL effect thread
-        // (CompositeStickerOverlay, TransitionEffect) is still actively using,
-        // causing native SIGABRT: "cannot access an invalid/free'd bitmap".
-        // GC will reclaim native bitmap memory once all references are dropped.
-        lastTransitionBitmaps.getAndSet(null)
-        beatSyncLoadedBitmaps.getAndSet(null)
-        lastDecodedStickers.getAndSet(null)
+        lastDecodedStickers.set(null)
     }
 
     /**
@@ -173,9 +153,9 @@ class CompositionFactory(
 
         onProgress?.invoke(0)
 
-        // STEP 1: Pre-process ALL images with blur background  (0→70% of composition)
+        // STEP 1: Pre-process ALL images with blur background  (0→80% of composition)
         val processedImages = preProcessAllImages(project.assets, settings, textureSize) { imgPercent ->
-            onProgress?.invoke(imgPercent * 70 / 100)
+            onProgress?.invoke(imgPercent * 80 / 100)
         }
 
         // VALIDATE: Ensure ALL images were processed successfully
@@ -187,12 +167,11 @@ class CompositionFactory(
             )
         }
 
-        // STEP 2: Load transition TO bitmaps from cache files  (→75%)
-        val transitionBitmaps = loadTransitionBitmapsFromCache(processedImages, settings)
-        lastTransitionBitmaps.set(transitionBitmaps)
-        onProgress?.invoke(75)
+        // No bulk bitmap loading — TransitionEffect loads lazily from cache file paths.
+        // This reduces peak memory from ~161 MB (all bitmaps) to ~7.4 MB (2 at a time).
+        onProgress?.invoke(80)
 
-        // STEP 2b: Decode sticker assets (incl. animated GIF frames) for overlay compositing.
+        // STEP 2: Decode sticker assets (incl. animated GIF frames) for overlay compositing.
         // Shared across all clips so each per-clip effect chain reuses the same frames.
         val decodedStickers = if (settings.stickers.isNotEmpty()) {
             stickerDecoder.decodeAll(settings.stickers)
@@ -214,7 +193,6 @@ class CompositionFactory(
             settings = settings,
             beatData = beatData,
             processedImages = processedImages,
-            transitionBitmaps = transitionBitmaps,
             includeWatermark = includeWatermark,
             fontPresets = fontPresets
         )
@@ -309,80 +287,8 @@ class CompositionFactory(
         results  // Return from withContext
     }
 
-    /**
-     * Load bitmaps from GPU-cached files for ALL clips
-     *
-     * SINGLE SOURCE OF TRUTH: All textures come from the SAME GPU-rendered cache files.
-     * This ensures identical color handling because:
-     * - Same GPU shader produced all images
-     * - Same PNG files are loaded using identical BitmapFactory.decodeFile
-     * - TransitionEffect loads textures itself (ignores Media3's inputTexId)
-     *
-     * For clips with transitions: loads FROM + TO bitmaps
-     * For last clip (no transition): loads only FROM bitmap (for passthrough rendering)
-     *
-     * @return Map of clip index to TransitionBitmapPair (from + optional to)
-     */
-    private suspend fun loadTransitionBitmapsFromCache(
-        processedImages: Map<Int, ProcessedImage>,
-        settings: ProjectSettings
-    ): Map<Int, TransitionBitmapPair> = withContext(Dispatchers.IO) {
-        // ✅ Explicit IO dispatcher to avoid ANR during bitmap loading
-        val results = mutableMapOf<Int, TransitionBitmapPair>()
-        val sortedIndices = processedImages.keys.sorted()
-
-        // Load bitmaps for ALL clips
-        sortedIndices.forEach { index ->
-            val currentProcessedImage = processedImages[index]
-            val isLastClip = index == sortedIndices.last()
-            val hasTransition = !isLastClip && settings.effectSetId != null
-
-            if (currentProcessedImage != null) {
-                try {
-                    // Load FROM bitmap (current clip's image) - needed for ALL clips
-                    // Verify file exists before loading
-                    val fromBitmap = if (currentProcessedImage.cacheFile.exists() && currentProcessedImage.cacheFile.length() > 0) {
-                        BitmapFactory.decodeFile(currentProcessedImage.cacheFile.absolutePath)
-                    } else {
-                        android.util.Log.w("CompositionFactory", "Cache file missing: ${currentProcessedImage.cacheFile.name}")
-                        null
-                    }
-
-                    if (fromBitmap != null) {
-                        if (hasTransition) {
-                            // For clips with transition: also load TO bitmap (next clip)
-                            val nextIndex = index + 1
-                            val nextProcessedImage = processedImages[nextIndex]
-                            val toBitmap = nextProcessedImage?.let { nextImg ->
-                                if (nextImg.cacheFile.exists() && nextImg.cacheFile.length() > 0) {
-                                    BitmapFactory.decodeFile(nextImg.cacheFile.absolutePath)
-                                } else {
-                                    android.util.Log.w("CompositionFactory", "Next cache file missing: ${nextImg.cacheFile.name}")
-                                    null
-                                }
-                            }
-
-                            if (toBitmap != null) {
-                                results[index] = TransitionBitmapPair(fromBitmap, toBitmap)
-                            } else {
-                                // Fallback: use FROM as TO (no visible transition but consistent rendering)
-                                results[index] = TransitionBitmapPair(fromBitmap, fromBitmap)
-                            }
-                        } else {
-                            // For last clip (no transition): use FROM for both (passthrough mode)
-                            results[index] = TransitionBitmapPair(fromBitmap, fromBitmap)
-                        }
-                    }
-                } catch (_: Exception) {
-                }
-            }
-        }
-
-        results  // Return from withContext
-    }
-
-    // CPU blur code removed - now using GPU preprocessing via GPUImagePreprocessor
-    // This ensures single source of truth for color handling
+    // Transition bitmaps are no longer loaded upfront — TransitionEffect loads
+    // lazily from cache file paths in configure(). See TransitionEffect.kt.
 
     /**
      * Create video sequence using beat-sync timing (variable clip durations).
@@ -400,13 +306,9 @@ class CompositionFactory(
         settings: ProjectSettings,
         beatData: BeatSyncData,
         processedImages: Map<Int, ProcessedImage>,
-        transitionBitmaps: Map<Int, TransitionBitmapPair>,
         includeWatermark: Boolean,
         fontPresets: List<TextFontPreset>
     ): EditedMediaItemSequence {
-        // Track all bitmaps loaded in this method for cleanup
-        val loadedBitmaps = mutableListOf<Bitmap>()
-
         // Get all transitions from the effect set
         val effectSetTransitions = getTransitionsFromEffectSet(settings)
         val passthroughTransition = TransitionShaderLibrary.getDefault()
@@ -433,8 +335,6 @@ class CompositionFactory(
 
         val editedItems = clips.mapIndexed { clipIdx, clip ->
             val imageIdx = clip.imageIndex
-            val asset = assets[imageIdx]
-            val bitmapPair = transitionBitmaps[imageIdx]
             val isLast = !clip.hasTransition
 
             // Get transition for this clip (cycles through effect set)
@@ -446,9 +346,12 @@ class CompositionFactory(
                 null  // No transitions available - skip transition effect
             }
 
+            // File path for current image's cache
+            val fromImagePath = processedImages[imageIdx]?.cacheFile?.absolutePath
+
             val transition = when {
                 clip.hasTransition && selectedTransition != null -> selectedTransition
-                isLast && bitmapPair != null -> passthroughTransition  // Last clip: passthrough mode
+                isLast && fromImagePath != null -> passthroughTransition  // Last clip: passthrough mode
                 else -> null
             }
 
@@ -457,36 +360,24 @@ class CompositionFactory(
             val clipStartTimeUs = cumulativeStartTimeUs
 
             // Use CACHE URI instead of original asset URI
-            val imageUri = processedImages[imageIdx]?.cacheUri ?: asset.uri
+            val imageUri = processedImages[imageIdx]?.cacheUri ?: assets[imageIdx].uri
 
-            // Load TO bitmap for transition with size limit (prevents OOM)
-            val toBitmap = if (clip.hasTransition && clipIdx + 1 < clips.size) {
+            // File path for next image (transition TO target)
+            val toImagePath = if (clip.hasTransition && clipIdx + 1 < clips.size) {
                 val nextImgIdx = clips[clipIdx + 1].imageIndex
-                processedImages[nextImgIdx]?.cacheFile?.let { cacheFile ->
-                    // Verify file exists before loading
-                    if (cacheFile.exists() && cacheFile.length() > 0) {
-                        // Load with options to limit size (max 720px as per EXPORT_TEXTURE_SIZE)
-                        val options = BitmapFactory.Options().apply {
-                            inSampleSize = 2  // Reduce memory by 4x
-                        }
-                        BitmapFactory.decodeFile(cacheFile.absolutePath, options)?.also { bitmap ->
-                            loadedBitmaps.add(bitmap)  // Track for cleanup
-                        }
-                    } else {
-                        android.util.Log.w("CompositionFactory", "Beat-sync cache file missing: ${cacheFile.name}")
-                        null
-                    }
-                }
+                processedImages[nextImgIdx]?.cacheFile?.absolutePath
+            } else if (isLast) {
+                fromImagePath  // Passthrough: same as from
             } else {
-                bitmapPair?.toBitmap
+                null
             }
 
             val editedItem = createEditedMediaItem(
                 imageUri = imageUri,
                 settings = settings,
                 transition = transition,
-                fromImageBitmap = bitmapPair?.fromBitmap,
-                toImageBitmap = toBitmap,
+                fromImagePath = fromImagePath,
+                toImagePath = toImagePath,
                 hasTransition = clip.hasTransition,
                 isPassthroughMode = isLast,
                 clipStartTimeUs = clipStartTimeUs,
@@ -499,9 +390,6 @@ class CompositionFactory(
             cumulativeStartTimeUs += totalDurationMs * 1000L
             editedItem
         }
-
-        // Store loaded bitmaps for cleanup
-        beatSyncLoadedBitmaps.set(loadedBitmaps)
 
         return EditedMediaItemSequence.Builder(editedItems).build()
     }
@@ -583,8 +471,8 @@ class CompositionFactory(
         imageUri: Uri,
         settings: ProjectSettings,
         transition: Transition?,
-        fromImageBitmap: Bitmap?,
-        toImageBitmap: Bitmap?,
+        fromImagePath: String?,
+        toImagePath: String?,
         hasTransition: Boolean,
         isPassthroughMode: Boolean,
         clipStartTimeUs: Long,
@@ -606,8 +494,8 @@ class CompositionFactory(
         val effects = createEffects(
             settings = settings,
             transition = transition,
-            fromImageBitmap = fromImageBitmap,
-            toImageBitmap = toImageBitmap,
+            fromImagePath = fromImagePath,
+            toImagePath = toImagePath,
             transitionDurationUs = transitionDurationUs,
             clipDurationUs = totalDurationUs,
             clipStartTimeUs = clipStartTimeUs,
@@ -640,8 +528,8 @@ class CompositionFactory(
     private fun createEffects(
         settings: ProjectSettings,
         transition: Transition?,
-        fromImageBitmap: Bitmap?,
-        toImageBitmap: Bitmap?,
+        fromImagePath: String?,
+        toImagePath: String?,
         transitionDurationUs: Long,
         clipDurationUs: Long,
         clipStartTimeUs: Long,
@@ -655,15 +543,15 @@ class CompositionFactory(
         // NO BlurBackgroundEffect - images are already pre-processed!
 
         // 1. Transition effect - SINGLE SOURCE OF TRUTH
-        // Both FROM and TO bitmaps are loaded from GPU-cached files using identical methods
+        // FROM and TO textures are lazy-loaded from GPU-cached files in configure()
         // TransitionEffect ignores Media3's input texture and uses our textures instead
         // For passthrough mode (last clip): still uses TransitionEffect to ensure consistent rendering
-        if (transition != null && fromImageBitmap != null && toImageBitmap != null) {
+        if (transition != null && fromImagePath != null && toImagePath != null) {
             videoEffects.add(
                 TransitionEffect(
                     transition = transition,
-                    fromImageBitmap = fromImageBitmap,
-                    toImageBitmap = toImageBitmap,
+                    fromImagePath = fromImagePath,
+                    toImagePath = toImagePath,
                     transitionDurationUs = transitionDurationUs,
                     clipDurationUs = clipDurationUs,
                     clipStartTimeUs = clipStartTimeUs,

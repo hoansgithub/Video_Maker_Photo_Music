@@ -20,6 +20,10 @@ import androidx.media3.effect.GlShaderProgram
 
 /**
  * Overlays app logo as watermark at bottom-right corner.
+ *
+ * Memory optimization: creates a logo-sized bitmap (~67 KB) instead of a
+ * full-resolution bitmap (~8.2 MB at 1080p). The shader positions the
+ * watermark using a normalized rect uniform.
  */
 class WatermarkOverlayEffect(
     private val context: Context,
@@ -77,6 +81,9 @@ private class WatermarkOverlayShaderProgram(
     private var watermarkTextureId: Int = -1
     private var watermarkBitmap: Bitmap? = null
 
+    // Watermark placement in normalized GL texture coordinates: [left, bottom, right, top]
+    private var watermarkRect = floatArrayOf(0f, 0f, 0f, 0f)
+
     override fun configure(inputWidth: Int, inputHeight: Int): Size {
         if (glProgram == null) {
             val program = GlProgram(VERTEX_SHADER, FRAGMENT_SHADER)
@@ -99,28 +106,42 @@ private class WatermarkOverlayShaderProgram(
         if (watermarkTextureId == -1) {
             watermarkBitmap?.let { bitmap ->
                 watermarkTextureId = createTexture(bitmap)
+                bitmap.recycle()
+                watermarkBitmap = null
             }
         }
 
         return Size(inputWidth, inputHeight)
     }
 
+    /**
+     * Build a logo-sized bitmap instead of full-resolution.
+     * Stores normalized placement for the shader to position the watermark.
+     */
     private fun buildOverlayBitmap(inputWidth: Int, inputHeight: Int): Bitmap? {
         val logo = BitmapFactory.decodeResource(context.resources, watermarkResId) ?: return null
-        val overlay = Bitmap.createBitmap(inputWidth, inputHeight, Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(overlay)
         val placement = WatermarkOverlayEffect.calculateOverlayPlacement(inputWidth, inputHeight)
+        val logoWidth = (placement.right - placement.left).coerceAtLeast(1)
+        val logoHeight = (placement.bottom - placement.top).coerceAtLeast(1)
+
+        // Store placement as normalized GL texture coordinates for the shader.
+        // Canvas top-left origin -> GL bottom-left origin: flip Y.
+        watermarkRect = floatArrayOf(
+            placement.left.toFloat() / inputWidth,
+            1f - placement.bottom.toFloat() / inputHeight,
+            placement.right.toFloat() / inputWidth,
+            1f - placement.top.toFloat() / inputHeight
+        )
+
+        // Create logo-sized bitmap (~67 KB) instead of full-resolution (~8 MB at 1080p)
+        val overlay = Bitmap.createBitmap(logoWidth, logoHeight, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(overlay)
 
         val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             alpha = 190
             isFilterBitmap = true
         }
-        val destinationRect = Rect(
-            placement.left,
-            placement.top,
-            placement.right,
-            placement.bottom
-        )
+        val destinationRect = Rect(0, 0, logoWidth, logoHeight)
 
         if (WatermarkOverlayEffect.shouldPreFlipLogoVertically()) {
             val srcRect = RectF(0f, 0f, logo.width.toFloat(), logo.height.toFloat())
@@ -168,6 +189,7 @@ private class WatermarkOverlayShaderProgram(
 
         program.use()
         program.setSamplerTexIdUniform("uVideoSampler", inputTexId, 0)
+        program.setFloatsUniform("uWatermarkRect", watermarkRect)
 
         if (watermarkTextureId != -1) {
             program.setSamplerTexIdUniform("uOverlaySampler", watermarkTextureId, 1)
@@ -210,6 +232,7 @@ precision highp float;
 uniform sampler2D uVideoSampler;
 uniform sampler2D uOverlaySampler;
 uniform float uHasOverlay;
+uniform vec4 uWatermarkRect;
 varying vec2 vTexCoords;
 
 void main() {
@@ -219,8 +242,14 @@ void main() {
         return;
     }
 
-    vec4 overlayColor = texture2D(uOverlaySampler, vTexCoords);
-    gl_FragColor = mix(videoColor, overlayColor, overlayColor.a);
+    if (vTexCoords.x >= uWatermarkRect.x && vTexCoords.x <= uWatermarkRect.z &&
+        vTexCoords.y >= uWatermarkRect.y && vTexCoords.y <= uWatermarkRect.w) {
+        vec2 wmUV = (vTexCoords - uWatermarkRect.xy) / (uWatermarkRect.zw - uWatermarkRect.xy);
+        vec4 overlayColor = texture2D(uOverlaySampler, wmUV);
+        gl_FragColor = mix(videoColor, overlayColor, overlayColor.a);
+    } else {
+        gl_FragColor = videoColor;
+    }
 }
 """
     }

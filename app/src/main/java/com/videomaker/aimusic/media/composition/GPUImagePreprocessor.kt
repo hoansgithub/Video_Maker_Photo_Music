@@ -55,6 +55,9 @@ class GPUImagePreprocessor(private val context: Context) {
     private var framebuffer: Int = 0
     private var outputTexture: Int = 0
 
+    // Reusable ByteBuffer for glReadPixels (avoids repeated native allocation)
+    private var readPixelsBuffer: ByteBuffer? = null
+
     // Shader program
     private var shaderProgram: Int = 0
     private var positionHandle: Int = 0
@@ -271,9 +274,16 @@ class GPUImagePreprocessor(private val context: Context) {
 
             GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4)
 
-            // Read pixels
-            val buffer = ByteBuffer.allocateDirect(outputWidth * outputHeight * 4)
-            buffer.order(ByteOrder.nativeOrder())
+            // Read pixels (reuse buffer to avoid repeated native allocations)
+            val bufferSize = outputWidth * outputHeight * 4
+            val existing = readPixelsBuffer
+            val buffer = if (existing != null && existing.capacity() >= bufferSize) {
+                existing.apply { clear() }
+            } else {
+                ByteBuffer.allocateDirect(bufferSize).apply {
+                    order(ByteOrder.nativeOrder())
+                }.also { readPixelsBuffer = it }
+            }
             GLES20.glReadPixels(0, 0, outputWidth, outputHeight, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, buffer)
             buffer.rewind()
 
@@ -532,6 +542,7 @@ class GPUImagePreprocessor(private val context: Context) {
             eglDisplay = EGL14.EGL_NO_DISPLAY
             eglContext = EGL14.EGL_NO_CONTEXT
             eglSurface = EGL14.EGL_NO_SURFACE
+            readPixelsBuffer = null
             isInitialized = false
 
         } catch (e: Exception) {
