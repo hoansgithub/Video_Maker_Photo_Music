@@ -66,9 +66,11 @@ private class FrameOverlayShaderProgram(
             )
             glProgram = program
 
-            // Create frame texture
+            // Create frame texture and recycle bitmap — only the GL texture is needed
             frameBitmap?.let { bitmap ->
                 frameTextureId = createTexture(bitmap)
+                bitmap.recycle()
+                frameBitmap = null
             }
         }
 

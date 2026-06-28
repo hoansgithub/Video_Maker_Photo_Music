@@ -70,6 +70,8 @@ private class TextOverlayShaderProgram(
         if (overlayTextureId == -1 && overlayBitmap != null) {
             overlayBitmap?.let { bitmap ->
                 overlayTextureId = createTexture(bitmap)
+                bitmap.recycle()
+                overlayBitmap = null
             }
         }
 

@@ -451,7 +451,14 @@ class GPUImagePreprocessor(private val context: Context) {
         outputTexture = texIds[0]
 
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, outputTexture)
+        // Drain pending errors, then allocate FBO texture and check for GPU OOM
+        @Suppress("ControlFlowWithEmptyBody")
+        while (GLES20.glGetError() != GLES20.GL_NO_ERROR) {}
         GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGBA, width, height, 0, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, null)
+        val allocError = GLES20.glGetError()
+        if (allocError != GLES20.GL_NO_ERROR) {
+            android.util.Log.e(TAG, "FBO texture alloc failed: ${width}x$height, error=0x${Integer.toHexString(allocError)}")
+        }
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR)
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR)
 
