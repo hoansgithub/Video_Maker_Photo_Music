@@ -26,30 +26,44 @@ package com.videomaker.aimusic.core.constants
 object AdPlacement {
 
     /**
-     * Interstitial ad shown after splash screen loading completes (first app install only).
-     * Timing: After all data loaded (Remote Config, status checks), before navigating to next screen.
-     * Shown once per app session (splash screen only appears once).
+     * HIGH-priority splash interstitial (first install only).
+     * Single high-eCPM ad unit — tried first. If it fails to load, falls back to SPLASH_LOW.
      *
-     * Ad units (priority order):
-     * - Primary: ca-app-pub-7121075950716954/9920077454
-     * - Secondary: ca-app-pub-7121075950716954/1830520200
+     * Ad unit: ca-app-pub-7121075950716954/9920077454
      *
-     * Remote Config key: ad_interstitial_splash
+     * Remote Config key: ad_interstitial_splash_high
      */
-    const val INTERSTITIAL_SPLASH = "ad_interstitial_splash"
+    const val INTERSTITIAL_SPLASH_HIGH = "ad_interstitial_splash_high"
 
     /**
-     * Interstitial ad shown after splash screen loading completes (second app open onwards).
-     * Timing: Same as INTERSTITIAL_SPLASH but shown from the second launch onward.
-     * Uses separate ad unit to allow independent eCPM tracking and frequency capping.
+     * LOW-priority splash interstitial fallback (first install only).
+     * Single all-fill ad unit — tried only when SPLASH_HIGH fails to load.
      *
-     * Ad units (priority order):
-     * - Primary: ca-app-pub-7121075950716954/4748771125 (Inter_high_splash_reopen)
-     * - Secondary: ca-app-pub-7121075950716954/2676684702 (Inter_all_splash_reopen)
+     * Ad unit: ca-app-pub-7121075950716954/1830520200
      *
-     * Remote Config key: ad_interstitial_open_app
+     * Remote Config key: ad_interstitial_splash_low
      */
-    const val INTERSTITIAL_OPEN_APP = "ad_interstitial_open_app"
+    const val INTERSTITIAL_SPLASH_LOW = "ad_interstitial_splash_low"
+
+    /**
+     * HIGH-priority open-app interstitial (second+ launch).
+     * Single high-eCPM ad unit — tried first. If it fails to load, falls back to OPEN_APP_LOW.
+     *
+     * Ad unit: ca-app-pub-7121075950716954/4748771125 (Inter_high_splash_reopen)
+     *
+     * Remote Config key: ad_interstitial_open_app_high
+     */
+    const val INTERSTITIAL_OPEN_APP_HIGH = "ad_interstitial_open_app_high"
+
+    /**
+     * LOW-priority open-app interstitial fallback (second+ launch).
+     * Single all-fill ad unit — tried only when OPEN_APP_HIGH fails to load.
+     *
+     * Ad unit: ca-app-pub-7121075950716954/2676684702 (Inter_all_splash_reopen)
+     *
+     * Remote Config key: ad_interstitial_open_app_low
+     */
+    const val INTERSTITIAL_OPEN_APP_LOW = "ad_interstitial_open_app_low"
 
     /**
      * Fullscreen-image interstitial shown at the onboarding ad step
@@ -481,6 +495,18 @@ object AdPlacement {
      */
     const val NATIVE_WELCOME_BACK = "ad_native_welcome_back"
 
+    /**
+     * Native ad shown on OnboardingWelcomeBackScreen (partial onboarding progress).
+     * Reuses NATIVE_WELCOME_BACK ad units initially.
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/9525024469
+     * - Secondary: ca-app-pub-7121075950716954/1552989505
+     *
+     * Remote Config key: ad_native_onboarding_welcome_back
+     */
+    const val NATIVE_ONBOARDING_WELCOME_BACK = "ad_native_onboarding_welcome_back"
+
     // ==========================================
     // NATIVE ADS (In-feed, Dialogs, Bottom Sheets, Banners)
     // ==========================================
@@ -490,6 +516,14 @@ object AdPlacement {
      * Replaces standard banner with a native ad layout
      */
     const val NATIVE_HOME_BANNER = "ad_native_home_banner"
+
+    /**
+     * Collapsible native ad shown on Home screen on first entry and reopens.
+     * Can be closed/collapsed by the user.
+     *
+     * Remote Config key: ad_native_home_collapsible
+     */
+    const val NATIVE_HOME_COLLAPSIBLE = "ad_native_home_collapsible"
 
     /**
      * Template previewer bottom banner native ad.
@@ -562,6 +596,49 @@ object AdPlacement {
      * Remote Config key: ad_native_post_reward
      */
     const val NATIVE_POST_REWARD = "ad_native_post_reward"
+
+    /**
+     * Fullscreen native ad shown after splash/open-app interstitial closes (Drama app pattern).
+     * Only triggered by INTERSTITIAL_SPLASH_HIGH, SPLASH_LOW, OPEN_APP_HIGH, OPEN_APP_LOW.
+     * Preloaded when interstitial is shown, displayed after interstitial closes if ready.
+     * Non-blocking: if native ad isn't loaded when interstitial closes, skip silently.
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/6220436755
+     * - Secondary: ca-app-pub-7121075950716954/3594273415
+     *
+     * Remote Config key: ad_native_after_splash
+     */
+    const val NATIVE_AFTER_SPLASH = "ad_native_after_splash"
+
+    /**
+     * Fullscreen native ad shown after onboarding-complete interstitial closes (Drama app pattern).
+     * Triggered by INTERSTITIAL_ONBOARDING_COMPLETE only.
+     * Preloaded during PERSONALIZING step, displayed after interstitial closes if ready.
+     * Non-blocking: if native ad isn't loaded when interstitial closes, skip silently.
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/9968110073
+     * - Secondary: ca-app-pub-7121075950716954/7341946732
+     *
+     * Remote Config key: ad_native_after_onboarding
+     */
+    const val NATIVE_AFTER_ONBOARDING = "ad_native_after_onboarding"
+
+    /**
+     * Fullscreen native ad shown after all other interstitials close (Drama app pattern).
+     * Triggered by every interstitial placement not covered by NATIVE_AFTER_SPLASH
+     * or NATIVE_AFTER_ONBOARDING.
+     * Native ad starts loading when showInterstitial() is called.
+     * Non-blocking: if native ad isn't loaded when interstitial closes, skip silently.
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/4336509440
+     * - Secondary: ca-app-pub-7121075950716954/9906576495
+     *
+     * Remote Config key: ad_native_after_inter
+     */
+    const val NATIVE_AFTER_INTER = "ad_native_after_inter"
 
     /**
      * Native ad shown in search screens (in-feed at top).
@@ -671,6 +748,20 @@ object AdPlacement {
      * Remote Config key: ad_native_library_created_video
      */
     const val NATIVE_LIBRARY_CREATED_VIDEO = "ad_native_library_created_video"
+
+    /**
+     * Native ad shown in "Music for you" list in Liked Songs screen (in-feed placement).
+     * Repeats every N songs based on infeed_interval config (default: 6).
+     *
+     * Layout: native_small_row
+     *
+     * Ad units (priority order):
+     * - Primary: ca-app-pub-7121075950716954/4524211708
+     * - Secondary: ca-app-pub-7121075950716954/6274453243
+     *
+     * Remote Config key: ad_native_music_for_you_infeed
+     */
+    const val NATIVE_MUSIC_FOR_YOU_INFEED = "ad_native_music_for_you_infeed"
 
     /**
      * Native ad shown in gallery templates staggered grid (in-feed placement).
@@ -1205,8 +1296,10 @@ object AdPlacement {
         APP_OPEN_AOA,
         APP_OPEN_FOREGROUND,
         APP_OPEN_AFTER_AD_CLICK,
-        INTERSTITIAL_SPLASH,
-        INTERSTITIAL_OPEN_APP,
+        INTERSTITIAL_SPLASH_HIGH,
+        INTERSTITIAL_SPLASH_LOW,
+        INTERSTITIAL_OPEN_APP_HIGH,
+        INTERSTITIAL_OPEN_APP_LOW,
         INTERSTITIAL_TEMPLATE_PREVIEWER_BACK,
         INTERSTITIAL_TEMPLATE_PREVIEWER_SCROLL,
         INTERSTITIAL_TEMPLATE_PREVIEWER_USE,
@@ -1225,6 +1318,7 @@ object AdPlacement {
         BANNER_EDITOR,
         BANNER_EXPORT,
         NATIVE_WELCOME_BACK,
+        NATIVE_ONBOARDING_WELCOME_BACK,
         NATIVE_ONBOARDING_LANGUAGE,
         NATIVE_ONBOARDING_LANGUAGE_ALT,
         NATIVE_ONBOARDING_PAGE1,
@@ -1232,13 +1326,18 @@ object AdPlacement {
         NATIVE_ONBOARDING_PAGE3,
         NATIVE_ONBOARDING_FULLSCREEN,
         NATIVE_POST_REWARD,
+        NATIVE_AFTER_SPLASH,
+        NATIVE_AFTER_ONBOARDING,
+        NATIVE_AFTER_INTER,
         NATIVE_ONBOARDING_FEATURE_SELECTION,
         NATIVE_ONBOARDING_FEATURE_SELECTION_ALT,
         NATIVE_SEARCH_INFEED,
         NATIVE_UNINSTALL_BOTTOM,
         NATIVE_WIDGET_BOTTOM,
         NATIVE_LIBRARY_CREATED_VIDEO,
+        NATIVE_MUSIC_FOR_YOU_INFEED,
         NATIVE_HOME_BANNER,
+        NATIVE_HOME_COLLAPSIBLE,
         NATIVE_TEMPLATE_PREVIEWER_BANNER,
         NATIVE_EDITOR_BANNER,
         NATIVE_EDITOR_LOADING,

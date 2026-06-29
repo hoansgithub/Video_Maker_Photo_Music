@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -34,8 +33,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import co.alcheclub.lib.acccore.ads.compose.NativeAdView
 import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.R
@@ -68,167 +65,161 @@ fun PopupTrendingTemplate(
             )
         )
     }
-    Dialog(
-        onDismissRequest = {
-        },
-        properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)
+    Column(
+        modifier = Modifier
+            .clickableSingle {
+            }
+            .fillMaxSize()
+            .background(SplashBackground)
+            .padding(top = 81.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Column(
             modifier = Modifier
-                .clickableSingle {
-                }
-                .fillMaxSize()
-                .background(Color(0xFF000000).copy(0.56f))
-                .padding(top = 81.dp),
+                .fillMaxWidth()
+                .weight(1f)
+                .padding(horizontal = 34.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Column(
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f)
-                    .padding(horizontal = 34.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                    .height(74.5.dp)
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_circle_cross),
+                    contentDescription = null,
+                    tint = Neutral_N800,
+                    modifier = Modifier
+                        .size(44.dp)
+                        .clickableSingle {
+                            Analytics.track(
+                                AnalyticsEvent.REWARD_TEMPLATE_EXIT,
+                                mapOf(
+                                    AnalyticsEvent.Param.TEMPLATE_ID to item.id,
+                                    AnalyticsEvent.Param.TEMPLATE_NAME to item.name
+                                )
+                            )
+                            onDismiss.invoke()
+                        }
+                        .align(Alignment.TopEnd)
+                        .padding(4.dp)
+                )
+                Image(
+                    painter = painterResource(R.drawable.img_start_trending),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(31.dp)
+                        .align(Alignment.BottomStart),
+                    contentScale = ContentScale.Crop
+                )
+            }
+
+            Text(
+                text = stringResource(R.string.popup_dont_miss_it),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.W900,
+                fontSize = 34.sp,
+                color = Primary,
+                textAlign = TextAlign.Center
+            )
+
+            Box(
+                modifier = Modifier
+                    .width(246.dp)
+                    .height(260.dp)
             ) {
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .height(74.5.dp)
+                        .padding(top = 18.dp, end = 32.dp)
+                        .rotate(-10.8f)
+                        .clip(RoundedCornerShape(18.35.dp))
+                        .width(159.64.dp)
+                        .height(220.19.dp)
+                        .border(1.dp, Color.White, RoundedCornerShape(18.35.dp))
+                        .align(Alignment.TopEnd),
                 ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_circle_cross),
-                        contentDescription = null,
-                        tint = Neutral_N800,
-                        modifier = Modifier
-                            .size(44.dp)
-                            .clickableSingle {
-                                Analytics.track(
-                                    AnalyticsEvent.REWARD_TEMPLATE_EXIT,
-                                    mapOf(
-                                        AnalyticsEvent.Param.TEMPLATE_ID to item.id,
-                                        AnalyticsEvent.Param.TEMPLATE_NAME to item.name
-                                    )
+                    TemplateCard(
+                        name = "",
+                        thumbnailPath = item.thumbnailPath,
+                        aspectRatio = (159.64f / 220.19f),
+                        isPremium = false,
+                        showHotTag = true,
+                        useCount = 0,
+                        viewCount = 0,
+                        modifier = Modifier,
+                        onClick = {
+                            Analytics.track(
+                                AnalyticsEvent.REWARD_TEMPLATE_CLICK,
+                                mapOf(
+                                    AnalyticsEvent.Param.TEMPLATE_ID to item.id,
+                                    AnalyticsEvent.Param.TEMPLATE_NAME to item.name
                                 )
-                                onDismiss.invoke()
-                            }
-                            .align(Alignment.TopEnd)
-                            .padding(4.dp)
-                    )
-                    Image(
-                        painter = painterResource(R.drawable.img_start_trending),
-                        contentDescription = null,
-                        modifier = Modifier
-                            .size(31.dp)
-                            .align(Alignment.BottomStart),
-                        contentScale = ContentScale.Crop
-                    )
-                }
-
-                Text(
-                    text = stringResource(R.string.popup_dont_miss_it),
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.W900,
-                    fontSize = 34.sp,
-                    color = Primary,
-                    textAlign = TextAlign.Center
-                )
-
-                Box(
-                    modifier = Modifier
-                        .width(246.dp)
-                        .height(260.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .padding(top = 18.dp, end = 32.dp)
-                            .rotate(-10.8f)
-                            .clip(RoundedCornerShape(18.35.dp))
-                            .width(159.64.dp)
-                            .height(220.19.dp)
-                            .border(1.dp, Color.White, RoundedCornerShape(18.35.dp))
-                            .align(Alignment.TopEnd),
-                    ) {
-                        TemplateCard(
-                            name = "",
-                            thumbnailPath = item.thumbnailPath,
-                            aspectRatio = (159.64f / 220.19f),
-                            isPremium = false,
-                            showHotTag = true,
-                            useCount = 0,
-                            viewCount = 0,
-                            modifier = Modifier,
-                            onClick = {
-                                Analytics.track(
-                                    AnalyticsEvent.REWARD_TEMPLATE_CLICK,
-                                    mapOf(
-                                        AnalyticsEvent.Param.TEMPLATE_ID to item.id,
-                                        AnalyticsEvent.Param.TEMPLATE_NAME to item.name
-                                    )
-                                )
-                                onCTA()
-                            }
-                        )
-                    }
-
-                    Image(
-                        painter = painterResource(R.drawable.img_bg_template_trend),
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.matchParentSize()
-                    )
-                }
-
-                Spacer(Modifier.height(20.dp))
-                Text(
-                    text = stringResource(R.string.popup_premium_template).uppercase(),
-                    fontWeight = FontWeight.W500,
-                    fontStyle = FontStyle.Italic,
-                    fontSize = 12.sp,
-                    textAlign = TextAlign.Center,
-                    style = MaterialTheme.typography.titleLarge.copy(
-                        brush = Brush.verticalGradient(
-                            colors = listOf(
-                                Color(0xFFFFE3B5),
-                                Color(0xFFFF970E)
                             )
-                        )
-                    ),
-                    modifier = Modifier
-                        .background(Color.White.copy(0.12f))
-                        .padding(horizontal = 12.dp, vertical = 4.dp)
-                )
-
-                Spacer(Modifier.height(11.dp))
-
-                Text(
-                    text = item.name,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.W700,
-                    fontSize = 28.sp,
-                    color = Neutral_N200,
-                    textAlign = TextAlign.Center
-                )
-                Spacer(Modifier.height(32.dp))
-                CTAPrimaryButton(
-                    text = stringResource(R.string.popup_try_it_now)
-                ) {
-                    Analytics.track(
-                        AnalyticsEvent.REWARD_TEMPLATE_CLICK,
-                        mapOf(
-                            AnalyticsEvent.Param.TEMPLATE_ID to item.id,
-                            AnalyticsEvent.Param.TEMPLATE_NAME to item.name
-                        )
+                            onCTA()
+                        }
                     )
-                    onCTA.invoke()
                 }
+
+                Image(
+                    painter = painterResource(R.drawable.img_bg_template_trend),
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.matchParentSize()
+                )
             }
 
-            NativeAdView(
-                placement = AdPlacement.NATIVE_POPUP_TRENDING_TEMPLATE,
-                modifier = Modifier.fillMaxWidth().height(100.dp),
-                isDebug = BuildConfig.DEBUG,
-                onAdClicked = { adClickDetector.onAdClick(it) }
+            Spacer(Modifier.height(20.dp))
+            Text(
+                text = stringResource(R.string.popup_premium_template).uppercase(),
+                fontWeight = FontWeight.W500,
+                fontStyle = FontStyle.Italic,
+                fontSize = 12.sp,
+                textAlign = TextAlign.Center,
+                style = MaterialTheme.typography.titleLarge.copy(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            Color(0xFFFFE3B5),
+                            Color(0xFFFF970E)
+                        )
+                    )
+                ),
+                modifier = Modifier
+                    .background(Color.White.copy(0.12f))
+                    .padding(horizontal = 12.dp, vertical = 4.dp)
             )
+
+            Spacer(Modifier.height(11.dp))
+
+            Text(
+                text = item.name,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.W700,
+                fontSize = 28.sp,
+                color = Neutral_N200,
+                textAlign = TextAlign.Center
+            )
+            Spacer(Modifier.height(32.dp))
+            CTAPrimaryButton(
+                text = stringResource(R.string.popup_try_it_now)
+            ) {
+                Analytics.track(
+                    AnalyticsEvent.REWARD_TEMPLATE_CLICK,
+                    mapOf(
+                        AnalyticsEvent.Param.TEMPLATE_ID to item.id,
+                        AnalyticsEvent.Param.TEMPLATE_NAME to item.name
+                    )
+                )
+                onCTA.invoke()
+            }
         }
+
+        NativeAdView(
+            placement = AdPlacement.NATIVE_POPUP_TRENDING_TEMPLATE,
+            modifier = Modifier.fillMaxWidth().height(100.dp),
+            isDebug = BuildConfig.DEBUG,
+            onAdClicked = { adClickDetector.onAdClick(it) }
+        )
     }
 }
 

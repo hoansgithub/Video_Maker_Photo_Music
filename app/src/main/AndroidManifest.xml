@@ -57,28 +57,83 @@
                 android:resource="@xml/shortcuts" />
         </activity>
 
-        <!-- OnboardingActivity - First-time user onboarding (separate one-time flow) -->
-        <activity
-            android:name=".modules.onboarding.OnboardingActivity"
-            android:exported="false"
-            android:screenOrientation="portrait"
-            android:theme="@style/Theme.VideoMaker" />
-
         <activity
             android:name=".modules.featureselection.FeatureSelectionActivity"
             android:exported="false"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.VideoMaker" />
 
+        <!-- OnboardingWelcomeBackActivity - Welcome back screen for partial onboarding progress -->
         <activity
-            android:name=".modules.genretemplate.GenreTemplateActivity"
+            android:name=".modules.onboarding.OnboardingWelcomeBackActivity"
             android:exported="false"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.VideoMaker" />
 
-        <!-- OnboardingSurveyActivity - Feature & Platform survey screens after language -->
+        <!-- Flattened onboarding steps: Welcome Pages -->
         <activity
-            android:name=".modules.onboardingsurvey.OnboardingSurveyActivity"
+            android:name=".modules.onboarding.WelcomePage1Activity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.VideoMaker" />
+        <activity
+            android:name=".modules.onboarding.WelcomePage2Activity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.VideoMaker" />
+        <activity
+            android:name=".modules.onboarding.FullscreenAdActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.VideoMaker" />
+        <activity
+            android:name=".modules.onboarding.WelcomePage3Activity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.VideoMaker" />
+
+        <!-- Flattened onboarding steps: Survey -->
+        <activity
+            android:name=".modules.onboardingsurvey.SurveyFeatureActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.VideoMaker" />
+        <activity
+            android:name=".modules.onboardingsurvey.SurveyPlatformActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.VideoMaker" />
+        <activity
+            android:name=".modules.onboardingsurvey.SurveyAiLevelActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.VideoMaker" />
+
+        <!-- Flattened onboarding steps: Genre/Template -->
+        <activity
+            android:name=".modules.genretemplate.GenreSelectionActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.VideoMaker" />
+        <activity
+            android:name=".modules.genretemplate.TemplatePickActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.VideoMaker" />
+        <activity
+            android:name=".modules.genretemplate.ContentExclusiveActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.VideoMaker" />
+        <activity
+            android:name=".modules.genretemplate.MediaPrivacyActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.VideoMaker" />
+
+        <!-- Flattened onboarding steps: Personalizing -->
+        <activity
+            android:name=".modules.featureselection.PersonalizingActivity"
             android:exported="false"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.VideoMaker" />

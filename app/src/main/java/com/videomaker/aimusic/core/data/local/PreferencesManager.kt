@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import androidx.core.content.edit
 import com.videomaker.aimusic.core.popup.TrendingPopupDailySnapshot
 import com.videomaker.aimusic.core.popup.TrendingPopupTab
+import com.videomaker.aimusic.modules.root.OnboardingResumeStep
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.encodeToString
@@ -67,12 +68,14 @@ class PreferencesManager(context: Context) {
     companion object {
         private const val PREFS_NAME = "video_maker_prefs"
         private const val KEY_ONBOARDING_COMPLETE = "onboarding_complete"
+        private const val KEY_ONBOARDING_WELCOME_COMPLETE = "onboarding_welcome_complete"
         private const val KEY_FIRST_LAUNCH = "first_launch"
         private const val KEY_RECENT_SEARCHES = "recent_searches"
         private const val KEY_PREFERRED_GENRES = "preferred_genres"
         private const val KEY_PREFERRED_FEATURES = "preferred_features"
         private const val KEY_FEATURE_SELECTION_COMPLETE = "feature_selection_complete"
         private const val KEY_HOME_INITIAL_TAB_FROM_ONBOARDING = "home_initial_tab_from_onboarding"
+        private const val KEY_ONBOARDING_SELECTED_GENRE = "onboarding_selected_genre"
         private const val KEY_USER_REGION = "user_region"
         private const val KEY_RATING_VIDEO_CREATE_COUNT = "rating_video_create_count"
         private const val KEY_RATING_SHOWN_COUNT = "rating_shown_count"
@@ -86,6 +89,7 @@ class PreferencesManager(context: Context) {
         private const val KEY_RATING_DAILY_SHOWN_COUNT = "rating_daily_shown_count"
         private const val KEY_NOTIFICATION_PERMISSION_REQUEST_COUNT = "notification_permission_request_count"
         private const val KEY_NOTIFICATION_PERMISSION_BLOCKED = "notification_permission_blocked"
+        private const val KEY_OB_RESUME_FIRED_COUNT = "ob_resume_fired_count"
         private const val KEY_NOTIFICATION_DAILY_SHOWN_EPOCH_DAY = "notification_daily_shown_epoch_day"
         private const val KEY_NOTIFICATION_DAILY_SHOWN_COUNT = "notification_daily_shown_count"
         private const val KEY_NOTIFICATION_TYPE_DAILY_SHOWN_EPOCH_DAY_PREFIX = "notification_type_daily_epoch_day_"
@@ -169,6 +173,14 @@ class PreferencesManager(context: Context) {
         prefs.edit { putInt(KEY_HOME_INITIAL_TAB_FROM_ONBOARDING, tab) }
     }
 
+    /** Genre selected during onboarding (persisted across Activities). */
+    fun getOnboardingSelectedGenre(): String? =
+        prefs.getString(KEY_ONBOARDING_SELECTED_GENRE, null)
+
+    fun setOnboardingSelectedGenre(genreId: String) {
+        prefs.edit { putString(KEY_ONBOARDING_SELECTED_GENRE, genreId) }
+    }
+
     /**
      * Check if onboarding has been completed
      */
@@ -183,6 +195,41 @@ class PreferencesManager(context: Context) {
      */
     suspend fun setOnboardingComplete(complete: Boolean) = withContext(Dispatchers.IO) {
         prefs.edit().putBoolean(KEY_ONBOARDING_COMPLETE, complete).commit()
+    }
+
+    /**
+     * Non-suspend variant using apply() (async write). Use when navigating away
+     * immediately and a coroutine scope isn't available.
+     */
+    fun markOnboardingCompleteSync() {
+        prefs.edit { putBoolean(KEY_ONBOARDING_COMPLETE, true) }
+    }
+
+    fun isOnboardingWelcomeComplete(): Boolean =
+        prefs.getBoolean(KEY_ONBOARDING_WELCOME_COMPLETE, false)
+
+    fun setOnboardingWelcomeComplete(complete: Boolean) {
+        prefs.edit { putBoolean(KEY_ONBOARDING_WELCOME_COMPLETE, complete) }
+    }
+
+    /**
+     * Determine where the user left off in onboarding.
+     * Returns null if onboarding is complete or never started.
+     *
+     * @param languageSelectionComplete whether language selection step is done
+     */
+    fun getOnboardingResumeStep(languageSelectionComplete: Boolean): OnboardingResumeStep? {
+        if (isOnboardingComplete()) return null
+        if (!languageSelectionComplete) return null  // Never started — not a "welcome back" case
+
+        val welcomeDone = isOnboardingWelcomeComplete()
+        val featureDone = isFeatureSelectionComplete()
+
+        return when {
+            !welcomeDone -> OnboardingResumeStep.WELCOME_PAGES
+            !featureDone -> OnboardingResumeStep.FEATURE_SELECTION
+            else -> null
+        }
     }
 
     /**
@@ -325,6 +372,15 @@ class PreferencesManager(context: Context) {
             remove(KEY_NOTIFICATION_PERMISSION_BLOCKED)
         }
     }
+
+    /**
+     * How many onboarding-resume notifications have actually been posted (0..3).
+     * Advanced only when a notification is successfully shown, so the sequence
+     * stays strictly ordered 1 -> 2 -> 3.
+     */
+    var obResumeFiredCount: Int
+        get() = prefs.getInt(KEY_OB_RESUME_FIRED_COUNT, 0)
+        set(value) = prefs.edit { putInt(KEY_OB_RESUME_FIRED_COUNT, value.coerceIn(0, 3)) }
 
     fun getNotificationDailyShownCount(nowMs: Long = System.currentTimeMillis()): Int {
         val today = epochDay(nowMs)

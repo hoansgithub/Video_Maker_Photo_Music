@@ -35,7 +35,7 @@ import org.koin.compose.koinInject
 @Stable
 private sealed class TemplateGridItem {
     data class TemplateItem(val template: VideoTemplate) : TemplateGridItem()
-    data object AdItem : TemplateGridItem()
+    data class AdItem(val adIndex: Int) : TemplateGridItem()
 }
 
 @Composable
@@ -45,7 +45,14 @@ fun ContentTemplate(
     onDeleteTemplateClick: (String) -> Unit,
 ) {
     val adClickDetector: AdClickDetector = koinInject()
+    val adsLoaderService = koinInject<co.alcheclub.lib.acccore.ads.loader.AdsLoaderService>()
     val dimens = AppDimens.current
+
+    val infeedInterval = remember {
+        val config = adsLoaderService.getPlacementConfig(AdPlacement.NATIVE_LIBRARY_CREATED_VIDEO)
+        val value = config?.extras?.get("infeed_interval")
+        value?.toString()?.trim('"')?.toIntOrNull() ?: 6
+    }
 
     LazyColumn(
         modifier = Modifier
@@ -59,13 +66,17 @@ fun ContentTemplate(
         if (state.isEmpty()) return@LazyColumn
 
         item(key = "template_grid", contentType = "grid") {
-            val gridItems = remember(state) {
+            val gridItems = remember(state, infeedInterval) {
                 buildList {
+                    var adCount = 0
                     state.forEachIndexed { index, template ->
                         add(TemplateGridItem.TemplateItem(template))
-                        if (index == 0) {
-                            add(TemplateGridItem.AdItem)
+                        if ((index + 1) % infeedInterval == 0) {
+                            add(TemplateGridItem.AdItem(adCount++))
                         }
+                    }
+                    if (state.isNotEmpty() && state.size < infeedInterval) {
+                        add(TemplateGridItem.AdItem(0))
                     }
                 }
             }

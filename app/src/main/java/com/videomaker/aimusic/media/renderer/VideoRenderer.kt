@@ -121,22 +121,38 @@ class VideoRenderer(private val context: Context) : GLSurfaceView.Renderer {
 
         if (state.imageUris.isEmpty()) return
 
-        // Ensure textures are loaded
-        textureManager.ensureTextures(state.imageUris)
+        // Detect URI list changes (no texture loading yet)
+        textureManager.updateImageUris(state.imageUris)
+
+        // Get current time from PlaybackClock
+        val timeMs = clock?.currentTimeMs() ?: 0L
+
+        // Calculate which frame to render FIRST (writes mutable fields, zero allocation)
+        calculateFrameAt(timeMs, state)
+
+        // Build the set of texture indices needed for this frame
+        val needed = buildSet {
+            if (frameValid) {
+                add(frameFromIndex)
+                if (frameIsTransition && frameToIndex >= 0) add(frameToIndex)
+                // Pre-load next image for smooth transition start
+                val lookAhead = frameFromIndex + 1
+                if (!frameIsTransition && lookAhead < state.imageUris.size) add(lookAhead)
+            } else {
+                add(0)
+            }
+        }
+
+        // Load only the needed textures (sliding window with eviction)
+        textureManager.ensureTexturesForFrame(needed)
 
         // Notify first frame rendered — textures are loaded and content is about to draw.
-        // Fired after ensureTextures so the preparing overlay stays until real content is visible.
         if (!hasNotifiedFirstFrame) {
             hasNotifiedFirstFrame = true
             onFirstFrameRendered?.invoke()
             onFirstFrameRendered = null
         }
 
-        // Get current time from PlaybackClock
-        val timeMs = clock?.currentTimeMs() ?: 0L
-
-        // Calculate which frame to render (writes mutable fields, zero allocation)
-        calculateFrameAt(timeMs, state)
         if (!frameValid) {
             // Just show first image
             drawHoldFrame(textureManager.getTexture(0), textureManager.getAspectRatio(0), state.aspectRatio.ratio)

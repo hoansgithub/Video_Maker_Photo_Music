@@ -829,7 +829,7 @@ private fun ProjectsListContent(
 @Stable
 private sealed class ProjectGridItem {
     data class ProjectItem(val project: Project) : ProjectGridItem()
-    data object AdItem : ProjectGridItem()
+    data class AdItem(val adIndex: Int) : ProjectGridItem()
 }
 
 /**
@@ -868,17 +868,27 @@ private fun ProjectsStaggeredGrid(
     spacing: Dp
 ) {
     val adClickDetector: AdClickDetector = koinInject()
+    val adsLoaderService = koinInject<co.alcheclub.lib.acccore.ads.loader.AdsLoaderService>()
     if (projects.isEmpty()) return
 
-    // ✅ Create mixed list with ad inserted at position 2 (after first project)
-    val gridItems = remember(projects) {
+    val infeedInterval = remember {
+        val config = adsLoaderService.getPlacementConfig(AdPlacement.NATIVE_LIBRARY_CREATED_VIDEO)
+        val value = config?.extras?.get("infeed_interval")
+        value?.toString()?.trim('"')?.toIntOrNull() ?: 6
+    }
+
+    // ✅ Create mixed list with ad inserted every N projects
+    val gridItems = remember(projects, infeedInterval) {
         buildList {
+            var adCount = 0
             projects.forEachIndexed { index, project ->
                 add(ProjectGridItem.ProjectItem(project))
-                // Insert ad after 1st project (index 0) - shows when at least 1 project exists
-                if (index == 0) {
-                    add(ProjectGridItem.AdItem)
+                if ((index + 1) % infeedInterval == 0) {
+                    add(ProjectGridItem.AdItem(adCount++))
                 }
+            }
+            if (projects.size < infeedInterval) {
+                add(ProjectGridItem.AdItem(0))
             }
         }
     }
@@ -901,7 +911,7 @@ private fun ProjectsStaggeredGrid(
         key = { item ->
             when (item) {
                 is ProjectGridItem.ProjectItem -> "project_${item.project.id}"
-                is ProjectGridItem.AdItem -> "ad_projects_grid"
+                is ProjectGridItem.AdItem -> "ad_projects_grid_${item.adIndex}"
             }
         }
     ) { item ->

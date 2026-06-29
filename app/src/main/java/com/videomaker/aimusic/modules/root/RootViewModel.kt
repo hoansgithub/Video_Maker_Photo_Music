@@ -9,32 +9,28 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
 import co.alcheclub.lib.acccore.remoteconfig.RemoteConfig
+import com.videomaker.aimusic.core.ads.AdPlacementConfigService
 import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.core.constants.RemoteConfigKeys
 import com.videomaker.aimusic.core.data.local.PreferencesManager
+import com.videomaker.aimusic.core.permission.NotificationPermissionCoordinator
 import com.videomaker.aimusic.modules.language.domain.usecase.CheckLanguageSelectedUseCase
 import com.videomaker.aimusic.modules.onboarding.domain.usecase.CheckOnboardingStatusUseCase
 import com.videomaker.aimusic.navigation.AppRoute
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
-import kotlinx.coroutines.withTimeoutOrNull
-import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.suspendCancellableCoroutine
 import java.lang.ref.WeakReference
-import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.coroutines.resume
 
 /**
  * RootViewModel - Root state machine for app initialization
@@ -46,12 +42,12 @@ import kotlin.coroutines.resume
  * - Feature selection: one-time intent picker that sets first Home tab
  * - Home: Main app experience
  *
- * Firebase Integration:
- * - Remote Config: Fetched and activated during initialization
+ * ## HIGH/LOW splash interstitial strategy
  *
- * Placeholder for future features:
- * - AdMob initialization
- * - App Open ad presentation
+ * This ViewModel only handles HIGH priority ad loading.
+ * If HIGH fails, it sets [showLowPriorityLoading] to `true`, which triggers
+ * [LoadingScreenLow] in the Activity — a separate composable with its own
+ * [LoadingScreenLowViewModel] that independently handles LOW priority ad loading.
  *
  * Usage in RootViewActivity:
  * ```kotlin
@@ -65,7 +61,9 @@ class RootViewModel(
     private val checkLanguageSelectedUseCase: CheckLanguageSelectedUseCase,
     private val preferencesManager: PreferencesManager,
     private val remoteConfig: RemoteConfig,
-    private val adsLoaderService: AdsLoaderService
+    private val adsLoaderService: AdsLoaderService,
+    private val adPlacementConfigService: AdPlacementConfigService,
+    private val notificationPermissionCoordinator: NotificationPermissionCoordinator
 ) : ViewModel() {
 
     // ============================================
@@ -89,6 +87,37 @@ class RootViewModel(
     val showNoInternetDialog: StateFlow<Boolean> = _showNoInternetDialog.asStateFlow()
 
     // ============================================
+    // LOW-PRIORITY LOADING SCREEN STATE
+    // ============================================
+
+    /** When `true`, RootViewActivity switches from LoadingScreen to LoadingScreenLow. */
+    private val _showLowPriorityLoading = MutableStateFlow(false)
+    val showLowPriorityLoading: StateFlow<Boolean> = _showLowPriorityLoading.asStateFlow()
+
+    /** Navigation destination resolved during init, exposed for LoadingScreenLow. */
+    private val _destination = MutableStateFlow<AppRoute?>(null)
+    val destination: StateFlow<AppRoute?> = _destination.asStateFlow()
+
+    /** Whether this is first open, exposed for LoadingScreenLow placement selection. */
+    private val _isFirstOpen = MutableStateFlow(false)
+    val isFirstOpen: StateFlow<Boolean> = _isFirstOpen.asStateFlow()
+
+    // ============================================
+    // NOTIFICATION PERMISSION EVENTS (Channel-based one-shot)
+    // ============================================
+
+    private val _permissionRequestChannel = Channel<String>(Channel.BUFFERED)
+
+    /** Collect in Activity to launch the system permission dialog. */
+    val permissionRequestEvent = _permissionRequestChannel.receiveAsFlow()
+
+    @Volatile
+    private var permissionDeferred: CompletableDeferred<Boolean>? = null
+
+    @Volatile
+    private var isPermissionRequestInProgress = false
+
+    // ============================================
     // INTERNAL STATE
     // ============================================
 
@@ -96,10 +125,14 @@ class RootViewModel(
     @Volatile
     private var onboardingComplete = false
 
-    // Captured once in loadInitialData() before any ad logic runs.
-    // true = first ever launch → INTERSTITIAL_SPLASH; false = second+ → INTERSTITIAL_OPEN_APP
+    // Non-null when user has partial onboarding progress and should see welcome-back screen
     @Volatile
-    private var isFirstOpen = false
+    private var onboardingResumeStep: OnboardingResumeStep? = null
+
+    // Captured once in loadInitialData() before any ad logic runs.
+    // true = first ever launch → INTERSTITIAL_SPLASH_HIGH; false = second+ → INTERSTITIAL_OPEN_APP_HIGH
+    @Volatile
+    private var firstOpen = false
 
     @Volatile
     private var isInitialized = false
@@ -124,8 +157,8 @@ class RootViewModel(
      * 2. Firebase Remote Config fetch and activate
      * 3. Language selection status check
      * 4. Onboarding status check
-     * 5. Splash interstitial ad loading and showing
-     * 6. Navigation to appropriate screen
+     * 5. HIGH priority splash interstitial loading
+     * 6. Navigation to appropriate screen (or switch to LoadingScreenLow)
      *
      * @param activity Activity context required for UMP consent form and ads
      */
@@ -134,8 +167,13 @@ class RootViewModel(
         activityRef = WeakReference(activity)
 
         if (isInitialized) {
-            // Already initialized, just navigate
-            proceedToNextScreen()
+            // Already initialized — if LoadingScreenLow is active, let it handle things.
+            // If the notification permission dialog is currently showing (Activity recreation
+            // while OS dialog is up), do NOT navigate — the suspended loadInitialData()
+            // coroutine will resume when the user responds and handle navigation itself.
+            if (!_showLowPriorityLoading.value && !isPermissionRequestInProgress) {
+                proceedWithHighAd()
+            }
             return
         }
 
@@ -183,10 +221,70 @@ class RootViewModel(
         _navigationEvent.value = null
     }
 
+    /**
+     * Called from Activity when the system permission dialog returns a result.
+     * Completes the deferred so [requestNotificationPermission] can resume.
+     */
+    fun onPermissionResult(granted: Boolean) {
+        permissionDeferred?.complete(granted)
+        permissionDeferred = null
+        isPermissionRequestInProgress = false
+    }
+
+    // ============================================
+    // PRIVATE: NOTIFICATION PERMISSION
+    // ============================================
+
+    /**
+     * Request notification permission during splash loading.
+     * Suspends until the user responds to the system dialog (or skips if not needed).
+     *
+     * Uses Channel to send the permission string to the Activity, then awaits
+     * the result via CompletableDeferred. The Activity collects [permissionRequestEvent]
+     * and calls [onPermissionResult] when the dialog returns.
+     */
+    private suspend fun requestNotificationPermission() {
+        if (isPermissionRequestInProgress) {
+            android.util.Log.d("RootViewModel", "🔔 Permission: skip — already in progress")
+            return
+        }
+
+        val context = activityRef?.get()
+        if (context == null) {
+            android.util.Log.w("RootViewModel", "🔔 Permission: skip — activityRef is null (GC'd)")
+            return
+        }
+        val shouldRequest = notificationPermissionCoordinator.shouldRequestOnboardingPermission(context)
+        android.util.Log.d("RootViewModel", "🔔 Permission: shouldRequest=$shouldRequest" +
+            " (granted=${notificationPermissionCoordinator.isNotificationGranted(context)}" +
+            ", SDK=${android.os.Build.VERSION.SDK_INT})")
+        if (!shouldRequest) return
+
+        isPermissionRequestInProgress = true
+        notificationPermissionCoordinator.markOnboardingPermissionDialogShown()
+
+        // Small delay so the splash screen is visible before the dialog appears
+        kotlinx.coroutines.delay(300)
+
+        val deferred = CompletableDeferred<Boolean>()
+        permissionDeferred = deferred
+        _permissionRequestChannel.send(android.Manifest.permission.POST_NOTIFICATIONS)
+
+        // Suspend until Activity calls onPermissionResult()
+        deferred.await()
+    }
+
     // ============================================
     // PRIVATE: INITIALIZATION
     // ============================================
 
+    /**
+     * Load initial data and attempt HIGH priority splash ad.
+     *
+     * This function only handles HIGH priority ad loading.
+     * If HIGH fails, it switches to [LoadingScreenLow] which has its own
+     * ViewModel for LOW priority ads.
+     */
     private fun loadInitialData() {
         viewModelScope.launch {
             _isLoading.value = true
@@ -203,40 +301,32 @@ class RootViewModel(
             }
 
             // Capture once — isFirstLaunch() auto-marks false on first call
-            isFirstOpen = preferencesManager.isFirstLaunch()
-            android.util.Log.d("RootViewModel", "📊 First open detection: isFirstOpen=$isFirstOpen")
+            firstOpen = preferencesManager.isFirstLaunch()
+            android.util.Log.d("RootViewModel", "📊 First open detection: isFirstOpen=$firstOpen")
 
             // Step 2: Get initialization timeout from Remote Config (already pre-fetched in Application.onCreate())
-            // Default: 45 seconds (can be adjusted remotely without app update)
-            // Longer timeout allows for slower networks while still preventing infinite loading
-            // Note: Using cached Remote Config values (pre-fetched during app startup)
             initTimeoutMs = try {
                 val configValue = remoteConfig.getLong(RemoteConfigKeys.APP_INIT_TIMEOUT_MS, 45_000L)
-                // Validate: Remote Config might return 0 or invalid value
                 if (configValue > 0) configValue else 45_000L
             } catch (e: Exception) {
-                45_000L  // Fallback to 45 seconds if Remote Config fails
+                45_000L
             }
             android.util.Log.d("RootViewModel", "📊 Init timeout: ${initTimeoutMs}ms (from cached Remote Config)")
+
+            val highPlacement = if (firstOpen) AdPlacement.INTERSTITIAL_SPLASH_HIGH else AdPlacement.INTERSTITIAL_OPEN_APP_HIGH
 
             // ============================================
             // CRITICAL: Timeout wrapper prevents infinite loading
             // ============================================
-            // Wraps entire initialization in configurable timeout (default 45s)
-            // If any operation hangs, app proceeds to navigation anyway
-            // This prevents users from getting stuck on loading screen forever
             try {
-                withTimeout(initTimeoutMs) {  // Remote Config controlled timeout
+                withTimeout(initTimeoutMs) {
                     try {
                         // Step 3: Check startup gate status
-                        // Simplified: Only check if onboarding is complete
-                        // If not complete, always start from Language Selection (beginning of flow)
                         _loadingStep.value = LoadingStep.CHECKING_STATUS
                         val onboardingResult = checkOnboardingStatusUseCase()
                         val shouldShowOnboarding = onboardingResult.getOrNull() ?: false
                         this@RootViewModel.onboardingComplete = !shouldShowOnboarding
 
-                        // Also check PreferencesManager directly to verify
                         val directCheck = preferencesManager.isOnboardingComplete()
 
                         android.util.Log.d("RootViewModel", "📊 Onboarding Status:")
@@ -244,92 +334,51 @@ class RootViewModel(
                         android.util.Log.d("RootViewModel", "   - shouldShowOnboarding (from UseCase): $shouldShowOnboarding")
                         android.util.Log.d("RootViewModel", "   - onboardingComplete (saved to class property): ${this@RootViewModel.onboardingComplete}")
 
-                        // Step 4: Preload ads (optimized strategy)
-                        // Native ads: Load in Application scope (background, survives ViewModel lifecycle)
-                        // Splash interstitial: Wait for it (we show it immediately before navigation)
-                        _loadingStep.value = LoadingStep.LOADING_AD
-                        val splashPlacement = if (isFirstOpen) AdPlacement.INTERSTITIAL_SPLASH else AdPlacement.INTERSTITIAL_OPEN_APP
-                        android.util.Log.d("RootViewModel", "🎬 Step 4: Preloading ads (optimized 1-step-ahead strategy)...")
-                        android.util.Log.d("RootViewModel", "   - onboardingComplete: ${this@RootViewModel.onboardingComplete}")
-                        android.util.Log.d("RootViewModel", "   - Splash interstitial: $splashPlacement (isFirstOpen=$isFirstOpen)")
-                        android.util.Log.d("RootViewModel", "   - Splash timeout: ${initTimeoutMs}ms")
-
-                        /*
-                         * OPTIMIZED AD LOADING STRATEGY (Delayed Parallel)
-                         *
-                         * 1. Splash interstitial (CRITICAL PATH):
-                         *    - Starts immediately (blocking) - we show it right away
-                         *    - Gets initial network bandwidth priority
-                         *    - Uses main thread (AdMob requirement)
-                         *
-                         * 2. Native ads (BACKGROUND):
-                         *    - Starts after 1.5s delay (gives splash a head start)
-                         *    - Launch in Application scope (survives ViewModel lifecycle)
-                         *    - Won't compete with splash on slow networks
-                         *    - On fast networks: splash finishes quickly, native ads still load early
-                         *
-                         * Why 1.5s delay?
-                         * - Typical splash ad load: 1.5-4s
-                         * - On slow networks: 1.5s gives splash exclusive bandwidth
-                         * - On fast networks: splash finishes before native ads start anyway
-                         * - Native ads still have plenty of time (load during splash display + navigation)
-                         *
-                         * Full onboarding flow:
-                         * Step 0: Language Selection
-                         * Step 1: OnboardingActivity (welcome pages, NO ads)
-                         * Step 2: Feature Selection
-                         * Then: Home
-                         */
-
-                        // Launch native ads with delay (Application scope, survives navigation)
+                        // Detect partial onboarding progress for welcome-back flow
                         if (!this@RootViewModel.onboardingComplete) {
-                            // Onboarding not complete → Preload Language Selection ads (Step 0)
-                            // Primary: immediate (prioritize bandwidth for the ad users see first)
-                            // ALT: delayed 1s (A/B variant, lower priority)
-                            android.util.Log.d("RootViewModel", "🔄 Preloading LANGUAGE ad immediately, LANGUAGE_ALT delayed 1s")
-                            com.videomaker.aimusic.VideoMakerApplication.preloadNativeAd(
-                                placement = AdPlacement.NATIVE_ONBOARDING_LANGUAGE
-                            )
-                            com.videomaker.aimusic.VideoMakerApplication.preloadNativeAdDelayed(
-                                placement = AdPlacement.NATIVE_ONBOARDING_LANGUAGE_ALT,
-                                delayMs = 1000L
-                            )
-                        } else {
-                            // Onboarding complete → Go to Home (no native ads needed)
-                            android.util.Log.d("RootViewModel", "⏭️ Onboarding complete, skipping native ad preload")
+                            val languageComplete = !checkLanguageSelectedUseCase()
+                            this@RootViewModel.onboardingResumeStep =
+                                preferencesManager.getOnboardingResumeStep(languageComplete)
+                            android.util.Log.d("RootViewModel", "📊 Onboarding resume step: ${this@RootViewModel.onboardingResumeStep}")
                         }
 
-                        // Load splash interstitial (starts immediately, blocking)
-                        android.util.Log.d("RootViewModel", "📺 Loading splash interstitial (priority)")
-                        withContext(Dispatchers.Main) {
-                            runCatching {
-                                val success = InterstitialAdHelperExt.preloadInterstitial(
-                                    adsLoaderService = adsLoaderService,
-                                    placement = splashPlacement,
-                                    loadTimeoutMillis = initTimeoutMs,
-                                    showLoadingOverlay = false
-                                )
-                                if (success) {
-                                    android.util.Log.d("RootViewModel", "✅ Splash interstitial loaded ($splashPlacement)")
-                                } else {
-                                    android.util.Log.w("RootViewModel", "⚠️ Splash interstitial load failed ($splashPlacement)")
+                        // Step 4: Preload native ads (Application scope, survives navigation)
+                        _loadingStep.value = LoadingStep.LOADING_AD
+                        android.util.Log.d("RootViewModel", "🎬 Step 4: Loading HIGH priority ad ($highPlacement)...")
+
+                        preloadNativeAds()
+
+                        // Step 5: Load HIGH interstitial + request notification permission in parallel
+                        val adLoadJob = async {
+                            val highEnabled = adPlacementConfigService.isPlacementEnabled(highPlacement)
+                            if (highEnabled) {
+                                android.util.Log.d("RootViewModel", "📺 Loading splash interstitial HIGH ($highPlacement)")
+                                runCatching {
+                                    InterstitialAdHelperExt.preloadInterstitial(
+                                        adsLoaderService = adsLoaderService,
+                                        placement = highPlacement,
+                                        loadTimeoutMillis = initTimeoutMs,
+                                        showLoadingOverlay = false
+                                    )
                                 }
-                            }.onFailure {
-                                android.util.Log.e("RootViewModel", "❌ Splash interstitial exception: ${it.message}", it)
+                            } else {
+                                android.util.Log.d("RootViewModel", "⏭️ HIGH placement disabled, skipping ($highPlacement)")
                             }
                         }
 
+                        requestNotificationPermission()
+                        adLoadJob.await()
+
                     } catch (e: Exception) {
                         android.util.Log.e("RootViewModel", "Initialization error: ${e.message}")
-                        // Continue to navigation even if initialization fails
                     }
                 }
             } catch (e: TimeoutCancellationException) {
                 initTimedOut = true
-                android.util.Log.w("RootViewModel", "⏱️ Initialization timed out after ${initTimeoutMs}ms — proceeding to navigation")
+                android.util.Log.w("RootViewModel", "⏱️ Initialization timed out after ${initTimeoutMs}ms")
             }
 
-            // Step 5: Track initialization time with time buckets
+            // Step 6: Track initialization time
             val durationMillis = System.currentTimeMillis() - startTimeMillis
             val durationSeconds = durationMillis / 1000.0
             val timeBucket = when {
@@ -342,7 +391,6 @@ class RootViewModel(
                 else -> "over_15s"
             }
 
-            // Track initialization performance
             Analytics.track(
                 name = AnalyticsEvent.APP_INIT_TIME,
                 params = mapOf(
@@ -350,9 +398,63 @@ class RootViewModel(
                 )
             )
 
-            // Step 6: Navigate to appropriate screen (ALWAYS happens, even if timeout/error)
-            // This ensures users never get stuck on loading screen
-            proceedToNextScreen()
+            // Step 7: Check if HIGH ad is ready
+            val isHighReady = adsLoaderService.isInterstitialReady(highPlacement)
+
+            if (!isHighReady) {
+                // HIGH failed → switch to LoadingScreenLow (separate ViewModel handles LOW)
+                // Native ads already preloading from step 4 above
+                android.util.Log.w("RootViewModel", "⚠️ HIGH priority ad not ready — switching to LoadingScreenLow")
+
+                val route = resolveStartupRoute(
+                    SetupProgress(
+                        onboardingComplete = this@RootViewModel.onboardingComplete,
+                        resumeStep = this@RootViewModel.onboardingResumeStep
+                    )
+                )
+
+                _destination.value = route
+                _isFirstOpen.value = firstOpen
+                _showLowPriorityLoading.value = true
+                return@launch // LoadingScreenLowViewModel takes over
+            }
+
+            android.util.Log.d("RootViewModel", "✅ HIGH priority ad loaded ($highPlacement)")
+
+            // HIGH is ready → show it and navigate
+            proceedWithHighAd()
+        }
+    }
+
+    // ============================================
+    // PRIVATE: NATIVE AD PRELOADING
+    // ============================================
+
+    /**
+     * Preload native ads using Application-scoped coroutines.
+     * Called once during initialization — survives ViewModel destruction.
+     */
+    private fun preloadNativeAds() {
+        if (!this@RootViewModel.onboardingComplete) {
+            if (this@RootViewModel.onboardingResumeStep != null) {
+                // Partial progress → Preload welcome-back ad
+                android.util.Log.d("RootViewModel", "🔄 Preloading ONBOARDING_WELCOME_BACK ad (resume flow)")
+                com.videomaker.aimusic.VideoMakerApplication.preloadNativeAd(
+                    placement = AdPlacement.NATIVE_ONBOARDING_WELCOME_BACK
+                )
+            } else {
+                // Fresh start → Preload Language Selection ads (Step 0)
+                android.util.Log.d("RootViewModel", "🔄 Preloading LANGUAGE ad immediately, LANGUAGE_ALT delayed 1s")
+                com.videomaker.aimusic.VideoMakerApplication.preloadNativeAd(
+                    placement = AdPlacement.NATIVE_ONBOARDING_LANGUAGE
+                )
+                com.videomaker.aimusic.VideoMakerApplication.preloadNativeAdDelayed(
+                    placement = AdPlacement.NATIVE_ONBOARDING_LANGUAGE_ALT,
+                    delayMs = 1000L
+                )
+            }
+        } else {
+            android.util.Log.d("RootViewModel", "⏭️ Onboarding complete, skipping native ad preload")
         }
     }
 
@@ -360,61 +462,52 @@ class RootViewModel(
     // PRIVATE: NAVIGATION
     // ============================================
 
-    private fun proceedToNextScreen() {
-        // Determine destination route (simplified)
+    /**
+     * Show HIGH priority interstitial and navigate.
+     * Only called when HIGH ad is confirmed ready via [isInterstitialReady].
+     */
+    private fun proceedWithHighAd() {
         val route = resolveStartupRoute(
             SetupProgress(
-                onboardingComplete = this@RootViewModel.onboardingComplete
+                onboardingComplete = this@RootViewModel.onboardingComplete,
+                resumeStep = this@RootViewModel.onboardingResumeStep
             )
         )
 
-        android.util.Log.d("RootViewModel", "📍 proceedToNextScreen() - Destination: $route")
+        val highPlacement = if (firstOpen) AdPlacement.INTERSTITIAL_SPLASH_HIGH else AdPlacement.INTERSTITIAL_OPEN_APP_HIGH
+        val isAdReady = adsLoaderService.isInterstitialReady(highPlacement)
 
-        // Show splash interstitial ad (if loaded) before navigating
-        // Ad shows on top of loading screen, then navigates when closed
-        val splashPlacement = if (isFirstOpen) AdPlacement.INTERSTITIAL_SPLASH else AdPlacement.INTERSTITIAL_OPEN_APP
-        activityRef?.get()?.let { activity ->
-            android.util.Log.d("RootViewModel", "📺 Attempting to show splash interstitial ad...")
-            android.util.Log.d("RootViewModel", "   - Placement: $splashPlacement (isFirstOpen=$isFirstOpen)")
-            android.util.Log.d("RootViewModel", "   - Bypass frequency cap: true")
-            android.util.Log.d("RootViewModel", "   - Load timeout: ${initTimeoutMs}ms")
+        android.util.Log.d("RootViewModel", "📍 proceedWithHighAd() - Destination: $route, isAdReady: $isAdReady")
 
-            // Track if callback was called
-            val callbackCalled = AtomicBoolean(false)
+        if (!isAdReady) {
+            android.util.Log.w("RootViewModel", "⚠️ HIGH ad no longer ready — navigating directly")
+            _navigationEvent.value = RootNavigationEvent.NavigateTo(route)
+            return
+        }
 
-            InterstitialAdHelperExt.showInterstitial(
-                adsLoaderService = adsLoaderService,
-                activity = activity,
-                placement = splashPlacement,
-                action = {
-                    if (callbackCalled.compareAndSet(false, true)) {
-                        // Navigate when ad closes (or if ad fails to show)
-                        android.util.Log.d("RootViewModel", "✅ Ad action callback called - navigating to $route")
-                        _navigationEvent.value = RootNavigationEvent.NavigateTo(route)
-                    }
-                },
-                onShown = {
-                    android.util.Log.d("RootViewModel", "🎬 Splash ad is now showing on screen")
-                },
-                bypassFrequencyCap = true,  // Splash ad always shows (once per session)
-                loadTimeoutMillis = initTimeoutMs,  // Use Remote Config timeout (default 45s)
-                showLoadingOverlay = false  // Loading screen already visible
-            )
-
-            // ⚠️ WORKAROUND for ACCCore bug: InterstitialAdHelper doesn't call action callback on timeout
-            // Force navigation after timeout + 5s buffer if callback wasn't called
-            viewModelScope.launch {
-                delay(initTimeoutMs + 5000L)  // Wait for ad timeout + 5s buffer
-                if (callbackCalled.compareAndSet(false, true)) {
-                    android.util.Log.w("RootViewModel", "⚠️ Ad callback not called within timeout - forcing navigation")
-                    _navigationEvent.value = RootNavigationEvent.NavigateTo(route)
-                }
-            }
-        } ?: run {
-            // No activity reference - navigate without ad
+        val activity = activityRef?.get()
+        if (activity == null) {
             android.util.Log.w("RootViewModel", "⚠️ No activity reference, skipping splash ad")
             _navigationEvent.value = RootNavigationEvent.NavigateTo(route)
+            return
         }
+
+        android.util.Log.d("RootViewModel", "📺 Showing HIGH priority ad ($highPlacement)")
+
+        InterstitialAdHelperExt.showInterstitial(
+            adsLoaderService = adsLoaderService,
+            activity = activity,
+            placement = highPlacement,
+            action = {
+                android.util.Log.d("RootViewModel", "✅ Ad closed — navigating to $route")
+                _navigationEvent.value = RootNavigationEvent.NavigateTo(route)
+            },
+            onShown = {
+                android.util.Log.d("RootViewModel", "🎬 Splash ad is now showing on screen")
+            },
+            bypassFrequencyCap = true,
+            showLoadingOverlay = false
+        )
     }
 
     // ============================================
@@ -427,9 +520,6 @@ class RootViewModel(
      * Uses NET_CAPABILITY_VALIDATED which means Android has verified the network
      * can reach the internet (by pinging Google's captive portal servers).
      *
-     * This is more reliable than NET_CAPABILITY_INTERNET which only checks if
-     * the network declares it can provide internet (not if it actually works).
-     *
      * Also checks NOT_SUSPENDED to ensure the network isn't temporarily paused.
      */
     private fun isInternetAvailable(): Boolean {
@@ -437,8 +527,6 @@ class RootViewModel(
         val network = cm.activeNetwork ?: return false
         val capabilities = cm.getNetworkCapabilities(network) ?: return false
 
-        // Check if network is validated (Android verified it can reach the internet)
-        // AND not suspended (network isn't temporarily paused)
         return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED) &&
                capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_SUSPENDED)
     }

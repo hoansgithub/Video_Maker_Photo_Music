@@ -10,7 +10,7 @@ import android.opengl.EGLContext
 import android.opengl.EGLDisplay
 import android.opengl.EGLSurface
 import android.opengl.GLES20
-import android.opengl.GLUtils
+import com.videomaker.aimusic.media.renderer.GLTextureUploader
 import android.media.ExifInterface
 import android.content.Context
 import java.io.File
@@ -54,6 +54,9 @@ class GPUImagePreprocessor(private val context: Context) {
     // Framebuffer objects
     private var framebuffer: Int = 0
     private var outputTexture: Int = 0
+
+    // Reusable ByteBuffer for glReadPixels (avoids repeated native allocation)
+    private var readPixelsBuffer: ByteBuffer? = null
 
     // Shader program
     private var shaderProgram: Int = 0
@@ -198,6 +201,8 @@ class GPUImagePreprocessor(private val context: Context) {
             return false
         }
 
+        var inputTexture = 0
+        var outputBitmap: Bitmap? = null
         try {
             // Make context current
             if (!EGL14.eglMakeCurrent(eglDisplay, eglSurface, eglSurface, eglContext)) {
@@ -232,7 +237,7 @@ class GPUImagePreprocessor(private val context: Context) {
             }
 
             // Create input texture
-            val inputTexture = createTexture(inputBitmap)
+            inputTexture = createTexture(inputBitmap)
             inputBitmap.recycle()
 
             if (inputTexture == 0) {
@@ -269,16 +274,23 @@ class GPUImagePreprocessor(private val context: Context) {
 
             GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4)
 
-            // Read pixels
-            val buffer = ByteBuffer.allocateDirect(outputWidth * outputHeight * 4)
-            buffer.order(ByteOrder.nativeOrder())
+            // Read pixels (reuse buffer to avoid repeated native allocations)
+            val bufferSize = outputWidth * outputHeight * 4
+            val existing = readPixelsBuffer
+            val buffer = if (existing != null && existing.capacity() >= bufferSize) {
+                existing.apply { clear() }
+            } else {
+                ByteBuffer.allocateDirect(bufferSize).apply {
+                    order(ByteOrder.nativeOrder())
+                }.also { readPixelsBuffer = it }
+            }
             GLES20.glReadPixels(0, 0, outputWidth, outputHeight, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, buffer)
             buffer.rewind()
 
             // glReadPixels reads bottom-to-top (GL origin is bottom-left), which
             // reverses the row order of the upside-down framebuffer — the resulting
             // bitmap is already in standard top-to-bottom orientation. No flip needed.
-            val outputBitmap = Bitmap.createBitmap(outputWidth, outputHeight, Bitmap.Config.ARGB_8888)
+            outputBitmap = Bitmap.createBitmap(outputWidth, outputHeight, Bitmap.Config.ARGB_8888)
             outputBitmap.copyPixelsFromBuffer(buffer)
 
             // Save to file
@@ -286,10 +298,7 @@ class GPUImagePreprocessor(private val context: Context) {
             FileOutputStream(outputFile).use { out ->
                 outputBitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
             }
-            outputBitmap.recycle()
 
-            // Cleanup
-            GLES20.glDeleteTextures(1, intArrayOf(inputTexture), 0)
             GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0)
 
             return true
@@ -297,6 +306,11 @@ class GPUImagePreprocessor(private val context: Context) {
         } catch (e: Exception) {
             android.util.Log.e(TAG, "Failed to preprocess image", e)
             return false
+        } finally {
+            if (inputTexture != 0) {
+                GLES20.glDeleteTextures(1, intArrayOf(inputTexture), 0)
+            }
+            outputBitmap?.let { if (!it.isRecycled) it.recycle() }
         }
     }
 
@@ -409,7 +423,10 @@ class GPUImagePreprocessor(private val context: Context) {
             GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE)
             GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE)
 
-            GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0)
+            if (!GLTextureUploader.safeTexImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0)) {
+                GLES20.glDeleteTextures(1, textureIds, 0)
+                return 0
+            }
         } catch (e: Exception) {
             android.util.Log.e(TAG, "Failed to upload texture: ${e.message}")
             GLES20.glDeleteTextures(1, textureIds, 0)
@@ -434,7 +451,14 @@ class GPUImagePreprocessor(private val context: Context) {
         outputTexture = texIds[0]
 
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, outputTexture)
+        // Drain pending errors, then allocate FBO texture and check for GPU OOM
+        @Suppress("ControlFlowWithEmptyBody")
+        while (GLES20.glGetError() != GLES20.GL_NO_ERROR) {}
         GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGBA, width, height, 0, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, null)
+        val allocError = GLES20.glGetError()
+        if (allocError != GLES20.GL_NO_ERROR) {
+            android.util.Log.e(TAG, "FBO texture alloc failed: ${width}x$height, error=0x${Integer.toHexString(allocError)}")
+        }
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR)
         GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR)
 
@@ -525,6 +549,7 @@ class GPUImagePreprocessor(private val context: Context) {
             eglDisplay = EGL14.EGL_NO_DISPLAY
             eglContext = EGL14.EGL_NO_CONTEXT
             eglSurface = EGL14.EGL_NO_SURFACE
+            readPixelsBuffer = null
             isInitialized = false
 
         } catch (e: Exception) {

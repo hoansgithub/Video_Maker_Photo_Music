@@ -35,7 +35,7 @@ import com.videomaker.aimusic.core.ads.AdClickDetector
 @Stable
 private sealed class SongListItemType {
     data class SongItem(val song: MusicSong) : SongListItemType()
-    data object AdItem : SongListItemType()
+    data class AdItem(val adIndex: Int) : SongListItemType()
 }
 
 @Composable
@@ -45,16 +45,27 @@ fun ContentSong(
     onDeleteSongClick: (MusicSong) -> Unit,
 ) {
     val adClickDetector: AdClickDetector = koinInject()
+    val adsLoaderService = koinInject<co.alcheclub.lib.acccore.ads.loader.AdsLoaderService>()
     val dimens = AppDimens.current
     val sessionManager: MusicPlaybackSessionManager = koinInject()
 
-    val listItems = remember(songs) {
+    val infeedInterval = remember {
+        val config = adsLoaderService.getPlacementConfig(AdPlacement.NATIVE_MUSIC_FOR_YOU_INFEED)
+        val value = config?.extras?.get("infeed_interval")
+        value?.toString()?.trim('"')?.toIntOrNull() ?: 6
+    }
+
+    val listItems = remember(songs, infeedInterval) {
         buildList {
+            var adCount = 0
             songs.forEachIndexed { index, song ->
                 add(SongListItemType.SongItem(song))
-                if (index == 0) {
-                    add(SongListItemType.AdItem)
+                if ((index + 1) % infeedInterval == 0) {
+                    add(SongListItemType.AdItem(adCount++))
                 }
+            }
+            if (songs.isNotEmpty() && songs.size < infeedInterval) {
+                add(SongListItemType.AdItem(0))
             }
         }
     }
@@ -73,7 +84,13 @@ fun ContentSong(
             key = { index ->
                 when (val item = listItems[index]) {
                     is SongListItemType.SongItem -> item.song.id
-                    is SongListItemType.AdItem -> "ad_liked_songs"
+                    is SongListItemType.AdItem -> "ad_liked_songs_${item.adIndex}"
+                }
+            },
+            contentType = { index ->
+                when (listItems[index]) {
+                    is SongListItemType.SongItem -> "song"
+                    is SongListItemType.AdItem -> "ad"
                 }
             }
         ) { index ->
@@ -103,7 +120,7 @@ fun ContentSong(
                 }
                 is SongListItemType.AdItem -> {
                     NativeAdView(
-                        placement = AdPlacement.NATIVE_LIBRARY_CREATED_VIDEO,
+                        placement = AdPlacement.NATIVE_MUSIC_FOR_YOU_INFEED,
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 22.dp),

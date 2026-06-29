@@ -45,11 +45,16 @@ import org.koin.compose.koinInject
 import kotlin.math.abs
 import com.videomaker.aimusic.core.ads.AdClickDetector
 
+private sealed class CarouselSlot {
+    data class BannerSlot(val banner: HomeBannerUi) : CarouselSlot()
+    data class AdSlot(val adIndex: Int) : CarouselSlot()
+}
+
 /**
  * Remote-config driven home banner carousel.
  *
- * Renders the resolved [banners] (template/song styles 1–2) plus a native AD at the 2nd slot
- * (parity with the legacy carousel). A top-start [BannerPageIndicator] is overlaid on each banner.
+ * Renders the resolved [banners] (template/song styles 1–2) plus native ADs interspersed
+ * every [infeed_interval] banners. A top-start [BannerPageIndicator] is overlaid on each banner.
  * Song banners play inline through [BannerSongPlayer]; auto-swipe pauses while a song is playing.
  */
 @Composable
@@ -67,9 +72,31 @@ fun HomeBannerCarousel(
     val dimens = AppDimens.current
     val player = koinInject<BannerSongPlayer>()
     val sessionManager = koinInject<MusicPlaybackSessionManager>()
+    val adsLoaderService = koinInject<co.alcheclub.lib.acccore.ads.loader.AdsLoaderService>()
     val activeSongId by player.activeSongId.collectAsStateWithLifecycle()
 
-    val carouselSize = banners.size + 1 // +1 for the AD slot at logical index 1
+    val adInterval = remember {
+        val config = adsLoaderService.getPlacementConfig(AdPlacement.NATIVE_GALLERY_HOT_TPT)
+        val value = config?.extras?.get("infeed_interval")
+        value?.toString()?.trim('"')?.toIntOrNull() ?: 3
+    }
+
+    // Precompute carousel items mixing banners and ad slots
+    val carouselItems = remember(banners, adInterval) {
+        buildList<Any> { // Any: HomeBannerUi or Int (ad index)
+            var adCount = 0
+            banners.forEachIndexed { index, banner ->
+                add(banner)
+                if ((index + 1) % adInterval == 0) {
+                    add(adCount++) // Int represents ad slot
+                }
+            }
+            if (banners.isNotEmpty() && banners.size < adInterval) {
+                add(0) // single ad at end
+            }
+        }
+    }
+    val carouselSize = carouselItems.size
 
     val infinitePageCount = Int.MAX_VALUE
     val pagerState = rememberPagerState(
@@ -83,10 +110,8 @@ fun HomeBannerCarousel(
 
     // Resolve the banner (if any) sitting at a given pager page.
     fun bannerAt(page: Int): HomeBannerUi? {
-        val itemIndex = page.mod(carouselSize)
-        if (itemIndex == 1) return null // AD slot
-        val bannerIndex = if (itemIndex == 0) 0 else itemIndex - 1
-        return banners.getOrNull(bannerIndex)
+        val item = carouselItems[page.mod(carouselSize)]
+        return item as? HomeBannerUi
     }
 
     // Pause inline music when the gallery is no longer visible (tab switch — always foreground).
@@ -157,8 +182,9 @@ fun HomeBannerCarousel(
     ) { page ->
         val itemIndex = page.mod(carouselSize)
         val currentPageIndex = pagerState.currentPage.mod(carouselSize)
+        val slot = carouselItems[itemIndex]
 
-        if (itemIndex == 1) {
+        if (slot is Int) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()

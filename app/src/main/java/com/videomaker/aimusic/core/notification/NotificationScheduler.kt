@@ -9,6 +9,7 @@ import com.videomaker.aimusic.core.data.local.PreferencesManager
 import com.videomaker.aimusic.core.notification.workers.AbandonedSelectPhotosWorker
 import com.videomaker.aimusic.core.notification.workers.DraftCompletionNudgeWorker
 import com.videomaker.aimusic.core.notification.workers.ForgottenMasterpieceWorker
+import com.videomaker.aimusic.core.notification.workers.OnboardingResumeWorker
 import com.videomaker.aimusic.core.notification.workers.QuickSaveReminderWorker
 import com.videomaker.aimusic.core.notification.workers.ShareEncouragementWorker
 import com.videomaker.aimusic.core.notification.workers.TrendingSongWorker
@@ -219,6 +220,26 @@ class NotificationScheduler(
         preferencesManager.removeActiveDraftReminderId(draftId)
     }
 
+    fun scheduleOnboardingResume(attempt: Int, delayMs: Long) {
+        val request = OneTimeWorkRequestBuilder<OnboardingResumeWorker>()
+            .setInputData(
+                androidx.work.Data.Builder()
+                    .putInt(KEY_OB_RESUME_ATTEMPT, attempt)
+                    .putLong(KEY_OB_RESUME_DELAY_MS, delayMs.coerceAtLeast(0L))
+                    .build()
+            )
+            .setInitialDelay(delayMs.coerceAtLeast(0L), TimeUnit.MILLISECONDS)
+            .addTag(TAG_OB_RESUME)
+            .build()
+        // Single unique work: re-scheduling REPLACEs the pending one, so only the
+        // next attempt is ever queued.
+        workManager.enqueueUniqueWork(UNIQUE_WORK_OB_RESUME, ExistingWorkPolicy.REPLACE, request)
+    }
+
+    fun cancelOnboardingResume() {
+        workManager.cancelUniqueWork(UNIQUE_WORK_OB_RESUME)
+    }
+
     private fun enqueueDailyTrendingSong(
         now: ZonedDateTime,
         policy: ExistingWorkPolicy,
@@ -330,6 +351,10 @@ class NotificationScheduler(
     companion object {
         const val UNIQUE_WORK_TRENDING_DAILY = "notif_trending_song_daily"
         const val UNIQUE_WORK_VIRAL_DAILY = "notif_viral_template_daily"
+        const val KEY_OB_RESUME_ATTEMPT = "key_ob_resume_attempt"
+        const val KEY_OB_RESUME_DELAY_MS = "key_ob_resume_delay_ms"
+        const val UNIQUE_WORK_OB_RESUME = "notif_ob_resume"
+        private const val TAG_OB_RESUME = "notif_ob_resume_tag"
         const val KEY_PROJECT_ID = "key_project_id"
         const val KEY_DRAFT_ID = "key_draft_id"
         const val KEY_EXIT_SESSION_ID = "key_exit_session_id"

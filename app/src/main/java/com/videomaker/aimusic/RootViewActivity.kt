@@ -1,10 +1,11 @@
 package com.videomaker.aimusic
 
-import android.app.Activity
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
@@ -13,10 +14,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -26,6 +25,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -40,16 +40,18 @@ import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import org.koin.compose.koinInject
+import com.videomaker.aimusic.core.permission.NotificationPermissionCoordinator
 import com.videomaker.aimusic.modules.featureselection.FeatureSelectionActivity
 import com.videomaker.aimusic.modules.language.LanguageSelectionActivity
-import com.videomaker.aimusic.modules.onboarding.OnboardingActivity
+import com.videomaker.aimusic.modules.onboarding.WelcomePage1Activity
 import com.videomaker.aimusic.modules.root.LoadingScreen
+import com.videomaker.aimusic.modules.root.LoadingScreenLow
 import com.videomaker.aimusic.modules.root.LoadingStep
 import com.videomaker.aimusic.modules.root.RootNavigationEvent
 import com.videomaker.aimusic.modules.root.RootViewModel
 import com.videomaker.aimusic.navigation.AppRoute
 import com.videomaker.aimusic.ui.theme.FoundationBlack
-import com.videomaker.aimusic.ui.theme.FoundationBlack_100
 import com.videomaker.aimusic.ui.theme.PlayerCardBackground
 import com.videomaker.aimusic.ui.theme.Primary
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
@@ -105,7 +107,7 @@ class RootViewActivity : AppCompatActivity() {
         val preferencesManager: com.videomaker.aimusic.core.data.local.PreferencesManager by inject()
         val onboardingMusicPlayer: com.videomaker.aimusic.core.playback.OnboardingMusicPlayer by inject()
         if (!preferencesManager.isOnboardingComplete()) {
-            onboardingMusicPlayer.preload()
+            onboardingMusicPlayer.preload() // Buffer early; playback starts at first onboarding step
         }
 
         setContent {
@@ -113,28 +115,93 @@ class RootViewActivity : AppCompatActivity() {
             val loadingStep by rootViewModel.loadingStep.collectAsStateWithLifecycle()
             val navigationEvent by rootViewModel.navigationEvent.collectAsStateWithLifecycle()
             val showNoInternetDialog by rootViewModel.showNoInternetDialog.collectAsStateWithLifecycle()
+            val showLowPriorityLoading by rootViewModel.showLowPriorityLoading.collectAsStateWithLifecycle()
+            val destination by rootViewModel.destination.collectAsStateWithLifecycle()
+            val isFirstOpen by rootViewModel.isFirstOpen.collectAsStateWithLifecycle()
 
-            // Handle navigation events
+            // Notification permission launcher — result flows back to ViewModel
+            val notificationPermissionCoordinator = koinInject<NotificationPermissionCoordinator>()
+            val notificationPermissionLauncher = rememberLauncherForActivityResult(
+                contract = ActivityResultContracts.RequestPermission()
+            ) { granted ->
+                Analytics.trackPermissionClick(
+                    button = if (granted) AnalyticsEvent.Value.Option.ALLOW else AnalyticsEvent.Value.Option.NO_ALLOW,
+                    perType = AnalyticsEvent.Value.PerType.NOTI,
+                    popType = AnalyticsEvent.Value.PopType.SYSTEM
+                )
+                notificationPermissionCoordinator.onSystemPermissionResult(granted)
+                Analytics.trackPermissionCheck(allow = granted)
+                rootViewModel.onPermissionResult(granted)
+            }
+
+            // Collect permission request events from ViewModel (fires during splash loading)
+            LaunchedEffect(Unit) {
+                rootViewModel.permissionRequestEvent.collect { permission ->
+                    Analytics.trackPermissionRender(
+                        perType = AnalyticsEvent.Value.PerType.NOTI,
+                        popType = AnalyticsEvent.Value.PopType.SYSTEM
+                    )
+                    notificationPermissionLauncher.launch(permission)
+                }
+            }
+
+            // Handle navigation events — all routes handled uniformly
             LaunchedEffect(navigationEvent) {
                 navigationEvent?.let { event ->
                     when (event) {
                         is RootNavigationEvent.NavigateTo -> {
                             handleNavigation(event)
+                            rootViewModel.onNavigationHandled()
                         }
                         is RootNavigationEvent.NavigateBack -> {
-                            // Not applicable for RootViewActivity
+                            rootViewModel.onNavigationHandled()
                         }
                     }
-                    rootViewModel.onNavigationHandled()
                 }
             }
 
             VideoMakerTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    LoadingScreen(
-                        isLoading = isLoading,
-                        loadingStep = loadingStep
-                    )
+                    androidx.compose.foundation.layout.Box(modifier = Modifier.fillMaxSize()) {
+                        // Show LoadingScreenLow when HIGH priority ad fails,
+                        // otherwise show normal LoadingScreen
+                        if (showLowPriorityLoading) {
+                            destination?.let { dest ->
+                                LoadingScreenLow(
+                                    destination = dest,
+                                    isFirstOpen = isFirstOpen,
+                                    onNavigate = { event ->
+                                        when (event) {
+                                            is RootNavigationEvent.NavigateTo -> {
+                                                handleNavigation(event)
+                                            }
+                                            is RootNavigationEvent.NavigateBack -> {
+                                                // Not applicable for RootViewActivity
+                                            }
+                                        }
+                                    }
+                                )
+                            }
+                        } else {
+                            LoadingScreen(
+                                isLoading = isLoading,
+                                loadingStep = loadingStep
+                            )
+                        }
+
+                        // Post-interstitial native ad overlay (shown after splash/open-app interstitial closes)
+                        val postInterNativeAdManager = org.koin.compose.koinInject<com.videomaker.aimusic.core.ads.PostInterNativeAdManager>()
+                        val showPostInterNativeAd by postInterNativeAdManager.showNativeAd
+                            .collectAsStateWithLifecycle()
+                        if (showPostInterNativeAd) {
+                            postInterNativeAdManager.getActiveNativePlacement()?.let { placement ->
+                                com.videomaker.aimusic.core.ads.PostInterNativeAd(
+                                    placement = placement,
+                                    onClose = postInterNativeAdManager::onNativeAdClosed
+                                )
+                            }
+                        }
+                    }
 
                     if (showNoInternetDialog) {
                         Dialog(
@@ -203,13 +270,18 @@ class RootViewActivity : AppCompatActivity() {
                 finish()
             }
             is AppRoute.Onboarding -> {
-                // Navigate to OnboardingActivity (separate one-time flow)
-                startActivity(Intent(this, OnboardingActivity::class.java))
+                // Navigate to first welcome page (flattened onboarding flow)
+                startActivity(Intent(this, WelcomePage1Activity::class.java))
                 applyDefaultTransition()
                 finish()
             }
             is AppRoute.FeatureSelection -> {
                 startActivity(Intent(this, FeatureSelectionActivity::class.java))
+                applyDefaultTransition()
+                finish()
+            }
+            is AppRoute.OnboardingWelcomeBack -> {
+                startActivity(Intent(this, com.videomaker.aimusic.modules.onboarding.OnboardingWelcomeBackActivity::class.java))
                 applyDefaultTransition()
                 finish()
             }

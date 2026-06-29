@@ -43,6 +43,7 @@ internal fun SettingsTabBar(
     onStickerClick: () -> Unit,
     onRatioClick: () -> Unit,
     onVolumeClick: () -> Unit,
+    onTabInteraction: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -57,27 +58,27 @@ internal fun SettingsTabBar(
         SettingsTabButton(
             icon = R.drawable.img_effect_video,
             label = stringResource(R.string.editor_effect),
-            onClick = onEffectClick,
+            onClick = { onTabInteraction(); onEffectClick() },
         )
         // Sticker button - opens the sticker picker panel
         SettingsTabButton(
             icon = R.drawable.ic_edit_sticker,
             label = stringResource(R.string.editor_sticker),
-            onClick = onStickerClick,
+            onClick = { onTabInteraction(); onStickerClick() },
         )
 
         // Text button
         SettingsTabButton(
             icon = R.drawable.ic_add_text,
             label = stringResource(R.string.editor_text),
-            onClick = onTextClick,
+            onClick = { onTabInteraction(); onTextClick() },
         )
 
         // Images button - shows "Photos" label
         SettingsTabButton(
             icon = R.drawable.img_replace_gallery,
             label = stringResource(R.string.editor_photos_label),
-            onClick = onImagesClick,
+            onClick = { onTabInteraction(); onImagesClick() },
         )
 
 
@@ -85,7 +86,7 @@ internal fun SettingsTabBar(
         SettingsTabButton(
             icon = R.drawable.img_ratio_frame,
             label = stringResource(R.string.editor_ratio_label),
-            onClick = onRatioClick,
+            onClick = { onTabInteraction(); onRatioClick() },
         )
 
         // Volume control (only show if music is selected)
@@ -94,7 +95,7 @@ internal fun SettingsTabBar(
             SettingsTabButton(
                 icon = R.drawable.img_edit_sound,
                 label = stringResource(R.string.editor_volume),
-                onClick = onVolumeClick,
+                onClick = { onTabInteraction(); onVolumeClick() },
             )
         }
 

@@ -113,6 +113,18 @@ class NotificationRenderer(
         payload: NotificationPayload,
         resolvedCtaText: String
     ): Bitmap = withContext(Dispatchers.IO) {
+        // Pre-designed expanded artwork: use it as-is, no badge/gradient decoration.
+        payload.expandedImageRes?.let { res ->
+            val decoded = BitmapFactory.decodeResource(context.resources, res)
+            return@withContext if (payload.expandedImageFit && decoded != null) {
+                // Letterbox-fit a square/non-banner image into the wide frame so centerCrop
+                // (on the expanded ImageView) shows the whole image instead of cropping it.
+                fitIntoFrame(decoded, dp(384), dp(196))
+            } else {
+                decoded
+            }
+        }
+
         val baseBitmap = if (payload.type == NotificationType.VIRAL_TEMPLATE && payload.imageCandidates.size > 1) {
             val bitmaps = payload.imageCandidates.take(3).mapNotNull { loadBitmapFromSource(it) }
             if (bitmaps.isNotEmpty()) composeTemplateCollage(bitmaps) else null
@@ -126,7 +138,10 @@ class NotificationRenderer(
             }
             BitmapFactory.decodeResource(context.resources, payload.fallbackImageRes)
         }
-        if (payload.type == NotificationType.TRENDING_SONG) {
+        // No badge/gradient decoration for these — use the raw artwork as-is.
+        // (ONBOARDING_RESUME attempt 2 = Top-1-song-by-GEO cover, falling back to img_song1
+        // when the cover can't be fetched; attempts 1 & 3 already short-circuit above.)
+        if (payload.type == NotificationType.TRENDING_SONG || payload.type == NotificationType.ONBOARDING_RESUME) {
             return@withContext resolvedBitmap
         }
         decorateHeroBitmap(payload.type, resolvedBitmap, resolvedCtaText)
@@ -152,7 +167,11 @@ class NotificationRenderer(
             setTextViewText(R.id.tvBody, resolvedBody)
             setTextColor(R.id.tvTitle, textColors.titleColor)
             setTextColor(R.id.tvBody, textColors.bodyColor)
-            setImageViewBitmap(R.id.ivThumb, scaleBitmapToFit(heroBitmap, dp(56), dp(56)))
+            if (payload.collapsedImageRes != null) {
+                setImageViewResource(R.id.ivThumb, payload.collapsedImageRes)
+            } else {
+                setImageViewBitmap(R.id.ivThumb, scaleBitmapToFit(heroBitmap, dp(56), dp(56)))
+            }
             setOnClickPendingIntent(R.id.rootContainer, contentIntent)
             setOnClickPendingIntent(R.id.ivThumb, contentIntent)
         }
@@ -191,6 +210,23 @@ class NotificationRenderer(
     private fun isDeviceInNightMode(): Boolean {
         val nightMode = context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
         return nightMode == Configuration.UI_MODE_NIGHT_YES
+    }
+
+    /**
+     * Draws [source] scaled to fit (preserving aspect ratio) and centered onto a transparent
+     * [frameW] x [frameH] canvas. The result has the frame's wide aspect, so a centerCrop
+     * ImageView fills it without cropping the image content (only the transparent padding).
+     */
+    private fun fitIntoFrame(source: Bitmap, frameW: Int, frameH: Int): Bitmap {
+        if (frameW <= 0 || frameH <= 0) return source
+        val scale = minOf(frameW.toFloat() / source.width, frameH.toFloat() / source.height)
+        val w = (source.width * scale).toInt().coerceAtLeast(1)
+        val h = (source.height * scale).toInt().coerceAtLeast(1)
+        val scaled = Bitmap.createScaledBitmap(source, w, h, true)
+        val out = Bitmap.createBitmap(frameW, frameH, Bitmap.Config.ARGB_8888)
+        Canvas(out).drawBitmap(scaled, (frameW - w) / 2f, (frameH - h) / 2f, null)
+        if (scaled != source) scaled.recycle()
+        return out
     }
 
     private fun scaleBitmapToFit(source: Bitmap, maxWidthPx: Int, maxHeightPx: Int): Bitmap {
@@ -349,6 +385,14 @@ class NotificationRenderer(
                 badgeText = "1 STEP LEFT",
                 badgeColor = Color.parseColor("#FF8A00"),
                 ctaColor = Color.parseColor("#FFFFFF"),
+                ctaTextColor = Color.parseColor("#111111"),
+                gradientColor = Color.argb(215, 0, 0, 0)
+            )
+
+            NotificationType.ONBOARDING_RESUME -> HeroStyle(
+                badgeText = "HOT",
+                badgeColor = Color.parseColor("#FF4C2E"),
+                ctaColor = Color.parseColor("#DDFF33"),
                 ctaTextColor = Color.parseColor("#111111"),
                 gradientColor = Color.argb(215, 0, 0, 0)
             )
