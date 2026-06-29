@@ -31,6 +31,7 @@ object AnalyticsEvent {
     const val TAB_GALLERY_RENDER = "tab_gallery_render"
     const val TAB_SONG_RENDER = "tab_song_render"
     const val TAB_LIBRARY_RENDER = "tab_library_render"
+    const val TAB_AI_RENDER = "tab_ai_render"
 
     const val IDEA_SONG_IMPRESSION = "idea_song_impression"
     const val IDEA_TEMPLATE_IMPRESSION = "idea_template_impression"
@@ -324,6 +325,7 @@ object AnalyticsEvent {
     object Param {
         const val VALUE = "value"
         const val TYPE = "type"
+        const val STYLE = "style"
         const val SOURCE = "source"
         const val LOGIC = "logic"
         const val FLOW = "flow"
@@ -435,6 +437,15 @@ object AnalyticsEvent {
             const val FREE = "free"
         }
 
+        /**
+         * Template flow style for template context events (impression/click/preview).
+         * Existing music-sync templates -> [MUSIC_SYNC]; templates added for the AI flow -> [AI].
+         */
+        object Style {
+            const val MUSIC_SYNC = "music_sync"
+            const val AI = "ai"
+        }
+
         /** Which overlay tool an [EDIT_BOX_DRAG]/[EDIT_BOX_DELETE] event refers to. */
         object TypeTool {
             const val TEXT = "text"
@@ -445,6 +456,7 @@ object AnalyticsEvent {
             const val GALLERY = "gallery"
             const val SONG = "song"
             const val LIBRARY = "library"
+            const val AI = "ai"
         }
 
         object LibraryTab {
@@ -458,6 +470,7 @@ object AnalyticsEvent {
             const val GALLERY = "gallery"
             const val SONG = "song"
             const val LIBRARY = "library"
+            const val AI = "ai"
             const val SEARCH = "search"
             const val EDIT = "edit"
             const val RESULT = "result"

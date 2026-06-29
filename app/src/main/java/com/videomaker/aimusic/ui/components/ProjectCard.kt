@@ -92,6 +92,7 @@ fun ProjectCard(
     onDownload: () -> Unit,
     onShare: () -> Unit,
     isHintHighlighted: Boolean = false,
+    thumbnailAspectRatioOverride: Float? = null,
     modifier: Modifier = Modifier
 ) {
     val dimens = AppDimens.current
@@ -123,7 +124,7 @@ fun ProjectCard(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .aspectRatio(project.settings.aspectRatio.ratio)
+                    .aspectRatio(thumbnailAspectRatioOverride ?: project.settings.aspectRatio.ratio)
                     .clip(RoundedCornerShape(dimens.radiusMd))
                     .then(
                         if (isHintHighlighted) {

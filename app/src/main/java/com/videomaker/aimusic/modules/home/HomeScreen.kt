@@ -92,8 +92,6 @@ import com.videomaker.aimusic.modules.gallery.GalleryScreen
 import com.videomaker.aimusic.modules.gallery.GalleryUiState
 import com.videomaker.aimusic.modules.gallery.GalleryViewModel
 import com.videomaker.aimusic.modules.home.components.HomeFabOverlay
-import com.videomaker.aimusic.modules.home.components.ProjectsTabContent
-import com.videomaker.aimusic.modules.projects.ProjectsViewModel
 import com.videomaker.aimusic.modules.songs.MusicPlayerBottomSheet
 import com.videomaker.aimusic.modules.songs.SongsScreen
 import com.videomaker.aimusic.modules.songs.SongsViewModel
@@ -125,27 +123,25 @@ private val ZeroProgress: () -> Float = { 0f }
  * HomeScreen - Main screen with tabbed navigation
  *
  * Features:
- * - 3 tabs: Gallery, Songs, My Projects
+ * - 3 tabs: Gallery, Songs, AI (AI tab is an empty placeholder for now)
  * - Tab titles at top left with white indicator bar
  * - Settings button at top right
  * - Swipeable content with HorizontalPager
  *
+ * The user's library (Created Video / Liked Template / Liked Song) now lives in a dedicated
+ * MyVideosScreen reached from Settings → Library → My Videos.
+ *
  * @param onSettingsClick Callback when Settings button is clicked
  * @param onCreateClick Callback when Create action is triggered
- * @param onProjectClick Callback when a project is clicked
  */
 @androidx.annotation.OptIn(UnstableApi::class)
 @Composable
 fun HomeScreen(
     galleryViewModel: GalleryViewModel,
     songsViewModel: SongsViewModel,
-    projectsViewModel: ProjectsViewModel,
     initialTab: Int = 0,
-    highlightProjectId: String? = null,
-    projectHintMode: String? = null,
     onSettingsClick: (String) -> Unit = {},
     onCreateClick: () -> Unit = {},
-    onProjectClick: (projectId: String, thumbnailUri: String?) -> Unit = { _, _ -> },
     onNavigateToSearch: () -> Unit = {},
     onNavigateToSongSearch: () -> Unit = {},
     onNavigateToSuggestedSongsList: () -> Unit = {},
@@ -153,7 +149,6 @@ fun HomeScreen(
     onNavigateToTemplateDetail: (String, String?) -> Unit = { _, _ -> },
     onNavigateToAllTemplates: (String?) -> Unit = {},
     onNavigateToAssetPicker: (songId: Long) -> Unit = {},
-    onNavigateToAllSongs: () -> Unit = {},
     onNavigateToTemplatePreviewerWithSong: (songId: Long) -> Unit = {}
 ) {
     val adClickDetector: AdClickDetector = koinInject()
@@ -226,7 +221,7 @@ fun HomeScreen(
     val tabs = listOf(
         stringResource(R.string.home_tab_gallery),
         stringResource(R.string.home_tab_songs),
-        stringResource(R.string.home_tab_projects)
+        stringResource(R.string.home_tab_ai)
     )
 
     val pagerState = rememberPagerState(
@@ -241,7 +236,7 @@ fun HomeScreen(
         when (index) {
             0 -> AnalyticsEvent.Value.TabName.GALLERY
             1 -> AnalyticsEvent.Value.TabName.SONG
-            else -> AnalyticsEvent.Value.TabName.LIBRARY
+            else -> AnalyticsEvent.Value.TabName.AI
         }
     }
     var lastSettledPage by remember { mutableIntStateOf(pagerState.currentPage) }
@@ -486,7 +481,6 @@ fun HomeScreen(
             .distinctUntilChanged()
             .collect { targetPage ->
                 if (targetPage != 1) songsViewModel.onDismissPlayer()
-                if (targetPage != 2) projectsViewModel.onDismissPlayer()
             }
     }
 
@@ -529,21 +523,16 @@ fun HomeScreen(
     // above both the bottom NativeAdView and the tab content.
     val audioPreviewCache: AudioPreviewCache = koinInject()
     val songsSelectedSong by songsViewModel.selectedSong.collectAsStateWithLifecycle()
-    val projectsSelectedSong by projectsViewModel.selectedSong.collectAsStateWithLifecycle()
-    val isMusicPlayerActive = songsSelectedSong != null || projectsSelectedSong != null
+    val isMusicPlayerActive = songsSelectedSong != null
     LaunchedEffect(isMusicPlayerActive) {
         trendingPopupCoordinator.setMusicPlayerActive(isMusicPlayerActive)
     }
     // [Experiment] CTA "Try it" hides while the user scrolls the list to discover other songs
     // during preview; reappears on player interaction or new song select.
     var isSongsCtaVisible by remember { mutableStateOf(true) }
-    var isProjectsCtaVisible by remember { mutableStateOf(true) }
     // New song selected → reveal CTA again. Keyed by song id so re-selecting same song is a no-op.
     LaunchedEffect(songsSelectedSong?.id) {
         if (songsSelectedSong != null) isSongsCtaVisible = true
-    }
-    LaunchedEffect(projectsSelectedSong?.id) {
-        if (projectsSelectedSong != null) isProjectsCtaVisible = true
     }
     var bottomSectionHeight by remember { mutableStateOf(0) }
 
@@ -618,25 +607,7 @@ fun HomeScreen(
                                 onNavigateToTemplatePreviewerWithSong.invoke(it) },
                             onListScroll = { isSongsCtaVisible = false }
                         )
-                        2 -> ProjectsTabContent(
-                            viewModel = projectsViewModel,
-                            highlightProjectId = highlightProjectId,
-                            hintMode = projectHintMode,
-                            isVisible = pagerState.settledPage == 2,
-                            onCreateClick = {
-                                Analytics.trackCreationStart(AnalyticsEvent.Value.Location.LIBRARY)
-                                onNavigateToTemplateDetail("", AnalyticsEvent.Value.Location.LIBRARY_RCM)
-                            }, // Open template previewer with first template + analytics
-                            onProjectClick = onProjectClick,
-                            onNavigateToTemplateDetail = onNavigateToTemplateDetail,
-                            onNavigateToSongSearch = onNavigateToSongSearch,
-                            onNavigateToAllSongs = onNavigateToAllSongs,
-                            onNavigateToTemplateSearch = onNavigateToSearch,
-                            onNavigateToAllTemplates = { onNavigateToAllTemplates(null) },
-                            onNavigateToAssetPicker = onNavigateToAssetPicker,
-                            topBarHeight = topBarHeight,
-                            onListScroll = { isProjectsCtaVisible = false }
-                        )
+                        2 -> AiTabContent()
                     }
                 }
 
@@ -814,25 +785,20 @@ fun HomeScreen(
                 onUseToCreate = { songsViewModel.onUseToCreateVideo(song) }
             )
         }
-
-        projectsSelectedSong?.let { song ->
-            val selectedPlaylist by projectsViewModel.selectedPlaylist.collectAsStateWithLifecycle()
-            MusicPlayerBottomSheet(
-                song = song,
-                playlist = selectedPlaylist,
-                categoryLocation = AnalyticsEvent.Value.Location.SONG_FAVORITE,
-                genreId = null,
-                cacheDataSourceFactory = audioPreviewCache.cacheDataSourceFactory,
-                isCtaVisible = isProjectsCtaVisible,
-                onPlayerInteraction = { isProjectsCtaVisible = true },
-                onDismiss = {
-                    isProjectsCtaVisible = true
-                    projectsViewModel.onDismissPlayer()
-                },
-                onUseToCreate = { projectsViewModel.onUseToCreateVideo(song) }
-            )
-        }
     }
+}
+
+/**
+ * AI Tab - placeholder for upcoming AI features. Intentionally empty for now (just the
+ * surface background) so content can be added later.
+ */
+@Composable
+private fun AiTabContent() {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.surface)
+    )
 }
 
 /**
@@ -850,7 +816,7 @@ private fun HomeTopBar(
     val currentLocation = when (selectedTabIndex) {
         0 -> AnalyticsEvent.Value.Location.GALLERY
         1 -> "songs"
-        else -> AnalyticsEvent.Value.Location.LIBRARY
+        else -> AnalyticsEvent.Value.Location.AI
     }
 
     Column(
@@ -1061,7 +1027,7 @@ private fun HomeScreenPreviewContent(
     isNewIdeasVisible: Boolean = false,
     currentPage: Int = 0
 ) {
-    val tabs = listOf("Gallery", "Songs", "My Videos")
+    val tabs = listOf("Gallery", "Songs", "AI")
 
     val pagerState = rememberPagerState(
         initialPage = currentPage,
