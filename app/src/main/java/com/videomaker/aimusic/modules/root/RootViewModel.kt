@@ -305,6 +305,7 @@ class RootViewModel(
             android.util.Log.d("RootViewModel", "📊 First open detection: isFirstOpen=$firstOpen")
 
             // Step 2: Get initialization timeout from Remote Config (already pre-fetched in Application.onCreate())
+            _loadingStep.value = LoadingStep.FETCHING_CONFIG
             initTimeoutMs = try {
                 val configValue = remoteConfig.getLong(RemoteConfigKeys.APP_INIT_TIMEOUT_MS, 45_000L)
                 if (configValue > 0) configValue else 45_000L
@@ -398,7 +399,8 @@ class RootViewModel(
                 )
             )
 
-            // Step 7: Check if HIGH ad is ready
+            // Step 7: Prepare navigation
+            _loadingStep.value = LoadingStep.PREPARING
             val isHighReady = adsLoaderService.isInterstitialReady(highPlacement)
 
             if (!isHighReady) {
