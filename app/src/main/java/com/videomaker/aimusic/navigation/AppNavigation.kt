@@ -527,7 +527,6 @@ fun AppNavigation(
                         ))
                     },
                     onProjectClick = { projectId, thumbnailUri ->
-                        homeAdTracker.onNavigateAway()
                         backStack.add(AppRoute.Editor(projectId, thumbnailUri = thumbnailUri))
                     },
                     onNavigateToTemplateDetail = { templateId, sourceLocation ->
