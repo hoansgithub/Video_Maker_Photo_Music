@@ -70,6 +70,7 @@ import com.videomaker.aimusic.modules.language.domain.usecase.ApplyLanguageUseCa
 import com.videomaker.aimusic.modules.language.domain.usecase.SaveLanguagePreferenceUseCase
 import com.videomaker.aimusic.modules.picker.AssetPickerScreen
 import com.videomaker.aimusic.modules.picker.AssetPickerViewModel
+import com.videomaker.aimusic.modules.projects.MyVideosScreen
 import com.videomaker.aimusic.modules.projects.ProjectsViewModel
 import com.videomaker.aimusic.modules.rate.RatingFeedbackPopup
 import com.videomaker.aimusic.modules.rate.RatingSatisfactionPopup
@@ -353,9 +354,9 @@ fun AppNavigation(
                 val hintMode = intent.getStringExtra(NotificationDeepLinkFactory.EXTRA_HINT_MODE)
                 backStack.apply {
                     clear()
+                    add(AppRoute.Home())
                     add(
-                        AppRoute.Home(
-                            initialTab = 2,
+                        AppRoute.MyVideos(
                             highlightProjectId = projectId,
                             hintMode = hintMode
                         )
@@ -422,11 +423,6 @@ fun AppNavigation(
                     key = "songs",
                     factory = createSafeViewModelFactory { songsFactory.create() }
                 )
-                val projectsFactory = koinInject<ProjectsViewModelFactory>()
-                val projectsViewModel: ProjectsViewModel = viewModel(
-                    key = "projects",
-                    factory = createSafeViewModelFactory { projectsFactory.create() }
-                )
                 val homeAdTracker = koinInject<com.videomaker.aimusic.core.ads.HomeAdTracker>()
 
                 // Auto-open MusicPlayerBottomSheet when launched from widget song tap
@@ -444,10 +440,7 @@ fun AppNavigation(
                 HomeScreen(
                     galleryViewModel = galleryViewModel,
                     songsViewModel = songsViewModel,
-                    projectsViewModel = projectsViewModel,
                     initialTab = route.initialTab,
-                    highlightProjectId = route.highlightProjectId,
-                    projectHintMode = route.hintMode,
                     onCreateClick = {
                         homeAdTracker.onNavigateAway()
                         backStack.add(AppRoute.TemplatePreviewer(
@@ -497,10 +490,6 @@ fun AppNavigation(
                             overrideSongId = songId
                         ))
                     },
-                    onNavigateToAllSongs = {
-                        homeAdTracker.onNavigateAway()
-                        backStack.add(AppRoute.SuggestedSongsList)
-                    },
                     onNavigateToTemplatePreviewerWithSong = { songId ->
                         homeAdTracker.onNavigateAway()
                         // Song-to-template flow: browse templates with selected song, then select images
@@ -510,10 +499,49 @@ fun AppNavigation(
                             overrideSongId = songId,
                             sourceLocation = AnalyticsEvent.Value.Location.SONG
                         ))
+                    }
+                )
+            }
+
+            // ============================================
+            // MY VIDEOS (library) — moved out of Home into its own route
+            // ============================================
+            entry<AppRoute.MyVideos> { route ->
+                val projectsFactory = koinInject<ProjectsViewModelFactory>()
+                val projectsViewModel: ProjectsViewModel = viewModel(
+                    key = "projects",
+                    factory = createSafeViewModelFactory { projectsFactory.create() }
+                )
+                MyVideosScreen(
+                    viewModel = projectsViewModel,
+                    highlightProjectId = route.highlightProjectId,
+                    hintMode = route.hintMode,
+                    onNavigateBack = { backStack.safeRemoveLast() },
+                    onCreateClick = {
+                        Analytics.trackCreationStart(AnalyticsEvent.Value.Location.LIBRARY)
+                        // Open template previewer with first template (LIBRARY recommendation)
+                        backStack.add(AppRoute.TemplatePreviewer(
+                            templateId = "",
+                            imageUris = emptyList(),
+                            sourceLocation = AnalyticsEvent.Value.Location.LIBRARY_RCM
+                        ))
                     },
                     onProjectClick = { projectId, thumbnailUri ->
-                        homeAdTracker.onNavigateAway()
                         backStack.add(AppRoute.Editor(projectId, thumbnailUri = thumbnailUri))
+                    },
+                    onNavigateToTemplateDetail = { templateId, sourceLocation ->
+                        backStack.add(AppRoute.TemplatePreviewer(
+                            templateId = templateId,
+                            imageUris = emptyList(),
+                            sourceLocation = sourceLocation
+                        ))
+                    },
+                    onNavigateToSongSearch = { backStack.add(AppRoute.UnifiedSearch(SearchSection.MUSIC)) },
+                    onNavigateToAllSongs = { backStack.add(AppRoute.SuggestedSongsList) },
+                    onNavigateToTemplateSearch = { backStack.add(AppRoute.UnifiedSearch(SearchSection.TEMPLATES)) },
+                    onNavigateToAllTemplates = { backStack.add(AppRoute.TemplateList()) },
+                    onNavigateToAssetPicker = { songId ->
+                        backStack.add(AppRoute.AssetPicker(overrideSongId = songId))
                     }
                 )
             }
@@ -708,7 +736,8 @@ fun AppNavigation(
                     onNavigateToHomeMyVideos = {
                         backStack.apply {
                             clear()
-                            add(AppRoute.Home(initialTab = 2)) // Tab 2 = My Videos
+                            add(AppRoute.Home())
+                            add(AppRoute.MyVideos()) // Library lives in its own screen now
                         }
                     },
                     onNavigateToTemplateDetail = { templateId ->
@@ -786,6 +815,7 @@ fun AppNavigation(
             entry<AppRoute.Settings> { route ->
                 SettingsScreen(
                     onNavigateBack = { backStack.safeRemoveLast() },
+                    onNavigateToMyVideos = { backStack.add(AppRoute.MyVideos()) },
                     onNavigateToLanguageSettings = { backStack.add(AppRoute.LanguageSettings) },
                     onNavigateToWidgetScreen = { backStack.add(AppRoute.WidgetScreen) },
                     onNavigateToNotificationTest = { backStack.add(AppRoute.NotificationTest) },

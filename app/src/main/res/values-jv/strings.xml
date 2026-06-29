@@ -606,7 +606,7 @@
     <string name="retention_dialog_stay">Tetep</string>
 
     <!-- Onboarding survey & asset picker -->
-    <string name="ai_level_title">Pilih gaya kreasimu</string>
+    <string name="ai_level_title">Kepiye carane AI ngowahi foto sampeyan?</string>
     <string name="ai_level_light_touch_title">Owahan Entheng</string>
     <string name="ai_level_light_touch_banner">Tetep alami.\nKaton kaya kowe, mung luwih apik</string>
     <string name="ai_level_deep_swap_title">Owahan Jero</string>
@@ -672,4 +672,21 @@
     <string name="text_overlay_desc_rotate_scale">Puter lan skala</string>
     <string name="text_overlay_font_ad_error">Gagal ngemot Iklan, mangga coba maneh.</string>
     <string name="text_overlay_system_default">Bawaan Sistem</string>
+
+    <!-- Language Setup Dialog -->
+    <string name="language_setting_up">Nyiyapake kabeh ing basamu…</string>
+    <string name="language_setting_up_done">Rampung! Ayo njelajah aplikasi iki.</string>
+
+    <!-- Added by translation script -->
+    <string name="personalizing_step_style">Nyetel gaya sampeyan</string>
+    <string name="personalizing_step_templates">Nyiyapake cithakan AI</string>
+    <string name="personalizing_step_songs">Nggoleki lagu sing lagi trending</string>
+    <string name="personalizing_step_effects">Efek loading</string>
+    <string name="personalizing_step_ready">Rampung! Siap nggawe</string>
+    <string name="ai_face_swap_title">Kartunisasi potret sampeyan</string>
+    <string name="survey_face_swap_title">Nggawe AI Photo Face swap Panjenengan</string>
+    <string name="survey_dance_swap_title">Gawe Video Tari AI Panjenengan</string>
+    <string name="survey_before">sadurunge</string>
+    <string name="survey_after">Sawise</string>
+    <string name="survey_swipe_hint">Gesek Petunjuk</string>
 </resources>

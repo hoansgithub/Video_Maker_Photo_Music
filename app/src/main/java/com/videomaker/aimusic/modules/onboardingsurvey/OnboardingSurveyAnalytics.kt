@@ -22,6 +22,14 @@ object OnboardingSurveyAnalytics {
     const val EVENT_AI_LEVEL_NEXT = "creation_style_next"
     const val PARAM_AI_LEVEL = "option"
 
+    // Face swap screen events
+    const val EVENT_FACE_SWAP_RENDER = "face_swap_render"
+    const val EVENT_FACE_SWAP_NEXT = "face_swap_next"
+
+    // AI Dance screen events
+    const val EVENT_AI_DANCE_RENDER = "ai_dance_render"
+    const val EVENT_AI_DANCE_NEXT = "ai_dance_next"
+
     /**
      * Expands selected ids into indexed params: `${paramKey}1` → id1, `${paramKey}2` → id2, …
      * Iteration order is preserved; index starts at 1.

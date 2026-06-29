@@ -262,8 +262,10 @@ fun TextBottomSheetContent(
                 val focusRequester = remember { FocusRequester() }
                 var isTextFieldFocused by remember { mutableStateOf(false) }
 
-                LaunchedEffect(selectedOverlay.id, focusTrigger) {
-                    focusRequester.requestFocus()
+                LaunchedEffect(focusTrigger) {
+                    if (focusTrigger > 0L) {
+                        focusRequester.requestFocus()
+                    }
                 }
 
                 Row(

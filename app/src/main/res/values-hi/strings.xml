@@ -601,7 +601,7 @@
     <string name="retention_dialog_stay">रुकें</string>
 
     <!-- Onboarding survey & asset picker -->
-    <string name="ai_level_title">अपनी रचना शैली चुनें</string>
+    <string name="ai_level_title">आप कैसे चाहते हैं कि AI आपकी तस्वीर को बदल दे?</string>
     <string name="ai_level_light_touch_title">हल्का बदलाव</string>
     <string name="ai_level_light_touch_banner">स्वाभाविक बने रहें।\nआप जैसे दिखें, बस और बेहतर</string>
     <string name="ai_level_deep_swap_title">डीप स्वैप</string>
@@ -669,4 +669,21 @@
     <string name="text_overlay_desc_rotate_scale">घुमाएं और स्केल करें</string>
     <string name="text_overlay_font_ad_error">विज्ञापन लोड करने में विफल, कृपया पुनः प्रयास करें।</string>
     <string name="text_overlay_system_default">सिस्टम डिफ़ॉल्ट</string>
+
+    <!-- Language Setup Dialog -->
+    <string name="language_setting_up">आपकी भाषा में सब कुछ सेट किया जा रहा है…</string>
+    <string name="language_setting_up_done">हो गया! चलिए ऐप को एक्सप्लोर करते हैं।</string>
+
+    <!-- Added by translation script -->
+    <string name="personalizing_step_style">अपनी शैली स्थापित करना</string>
+    <string name="personalizing_step_templates">एआई टेम्प्लेट तैयार करना</string>
+    <string name="personalizing_step_songs">ट्रेंडिंग गाने ढूँढना</string>
+    <string name="personalizing_step_effects">प्रभाव लोड हो रहा है</string>
+    <string name="personalizing_step_ready">हो गया! बनाने के लिए तैयार</string>
+    <string name="ai_face_swap_title">अपने चित्र को कार्टून बनाएं</string>
+    <string name="survey_face_swap_title">अपना AI फोटो फेस स्वैप बनाएं</string>
+    <string name="survey_dance_swap_title">अपना एआई डांस वीडियो बनाएं</string>
+    <string name="survey_before">पहले</string>
+    <string name="survey_after">बाद</string>
+    <string name="survey_swipe_hint">संकेत स्वाइप करें</string>
 </resources>

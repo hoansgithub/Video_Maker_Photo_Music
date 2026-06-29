@@ -15,6 +15,8 @@
     <string name="language_select_title">Choose Languages</string>
     <string name="language_select_subtitle">Please select a display language.</string>
     <string name="language_continue">Continue</string>
+    <string name="language_setting_up">Setting things up in your language…</string>
+    <string name="language_setting_up_done">Done! Let\'s explore the app.</string>
     <string name="language_english">English</string>
     <string name="language_arabic">العربية</string>
     <string name="language_hindi">हिन्दी</string>
@@ -73,6 +75,7 @@
     <string name="home_tab_gallery">Gallery</string>
     <string name="home_tab_songs">Songs</string>
     <string name="home_tab_projects">Library</string>
+    <string name="home_tab_ai">AI</string>
 
     <!-- Gallery Tab -->
     <string name="gallery_filter_for_you">For you</string>
@@ -103,6 +106,8 @@
 
     <!-- Settings -->
     <string name="settings_title">Settings</string>
+    <string name="settings_library">Library</string>
+    <string name="settings_my_videos">My Videos</string>
     <string name="settings_account">Account</string>
     <string name="settings_legal">Legal</string>
     <string name="settings_language">Language</string>
@@ -633,15 +638,18 @@
     <string name="genre_step_subtitle">This step helps us suggest better music for you. It won’t affect your personalized content.</string>
     <string name="personalizing_title">Personalizing your experience…</string>
     <string name="personalizing_subtitle">Please wait a moment while we prepare the perfect style templates for you.</string>
+    <string name="personalizing_step_style">Setting up your style</string>
+    <string name="personalizing_step_templates">Preparing AI templates</string>
+    <string name="personalizing_step_songs">Finding trending songs</string>
+    <string name="personalizing_step_effects">Loading effects</string>
+    <string name="personalizing_step_ready">Done! Ready to create</string>
     <string name="template_pick_title">What template style do you prefer?</string>
     <string name="template_pick_subtitle">Pick a template style and let us handle the transitions and effects for you. This step won’t affect your personalized content.</string>
 
     <!-- AI_LEVEL (creation style) -->
-    <string name="ai_level_title">Choose your creation style</string>
+    <string name="ai_level_title">How do you want AI to transform your photo?</string>
     <string name="ai_level_light_touch_title">Light Touch</string>
-    <string name="ai_level_light_touch_banner">Keep it authentic.\nLook like you, just better</string>
     <string name="ai_level_deep_swap_title">Deep Swap</string>
-    <string name="ai_level_deep_swap_banner">Push creativity further.\nBecome anyone, try anything.</string>
 
     <!-- CONTENT_EXCLUSIVE (content filter) -->
     <string name="content_exclusive_title">Filter your music and template feed</string>
@@ -680,5 +688,15 @@
     <string name="banner_featured">FEATURED</string>
     <string name="banner_trending_now">TRENDING NOW</string>
     <string name="banner_new_arrivals">NEW ARRIVALS</string>
+
+    <!-- AI_FACE_SWAP (cartoonize preview) -->
+    <string name="ai_face_swap_title">Cartoonize your portrait</string>
+    <string name="survey_face_swap_title">Create Your AI Photo Face swap</string>
+
+    <!-- AI_DANCE (video dance preview) -->
+    <string name="survey_dance_swap_title">Generate Your AI Dance Video</string>
+    <string name="survey_before">Before</string>
+    <string name="survey_after">After</string>
+    <string name="survey_swipe_hint">Swipe Hint</string>
 
 </resources>

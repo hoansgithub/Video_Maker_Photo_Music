@@ -607,7 +607,7 @@
     <string name="retention_dialog_stay">Nọrọ</string>
 
     <!-- Onboarding survey & asset picker -->
-    <string name="ai_level_title">Họrọ ụdị okike gị</string>
+    <string name="ai_level_title">Kedu otu ịchọrọ ka AI gbanwee foto gị?</string>
     <string name="ai_level_light_touch_title">Mmetụ Dị Nro</string>
     <string name="ai_level_light_touch_banner">Debe ya n\'ụzọ eziokwu.\nYie ka gị, naanị ka mma</string>
     <string name="ai_level_deep_swap_title">Mgbanwe Miri Emi</string>
@@ -673,4 +673,21 @@
     <string name="text_overlay_desc_rotate_scale">Tụgharịa ma tụọ</string>
     <string name="text_overlay_font_ad_error">Mgbasa ozi enweghị ike ibunye, biko gbalịa ọzọ.</string>
     <string name="text_overlay_system_default">Ndi Agba Usoro</string>
+
+    <!-- Language Setup Dialog -->
+    <string name="language_setting_up">Na-edobere gị ihe n\'asụsụ gị…</string>
+    <string name="language_setting_up_done">Emeela! Ka anyị nyochaa ngwa ahụ.</string>
+
+    <!-- Added by translation script -->
+    <string name="personalizing_step_style">Ịtọlite ​​ụdị gị</string>
+    <string name="personalizing_step_templates">Na-akwado ndebiri AI</string>
+    <string name="personalizing_step_songs">Ịchọta egwu na-agbanwe agbanwe</string>
+    <string name="personalizing_step_effects">Mmetụta nbudata</string>
+    <string name="personalizing_step_ready">Emechaala! Njikere imepụta</string>
+    <string name="ai_face_swap_title">Mepụta eserese gị</string>
+    <string name="survey_face_swap_title">Mepụta mgbanwe ihu foto AI gị</string>
+    <string name="survey_dance_swap_title">Mepụta vidiyo ịgba egwu AI gị</string>
+    <string name="survey_before">Tupu</string>
+    <string name="survey_after">Mgbe</string>
+    <string name="survey_swipe_hint">Sụgharịa ntụnye</string>
 </resources>

@@ -329,4 +329,10 @@ val SkeletonPlaceholder = Color(0xFFD9D9D9)
 // ============================================
 val EffectUnselectedBg = Color(0x0FDAD9D9)
 
+// ============================================
+// ONBOARDING SURVEY
+// ============================================
+val OnboardingSurveyBackground = Color(0xFF161616)
+val OnboardingActivityBackground = Color(0xFF1A1A1A)
+val SliderChevronColor = Color(0xFF1E1E1E)
 

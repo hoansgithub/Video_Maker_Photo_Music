@@ -599,7 +599,7 @@
     <string name="retention_dialog_stay">Ficar</string>
 
     <!-- Onboarding survey & asset picker -->
-    <string name="ai_level_title">Escolha seu estilo de criação</string>
+    <string name="ai_level_title">Como você deseja que a IA transforme sua foto?</string>
     <string name="ai_level_light_touch_title">Toque Leve</string>
     <string name="ai_level_light_touch_banner">Mantenha a autenticidade.\nPareça você, só que melhor</string>
     <string name="ai_level_deep_swap_title">Troca Profunda</string>
@@ -667,4 +667,21 @@
     <string name="text_overlay_desc_rotate_scale">Rotacionar e dimensionar</string>
     <string name="text_overlay_font_ad_error">Falha ao carregar o anúncio, por favor tente novamente.</string>
     <string name="text_overlay_system_default">Padrão do sistema</string>
+
+    <!-- Language Setup Dialog -->
+    <string name="language_setting_up">Configurando as coisas no seu idioma…</string>
+    <string name="language_setting_up_done">Pronto! Vamos explorar o aplicativo.</string>
+
+    <!-- Added by translation script -->
+    <string name="personalizing_step_style">Configurando seu estilo</string>
+    <string name="personalizing_step_templates">Preparando modelos de IA</string>
+    <string name="personalizing_step_songs">Encontrando músicas populares</string>
+    <string name="personalizing_step_effects">Carregando efeitos</string>
+    <string name="personalizing_step_ready">Feito! Pronto para criar</string>
+    <string name="ai_face_swap_title">Cartoonize seu retrato</string>
+    <string name="survey_face_swap_title">Crie sua troca de rosto de foto AI</string>
+    <string name="survey_dance_swap_title">Crie seu vídeo de dança com IA</string>
+    <string name="survey_before">Antes</string>
+    <string name="survey_after">Depois</string>
+    <string name="survey_swipe_hint">Dica de deslizar</string>
 </resources>
