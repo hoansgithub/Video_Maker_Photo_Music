@@ -6,6 +6,7 @@
     <string name="facebook_client_token" translatable="false">59adbbae92079f20f43d002f331d8e9d</string>
 
     <!-- Loading -->
+    <string name="splash_subtitle">AI Music Video</string>
     <string name="loading">Loading…</string>
     <string name="ad_loading">Loading ad…</string>
 

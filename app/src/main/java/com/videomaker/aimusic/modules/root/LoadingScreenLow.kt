@@ -57,10 +57,13 @@ fun LoadingScreenLow(
         }
     }
 
-    // Same visual UI as the normal LoadingScreen
+    // Same visual UI as the normal LoadingScreen.
+    // Start progress from 0.60 (CHECKING_STATUS target) since the switch happens
+    // after RootViewModel completes that step — avoids progress bar resetting to 0.
     LoadingScreen(
         isLoading = isLoading,
         loadingStep = loadingStep,
-        modifier = modifier
+        modifier = modifier,
+        initialProgress = 0.60f
     )
 }
