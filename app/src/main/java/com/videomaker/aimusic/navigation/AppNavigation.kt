@@ -165,6 +165,13 @@ fun AppNavigation(
     val ratingTriggerManager = koinInject<com.videomaker.aimusic.core.rating.RatingTriggerManager>()
     val ratingStep by ratingTriggerManager.ratingStep.collectAsStateWithLifecycle()
     val ratingSuppressed by ratingTriggerManager.isSuppressed.collectAsStateWithLifecycle()
+
+    // Suppress rating popup when a fullscreen native ad overlay is showing
+    val postInterNativeAdManager = koinInject<com.videomaker.aimusic.core.ads.PostInterNativeAdManager>()
+    val showPostInterNativeAd by postInterNativeAdManager.showNativeAd.collectAsStateWithLifecycle()
+    val postRewardNativeAdManager = koinInject<com.videomaker.aimusic.core.ads.PostRewardNativeAdManager>()
+    val showPostRewardNativeAd by postRewardNativeAdManager.showNativeAd.collectAsStateWithLifecycle()
+
     val context = LocalContext.current
 
     LaunchedEffect(Unit) {
@@ -919,9 +926,11 @@ fun AppNavigation(
     }
 
     // Global rating popup overlay.
-    // Suppressed while a higher-priority popup (e.g. the picker permission dialog) is visible,
-    // so only one popup shows at a time. The pending step is preserved and reappears once released.
-    val effectiveRatingStep = if (ratingSuppressed) RatingStep.None else ratingStep
+    // Suppressed while a higher-priority popup (e.g. the picker permission dialog) or a
+    // fullscreen native ad overlay is visible, so only one popup shows at a time.
+    // The pending step is preserved and reappears once suppression is released.
+    val isFullscreenAdShowing = showPostInterNativeAd || showPostRewardNativeAd
+    val effectiveRatingStep = if (ratingSuppressed || isFullscreenAdShowing) RatingStep.None else ratingStep
     AnimatedContent(
         targetState = effectiveRatingStep,
         transitionSpec = { fadeIn() togetherWith fadeOut() },
