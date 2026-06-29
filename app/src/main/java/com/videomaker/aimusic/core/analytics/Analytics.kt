@@ -184,6 +184,7 @@ object Analytics {
             AnalyticsEvent.Value.TabName.GALLERY -> AnalyticsEvent.TAB_GALLERY_RENDER
             AnalyticsEvent.Value.TabName.SONG -> AnalyticsEvent.TAB_SONG_RENDER
             AnalyticsEvent.Value.TabName.LIBRARY -> AnalyticsEvent.TAB_LIBRARY_RENDER
+            AnalyticsEvent.Value.TabName.AI -> AnalyticsEvent.TAB_AI_RENDER
             else -> return
         }
         trackWithPolicy(
@@ -296,14 +297,16 @@ object Analytics {
         templateName: String,
         location: String,
         screenSessionId: String,
-        isPremium: Boolean
+        isPremium: Boolean,
+        style: String = AnalyticsEvent.Value.Style.MUSIC_SYNC
     ) {
         val params = mapOf(
             AnalyticsEvent.Param.TEMPLATE_ID to templateId,
             AnalyticsEvent.Param.TEMPLATE_NAME to templateName,
             AnalyticsEvent.Param.LOCATION to location,
             AnalyticsEvent.Param.SCREEN_SESSION_ID to screenSessionId,
-            AnalyticsEvent.Param.TYPE to premiumType(isPremium)
+            AnalyticsEvent.Param.TYPE to premiumType(isPremium),
+            AnalyticsEvent.Param.STYLE to style
         )
         trackWithPolicy(
             eventName = AnalyticsEvent.TEMPLATE_IMPRESSION,
@@ -376,14 +379,21 @@ object Analytics {
         )
     }
 
-    fun trackTemplateClick(templateId: String, templateName: String, location: String, isPremium: Boolean) {
+    fun trackTemplateClick(
+        templateId: String,
+        templateName: String,
+        location: String,
+        isPremium: Boolean,
+        style: String = AnalyticsEvent.Value.Style.MUSIC_SYNC
+    ) {
         trackWithPolicy(
             eventName = AnalyticsEvent.TEMPLATE_CLICK,
             params = mapOf(
                 AnalyticsEvent.Param.TEMPLATE_ID to templateId,
                 AnalyticsEvent.Param.TEMPLATE_NAME to templateName,
                 AnalyticsEvent.Param.LOCATION to location,
-                AnalyticsEvent.Param.TYPE to premiumType(isPremium)
+                AnalyticsEvent.Param.TYPE to premiumType(isPremium),
+                AnalyticsEvent.Param.STYLE to style
             ),
             requiredParams = setOf(
                 AnalyticsEvent.Param.TEMPLATE_ID,
@@ -426,14 +436,21 @@ object Analytics {
         )
     }
 
-    fun trackTemplatePreview(templateId: String, templateName: String, location: String, isPremium: Boolean) {
+    fun trackTemplatePreview(
+        templateId: String,
+        templateName: String,
+        location: String,
+        isPremium: Boolean,
+        style: String = AnalyticsEvent.Value.Style.MUSIC_SYNC
+    ) {
         trackWithPolicy(
             eventName = AnalyticsEvent.TEMPLATE_PREVIEW,
             params = mapOf(
                 AnalyticsEvent.Param.TEMPLATE_ID to templateId,
                 AnalyticsEvent.Param.TEMPLATE_NAME to templateName,
                 AnalyticsEvent.Param.LOCATION to location,
-                AnalyticsEvent.Param.TYPE to premiumType(isPremium)
+                AnalyticsEvent.Param.TYPE to premiumType(isPremium),
+                AnalyticsEvent.Param.STYLE to style
             ),
             requiredParams = setOf(
                 AnalyticsEvent.Param.TEMPLATE_ID,

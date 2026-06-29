@@ -159,7 +159,7 @@ fun SettingsScreen(
                     title = stringResource(R.string.settings_my_videos),
                     subtitle = "",
                     onClick = {
-                        Analytics.trackSettingOptionClick("my_videos", settingLocation)
+                        Analytics.trackSettingOptionClick("library", settingLocation)
                         onNavigateToMyVideos()
                     }
                 )

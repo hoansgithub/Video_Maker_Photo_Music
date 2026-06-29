@@ -816,7 +816,7 @@ private fun HomeTopBar(
     val currentLocation = when (selectedTabIndex) {
         0 -> AnalyticsEvent.Value.Location.GALLERY
         1 -> "songs"
-        else -> AnalyticsEvent.Value.Location.LIBRARY
+        else -> AnalyticsEvent.Value.Location.AI
     }
 
     Column(
