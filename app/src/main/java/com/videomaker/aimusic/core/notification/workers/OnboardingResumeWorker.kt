@@ -12,6 +12,7 @@ import com.videomaker.aimusic.core.notification.NotificationScheduler
 import com.videomaker.aimusic.core.notification.NotificationType
 import com.videomaker.aimusic.core.notification.OnboardingResumeNotifications
 import com.videomaker.aimusic.core.notification.TrendingCandidateResolver
+import co.alcheclub.lib.acccore.remoteconfig.RemoteConfig
 import com.videomaker.aimusic.domain.repository.SongRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -29,6 +30,7 @@ class OnboardingResumeWorker(
     private val notificationRenderer: NotificationRenderer by inject()
     private val notificationScheduler: NotificationScheduler by inject()
     private val songRepository: SongRepository by inject()
+    private val remoteConfig: RemoteConfig by inject()
 
     override suspend fun doWork(): Result {
         // Permission revoked or notifications disabled → no-op.
@@ -99,6 +101,26 @@ class OnboardingResumeWorker(
             imageType = if (!songCoverUrl.isNullOrBlank()) "song_artwork" else "fallback_artwork",
             shownAt = System.currentTimeMillis()
         )
+
+        // Chain: schedule the next attempt so it fires without the user re-opening the app.
+        val nextResolution = OnboardingResumeNotifications.resolveScheduleRequest(
+            onboardingComplete = preferencesManager.isOnboardingComplete(),
+            enabled = true,
+            firedCount = preferencesManager.obResumeFiredCount,
+            delayMinutesFor = { a ->
+                remoteConfig.getLong(
+                    OnboardingResumeNotifications.delayMinutesKey(a),
+                    OnboardingResumeNotifications.DEFAULT_DELAY_MINUTES
+                )
+            }
+        )
+        if (nextResolution.firedCount > preferencesManager.obResumeFiredCount) {
+            preferencesManager.obResumeFiredCount = nextResolution.firedCount
+        }
+        nextResolution.request?.let { next ->
+            notificationScheduler.scheduleOnboardingResume(attempt = next.attempt, delayMs = next.delayMs)
+        }
+
         return Result.success()
     }
 
