@@ -60,7 +60,8 @@ import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 fun LoadingScreen(
     isLoading: Boolean,
     loadingStep: LoadingStep,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    initialProgress: Float = 0f
 ) {
     val message = when (loadingStep) {
         LoadingStep.INITIALIZING -> stringResource(R.string.root_loading_initializing)
@@ -80,7 +81,7 @@ fun LoadingScreen(
         LoadingStep.PREPARING -> 0.95f
     }
 
-    val progress = remember { Animatable(0f) }
+    val progress = remember { Animatable(initialProgress) }
     LaunchedEffect(targetProgress) {
         progress.animateTo(
             targetValue = targetProgress,
