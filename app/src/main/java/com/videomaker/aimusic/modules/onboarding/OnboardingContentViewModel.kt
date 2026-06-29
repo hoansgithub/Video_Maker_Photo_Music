@@ -39,7 +39,7 @@ class OnboardingContentViewModel(
 
     fun preloadContent() {
         // VM is a singleton — guard against duplicate fetch if both
-        // LanguageSelectionActivity and OnboardingActivity (or re-entries) call this.
+        // LanguageSelectionActivity and WelcomePage Activities (or re-entries) call this.
         if (_contentState.value.isReady || preloadJob?.isActive == true) return
         preloadJob = viewModelScope.launch {
             try {

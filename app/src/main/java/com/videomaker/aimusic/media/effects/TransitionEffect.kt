@@ -2,8 +2,9 @@ package com.videomaker.aimusic.media.effects
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.opengl.GLES20
-import android.opengl.GLUtils
+import com.videomaker.aimusic.media.renderer.GLTextureUploader
 import androidx.media3.common.util.GlProgram
 import androidx.media3.common.util.GlUtil
 import androidx.media3.common.util.Size
@@ -16,13 +17,13 @@ import com.videomaker.aimusic.domain.model.Transition
  * TransitionEffect - Applies GL Transitions shaders between two images
  *
  * SINGLE SOURCE OF TRUTH ARCHITECTURE:
- * Both FROM and TO textures are loaded by US using identical methods.
+ * Both FROM and TO textures are loaded from GPU-preprocessed cache files.
  * We IGNORE Media3's input texture to ensure consistent color handling.
  *
- * Pipeline:
- * - FROM texture: Loaded by us from fromImageBitmap
- * - TO texture: Loaded by us from toImageBitmap
- * - Both use identical texture creation → identical colors
+ * LAZY LOADING: Textures are loaded on-demand in configure() from file paths,
+ * not upfront. Only 2 bitmaps are ever in memory at a time (loaded, uploaded
+ * to GPU, then immediately recycled). This reduces peak memory from ~161 MB
+ * (all transition bitmaps) to ~7.4 MB (2 bitmaps).
  *
  * Timing:
  * - clipStartTimeUs: Global composition time when clip starts
@@ -32,8 +33,8 @@ import com.videomaker.aimusic.domain.model.Transition
  */
 class TransitionEffect(
     private val transition: Transition,
-    private val fromImageBitmap: Bitmap?,
-    private val toImageBitmap: Bitmap?,
+    private val fromImagePath: String?,
+    private val toImagePath: String?,
     private val transitionDurationUs: Long,
     private val clipDurationUs: Long,
     private val clipStartTimeUs: Long = 0L,
@@ -48,8 +49,8 @@ class TransitionEffect(
         return TransitionShaderProgram(
             useHdr = useHdr,
             transition = transition,
-            fromImageBitmap = fromImageBitmap,
-            toImageBitmap = toImageBitmap,
+            fromImagePath = fromImagePath,
+            toImagePath = toImagePath,
             transitionDurationUs = transitionDurationUs,
             clipDurationUs = clipDurationUs,
             clipStartTimeUs = clipStartTimeUs
@@ -63,6 +64,9 @@ class TransitionEffect(
  * CRITICAL: We load BOTH FROM and TO textures ourselves using identical methods.
  * This guarantees no color difference between them.
  * Media3's input texture is IGNORED.
+ *
+ * LAZY LOADING: Textures are loaded from cache files in configure() (called once
+ * per clip by Media3). Bitmaps are recycled immediately after GPU upload.
  */
 // Pre-allocated constant — avoids heap allocation per drawFrame call
 private val FADE_COLOR_BLACK = floatArrayOf(0f, 0f, 0f)
@@ -70,8 +74,8 @@ private val FADE_COLOR_BLACK = floatArrayOf(0f, 0f, 0f)
 private class TransitionShaderProgram(
     useHdr: Boolean,
     private val transition: Transition,
-    private val fromImageBitmap: Bitmap?,
-    private val toImageBitmap: Bitmap?,
+    private val fromImagePath: String?,
+    private val toImagePath: String?,
     private val transitionDurationUs: Long,
     private val clipDurationUs: Long,
     private val clipStartTimeUs: Long
@@ -129,14 +133,14 @@ void main() {
             }
         }
 
-        // Create FROM texture from our bitmap (SINGLE SOURCE OF TRUTH)
-        if (fromTextureId == -1 && fromImageBitmap != null && !fromImageBitmap.isRecycled) {
-            fromTextureId = createTextureFromBitmap(fromImageBitmap)
+        // Lazy load FROM texture from cache file
+        if (fromTextureId == -1 && fromImagePath != null) {
+            fromTextureId = loadTextureFromFile(fromImagePath)
         }
 
-        // Create TO texture from our bitmap (SAME METHOD = SAME COLORS)
-        if (toTextureId == -1 && toImageBitmap != null && !toImageBitmap.isRecycled) {
-            toTextureId = createTextureFromBitmap(toImageBitmap)
+        // Lazy load TO texture from cache file (SAME METHOD = SAME COLORS)
+        if (toTextureId == -1 && toImagePath != null) {
+            toTextureId = loadTextureFromFile(toImagePath)
         }
 
         isConfigured = true
@@ -247,10 +251,33 @@ void main() {
     }
 
     /**
+     * Load a texture from a cache file on disk.
+     * Bitmap is recycled immediately after GPU upload — only the GL texture persists.
+     */
+    private fun loadTextureFromFile(path: String): Int {
+        val file = java.io.File(path)
+        if (!file.exists() || file.length() == 0L) {
+            android.util.Log.w(TAG, "Texture file missing or empty: $path")
+            return -1
+        }
+        val bitmap = BitmapFactory.decodeFile(path) ?: run {
+            android.util.Log.w(TAG, "Failed to decode texture file: $path")
+            return -1
+        }
+        try {
+            return createTextureFromBitmap(bitmap)
+        } finally {
+            bitmap.recycle()
+        }
+    }
+
+    /**
      * Create texture from bitmap - SINGLE METHOD FOR BOTH FROM AND TO
      * This guarantees identical color handling for both textures.
      */
     private fun createTextureFromBitmap(bitmap: Bitmap): Int {
+        if (bitmap.isRecycled) return -1
+
         return try {
             val textureIds = IntArray(1)
             GLES20.glGenTextures(1, textureIds, 0)
@@ -266,10 +293,7 @@ void main() {
             GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE)
             GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE)
 
-            GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0)
-
-            val error = GLES20.glGetError()
-            if (error != GLES20.GL_NO_ERROR) {
+            if (!GLTextureUploader.safeTexImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0)) {
                 GLES20.glDeleteTextures(1, textureIds, 0)
                 return -1
             }

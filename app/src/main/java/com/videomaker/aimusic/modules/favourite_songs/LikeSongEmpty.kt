@@ -30,6 +30,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Stable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -39,11 +41,16 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.videomaker.aimusic.R
+import co.alcheclub.lib.acccore.ads.compose.NativeAdView
+import com.videomaker.aimusic.BuildConfig
+import com.videomaker.aimusic.core.ads.AdClickDetector
+import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.modules.projects.SongTabState
 import com.videomaker.aimusic.ui.components.SongListItem
 import com.videomaker.aimusic.ui.theme.AppDimens
 import com.videomaker.aimusic.ui.theme.TextPrimary
+import org.koin.compose.koinInject
 
 @Composable
 fun LikeSongEmpty(
@@ -52,7 +59,15 @@ fun LikeSongEmpty(
     onSearch: () -> Unit,
     onSongClick: (MusicSong) -> Unit,
 ) {
+    val adClickDetector: AdClickDetector = koinInject()
+    val adsLoaderService = koinInject<co.alcheclub.lib.acccore.ads.loader.AdsLoaderService>()
     val dimens = AppDimens.current
+
+    val infeedInterval = remember {
+        val config = adsLoaderService.getPlacementConfig(AdPlacement.NATIVE_MUSIC_FOR_YOU_INFEED)
+        val value = config?.extras?.get("infeed_interval")
+        value?.toString()?.trim('"')?.toIntOrNull() ?: 6
+    }
 
     LazyColumn(
         modifier = Modifier
@@ -178,16 +193,57 @@ fun LikeSongEmpty(
             }
 
             is SongTabState.Success -> {
-                items(state.songs, key = { song -> song.id }) { song ->
-                    SongListItem(
-                        name = song.name,
-                        artist = song.artist,
-                        coverUrl = song.coverUrl,
-                        onSongClick = { onSongClick(song) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 22.dp)
-                    )
+                val listItems = buildList {
+                    var adCount = 0
+                    state.songs.forEachIndexed { index, song ->
+                        add(MusicForYouItem.SongItem(song))
+                        if ((index + 1) % infeedInterval == 0) {
+                            add(MusicForYouItem.AdItem(adCount++))
+                        }
+                    }
+                    if (state.songs.isNotEmpty() && state.songs.size < infeedInterval) {
+                        add(MusicForYouItem.AdItem(0))
+                    }
+                }
+
+                items(
+                    count = listItems.size,
+                    key = { index ->
+                        when (val item = listItems[index]) {
+                            is MusicForYouItem.SongItem -> item.song.id
+                            is MusicForYouItem.AdItem -> "ad_music_for_you_${item.adIndex}"
+                        }
+                    },
+                    contentType = { index ->
+                        when (listItems[index]) {
+                            is MusicForYouItem.SongItem -> "song"
+                            is MusicForYouItem.AdItem -> "ad"
+                        }
+                    }
+                ) { index ->
+                    when (val item = listItems[index]) {
+                        is MusicForYouItem.SongItem -> {
+                            SongListItem(
+                                name = item.song.name,
+                                artist = item.song.artist,
+                                coverUrl = item.song.coverUrl,
+                                onSongClick = { onSongClick(item.song) },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 22.dp)
+                            )
+                        }
+                        is MusicForYouItem.AdItem -> {
+                            NativeAdView(
+                                placement = AdPlacement.NATIVE_MUSIC_FOR_YOU_INFEED,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 22.dp),
+                                isDebug = BuildConfig.DEBUG,
+                                onAdClicked = { adClickDetector.onAdClick(it) }
+                            )
+                        }
+                    }
                 }
             }
 
@@ -210,4 +266,10 @@ fun LikeSongEmpty(
             Spacer(Modifier.height(150.dp))
         }
     }
+}
+
+@Stable
+private sealed class MusicForYouItem {
+    data class SongItem(val song: MusicSong) : MusicForYouItem()
+    data class AdItem(val adIndex: Int) : MusicForYouItem()
 }

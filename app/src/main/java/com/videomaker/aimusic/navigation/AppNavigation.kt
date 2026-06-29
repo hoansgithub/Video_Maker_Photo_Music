@@ -127,7 +127,7 @@ private fun <T> MutableList<T>.safeRemoveLast(): Boolean {
  *   (scroll position, pager index, etc.) when navigating back
  * - predictivePopTransitionSpec: Supports Android 14+ predictive-back gesture
  *
- * Onboarding is NOT a route here — it lives in OnboardingActivity (separate one-time flow).
+ * Onboarding is NOT a route here — it lives in per-step Activities (separate one-time flow).
  */
 @SuppressLint("ContextCastToActivity")
 @Composable
@@ -165,6 +165,13 @@ fun AppNavigation(
     val ratingTriggerManager = koinInject<com.videomaker.aimusic.core.rating.RatingTriggerManager>()
     val ratingStep by ratingTriggerManager.ratingStep.collectAsStateWithLifecycle()
     val ratingSuppressed by ratingTriggerManager.isSuppressed.collectAsStateWithLifecycle()
+
+    // Suppress rating popup when a fullscreen native ad overlay is showing
+    val postInterNativeAdManager = koinInject<com.videomaker.aimusic.core.ads.PostInterNativeAdManager>()
+    val showPostInterNativeAd by postInterNativeAdManager.showNativeAd.collectAsStateWithLifecycle()
+    val postRewardNativeAdManager = koinInject<com.videomaker.aimusic.core.ads.PostRewardNativeAdManager>()
+    val showPostRewardNativeAd by postRewardNativeAdManager.showNativeAd.collectAsStateWithLifecycle()
+
     val context = LocalContext.current
 
     LaunchedEffect(Unit) {
@@ -420,6 +427,8 @@ fun AppNavigation(
                     key = "projects",
                     factory = createSafeViewModelFactory { projectsFactory.create() }
                 )
+                val homeAdTracker = koinInject<com.videomaker.aimusic.core.ads.HomeAdTracker>()
+
                 // Auto-open MusicPlayerBottomSheet when launched from widget song tap
                 LaunchedEffect(route.initialSongId) {
                     if (route.initialSongId != -1L) {
@@ -440,6 +449,7 @@ fun AppNavigation(
                     highlightProjectId = route.highlightProjectId,
                     projectHintMode = route.hintMode,
                     onCreateClick = {
+                        homeAdTracker.onNavigateAway()
                         backStack.add(AppRoute.TemplatePreviewer(
                             templateId = "",
                             imageUris = emptyList(),
@@ -447,13 +457,27 @@ fun AppNavigation(
                         ))
                     },
                     onSettingsClick = { location ->
+                        homeAdTracker.onNavigateAway()
                         backStack.add(AppRoute.Settings(settingLocation = location))
                     },
-                    onNavigateToSearch = { backStack.add(AppRoute.UnifiedSearch(SearchSection.TEMPLATES)) },
-                    onNavigateToSongSearch = { backStack.add(AppRoute.UnifiedSearch(SearchSection.MUSIC)) },
-                    onNavigateToSuggestedSongsList = { backStack.add(AppRoute.SuggestedSongsList) },
-                    onNavigateToWeeklyRankingList = { backStack.add(AppRoute.WeeklyRankingList) },
+                    onNavigateToSearch = {
+                        homeAdTracker.onNavigateAway()
+                        backStack.add(AppRoute.UnifiedSearch(SearchSection.TEMPLATES))
+                    },
+                    onNavigateToSongSearch = {
+                        homeAdTracker.onNavigateAway()
+                        backStack.add(AppRoute.UnifiedSearch(SearchSection.MUSIC))
+                    },
+                    onNavigateToSuggestedSongsList = {
+                        homeAdTracker.onNavigateAway()
+                        backStack.add(AppRoute.SuggestedSongsList)
+                    },
+                    onNavigateToWeeklyRankingList = {
+                        homeAdTracker.onNavigateAway()
+                        backStack.add(AppRoute.WeeklyRankingList)
+                    },
                     onNavigateToTemplateDetail = { templateId, sourceLocation ->
+                        homeAdTracker.onNavigateAway()
                         // NEW FLOW: Browse templates first, THEN select images
                         backStack.add(AppRoute.TemplatePreviewer(
                             templateId = templateId,
@@ -462,17 +486,23 @@ fun AppNavigation(
                         ))
                     },
                     onNavigateToAllTemplates = { selectedVibeTagId ->
+                        homeAdTracker.onNavigateAway()
                         // Navigate to template list with selected tag filter
                         backStack.add(AppRoute.TemplateList(selectedVibeTagId))
                     },
                     onNavigateToAssetPicker = { songId ->
+                        homeAdTracker.onNavigateAway()
                         // Song-to-video flow: select images, then go to editor (skip templates)
                         backStack.add(AppRoute.AssetPicker(
                             overrideSongId = songId
                         ))
                     },
-                    onNavigateToAllSongs = { backStack.add(AppRoute.SuggestedSongsList) },
+                    onNavigateToAllSongs = {
+                        homeAdTracker.onNavigateAway()
+                        backStack.add(AppRoute.SuggestedSongsList)
+                    },
                     onNavigateToTemplatePreviewerWithSong = { songId ->
+                        homeAdTracker.onNavigateAway()
                         // Song-to-template flow: browse templates with selected song, then select images
                         backStack.add(AppRoute.TemplatePreviewer(
                             templateId = "",  // Empty = start from first template
@@ -482,10 +512,12 @@ fun AppNavigation(
                         ))
                     },
                     onProjectClick = { projectId, thumbnailUri ->
+                        homeAdTracker.onNavigateAway()
                         backStack.add(AppRoute.Editor(projectId, thumbnailUri = thumbnailUri))
                     }
                 )
             }
+
 
             entry<AppRoute.WelcomeBack> {
                 WelcomeBackScreen(
@@ -894,9 +926,11 @@ fun AppNavigation(
     }
 
     // Global rating popup overlay.
-    // Suppressed while a higher-priority popup (e.g. the picker permission dialog) is visible,
-    // so only one popup shows at a time. The pending step is preserved and reappears once released.
-    val effectiveRatingStep = if (ratingSuppressed) RatingStep.None else ratingStep
+    // Suppressed while a higher-priority popup (e.g. the picker permission dialog) or a
+    // fullscreen native ad overlay is visible, so only one popup shows at a time.
+    // The pending step is preserved and reappears once suppression is released.
+    val isFullscreenAdShowing = showPostInterNativeAd || showPostRewardNativeAd
+    val effectiveRatingStep = if (ratingSuppressed || isFullscreenAdShowing) RatingStep.None else ratingStep
     AnimatedContent(
         targetState = effectiveRatingStep,
         transitionSpec = { fadeIn() togetherWith fadeOut() },

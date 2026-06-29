@@ -38,8 +38,8 @@ android {
         applicationId = "com.videomaker.aimusic"
         minSdk = 28
         targetSdk = 36
-        versionCode = 53
-        versionName = "1.1.1"
+        versionCode = 55
+        versionName = "1.1.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -300,6 +300,22 @@ dependencies {
 
     // Mintegral - All formats, bidding + waterfall
     implementation("com.google.ads.mediation:mintegral:17.1.31.0")
+
+    // Unity Ads - Bidding (waterfall support ends Jan 31, 2026)
+    // https://developers.google.com/admob/android/mediation/unity
+    // IMPORTANT: Requires BOTH SDK and adapter (SDK removed from adapter since 4.x)
+    implementation("com.unity3d.ads:unity-ads:4.16.6")
+    implementation("com.google.ads.mediation:unity:4.16.6.0")
+
+    // Moloco - Bidding only
+    // https://developers.google.com/admob/android/mediation/moloco
+    // Adapter includes Moloco SDK as transitive dependency
+    implementation("com.google.ads.mediation:moloco:4.6.0.0")
+
+    // InMobi - Bidding + waterfall
+    // https://developers.google.com/admob/android/mediation/inmobi
+    // Adapter includes InMobi SDK as transitive dependency
+    implementation("com.google.ads.mediation:inmobi:11.2.0.0")
 
     // ============================================
     // PLAY SERVICES (Optional)

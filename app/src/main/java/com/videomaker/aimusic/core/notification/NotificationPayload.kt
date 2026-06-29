@@ -16,6 +16,14 @@ data class NotificationPayload(
     val imageCandidates: List<String> = emptyList(),
     val fallbackImageRes: Int,
     val ivCtaIcon: Int = R.drawable.ic_play,
+    // Optional pre-designed bundled images. When set, they are used directly (no badge/gradient
+    // decoration) instead of [imageCandidates]/[fallbackImageRes]. Lets a notification show a
+    // different small (collapsed) vs large (expanded) artwork.
+    val collapsedImageRes: Int? = null,
+    val expandedImageRes: Int? = null,
+    // When true, [expandedImageRes] is letterbox-fit (whole image visible, centered) into the wide
+    // expanded frame instead of being center-cropped. Use for square/non-banner artwork.
+    val expandedImageFit: Boolean = false,
 )
 
 data class NotificationText(

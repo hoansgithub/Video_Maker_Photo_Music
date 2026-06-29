@@ -2,46 +2,39 @@ package com.videomaker.aimusic
 
 import android.app.Activity
 import android.app.Application
-import com.facebook.ads.AdSettings
+import androidx.lifecycle.ProcessLifecycleOwner
 import co.alcheclub.lib.acccore.ads.adMobModule
 import co.alcheclub.lib.acccore.ads.layout.NativeAdLayoutRegistry
+import co.alcheclub.lib.acccore.ads.loader.AdsLoaderException
 import co.alcheclub.lib.acccore.analytics.AnalyticsCoordinator
 import co.alcheclub.lib.acccore.appsflyer.appsFlyerModule
 import co.alcheclub.lib.acccore.coreModuleFromDI
+import co.alcheclub.lib.acccore.di.koin.getAllSingletons
 import co.alcheclub.lib.acccore.facebook.facebookModule
 import co.alcheclub.lib.acccore.firebase.firebaseModule
 import co.alcheclub.lib.acccore.monitoring.MessagingService
 import co.alcheclub.lib.acccore.monitoring.NotificationConfig
 import co.alcheclub.lib.acccore.remoteconfig.RemoteConfig
 import co.alcheclub.lib.acccore.remoteconfig.RemoteConfigCoordinator
-import com.google.android.ump.ConsentDebugSettings
-import org.koin.android.ext.android.get
-import org.koin.android.ext.koin.androidContext
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
-import org.koin.java.KoinJavaComponent.getKoin
-import org.koin.core.parameter.parametersOf
-import co.alcheclub.lib.acccore.di.koin.getAllSingletons
-import java.util.concurrent.atomic.AtomicBoolean
-import kotlinx.coroutines.TimeoutCancellationException
-import co.alcheclub.lib.acccore.ads.loader.AdsLoaderException
-import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
 import coil.ImageLoader
 import coil.ImageLoaderFactory
 import coil.decode.ImageDecoderDecoder
 import coil.disk.DiskCache
 import coil.memory.MemoryCache
 import coil.util.DebugLogger
+import com.facebook.ads.AdSettings
+import com.google.android.ump.ConsentDebugSettings
+import com.videomaker.aimusic.core.ads.HomeAdTracker
+import com.videomaker.aimusic.core.ads.InterstitialAdHelperExt
+import com.videomaker.aimusic.core.ads.VideoMakerNativeAdLayoutProvider
+import com.videomaker.aimusic.core.constants.RemoteConfigKeys
+import com.videomaker.aimusic.core.notification.AppSessionTracker
+import com.videomaker.aimusic.core.notification.NotificationScheduleConfigService
+import com.videomaker.aimusic.di.adsModule
 import com.videomaker.aimusic.di.dataModule
 import com.videomaker.aimusic.di.domainModule
 import com.videomaker.aimusic.di.mediaModule
 import com.videomaker.aimusic.di.presentationModule
-import com.videomaker.aimusic.di.adsModule
-import com.videomaker.aimusic.core.ads.AdInitializer
-import com.videomaker.aimusic.core.constants.RemoteConfigKeys
-import com.videomaker.aimusic.core.notification.AppSessionTracker
-import com.videomaker.aimusic.core.notification.NotificationScheduleConfigService
-import com.videomaker.aimusic.core.ads.VideoMakerNativeAdLayoutProvider
 import com.videomaker.aimusic.media.library.MusicSongLibrary
 import com.videomaker.aimusic.media.library.TransitionSetLibrary
 import com.videomaker.aimusic.media.library.TransitionShaderLibrary
@@ -49,14 +42,18 @@ import com.videomaker.aimusic.media.library.VideoTemplateLibrary
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
-import androidx.lifecycle.ProcessLifecycleOwner
+import org.koin.android.ext.android.get
+import org.koin.android.ext.koin.androidContext
+import org.koin.core.context.GlobalContext
+import org.koin.core.context.startKoin
+import org.koin.core.context.stopKoin
+import org.koin.java.KoinJavaComponent.getKoin
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Application class for Video Maker App
@@ -340,7 +337,19 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
                         }
                     }
 
-                    android.util.Log.d("VideoMakerApp", "🔄 Initializing AdMob SDK...")
+                    // Step 3.5: Pass consent to Moloco SDK (required for bidding)
+                    // Without this, Moloco will not bid and won't appear in ad inspector
+                    try {
+                        val canRequest = adMobMediator.canRequestAds
+                        com.moloco.sdk.publisher.privacy.MolocoPrivacy.setPrivacy(
+                            com.moloco.sdk.publisher.privacy.MolocoPrivacy.PrivacySettings(canRequest, null, null)
+                        )
+                        android.util.Log.d("VideoMakerApp", "Moloco privacy set: canRequestAds=$canRequest")
+                    } catch (e: Exception) {
+                        android.util.Log.w("VideoMakerApp", "Moloco privacy setup failed: ${e.message}")
+                    }
+
+                    android.util.Log.d("VideoMakerApp", "Initializing AdMob SDK...")
 
                     // Step 4: Initialize AdMob SDK - PRODUCTION MODE (no test devices)
                     // ✅ Runs on IO thread - this is where DEX loading happens (ANR fix)
@@ -471,7 +480,11 @@ class VideoMakerApplication : Application(), ImageLoaderFactory {
         runCatching {
             val appSessionTracker = org.koin.core.context.GlobalContext.get().get<AppSessionTracker>()
             ProcessLifecycleOwner.get().lifecycle.addObserver(appSessionTracker)
+
+            val homeAdTracker = GlobalContext.get().get<HomeAdTracker>()
+            ProcessLifecycleOwner.get().lifecycle.addObserver(homeAdTracker)
         }
+
 
         // ✅ COLD START FIX: Defer shader preloading until app is in foreground
         // This reduces Application.onCreate() time on low-RAM devices

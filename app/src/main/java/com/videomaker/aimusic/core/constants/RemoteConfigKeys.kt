@@ -126,6 +126,16 @@ object RemoteConfigKeys {
     const val ONBOARDING_PAGE2_SONG_ID = "onboarding_page2_song_id"
 
     // ============================================
+    // ONBOARDING STEP GATES (every step gatable, default=true)
+    // ============================================
+
+    const val ONBOARDING_LANGUAGE_SELECTION_ENABLED = "onboarding_language_selection_enabled"
+    const val ONBOARDING_WELCOME_PAGE_1_ENABLED = "onboarding_welcome_page_1_enabled"
+    const val ONBOARDING_WELCOME_PAGE_2_ENABLED = "onboarding_welcome_page_2_enabled"
+    const val ONBOARDING_WELCOME_PAGE_3_ENABLED = "onboarding_welcome_page_3_enabled"
+    const val ONBOARDING_FEATURE_SELECT_ENABLED = "onboarding_feature_select_enabled"
+
+    // ============================================
     // ONBOARDING GENRE TEMPLATE STEPS
     // ============================================
 
@@ -226,4 +236,20 @@ object RemoteConfigKeys {
      * Default: 3.
      */
     const val RATING_POPUP_DAILY_CAP = "rating_popup_daily_cap"
+
+    // ============================================
+    // ONBOARDING RESUME NOTIFICATIONS
+    // ============================================
+
+    /** Master toggle for the entire onboarding-resume notification sequence. Default: true. */
+    const val OB_RESUME_NOTI_ENABLED = "ob_resume_noti_enabled"
+
+    /** Delay (minutes) before the 1st onboarding-resume notification fires. Default: 5. Set to 0 to disable this notification. */
+    const val OB_RESUME_NOTI_1_DELAY_MINUTES = "ob_resume_noti_1_delay_minutes"
+
+    /** Delay (minutes) before the 2nd onboarding-resume notification fires. Default: 5. Set to 0 to disable this notification. */
+    const val OB_RESUME_NOTI_2_DELAY_MINUTES = "ob_resume_noti_2_delay_minutes"
+
+    /** Delay (minutes) before the 3rd onboarding-resume notification fires. Default: 5. Set to 0 to disable this notification. */
+    const val OB_RESUME_NOTI_3_DELAY_MINUTES = "ob_resume_noti_3_delay_minutes"
 }

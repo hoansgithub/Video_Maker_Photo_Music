@@ -106,6 +106,7 @@ class AdPlacementConfigService(
     @Volatile
     var adBottomNavPaddingEnabled: Boolean = false
         private set
+
     init {
         try {
             registerAllPlacements()
@@ -184,26 +185,42 @@ class AdPlacementConfigService(
         // INTERSTITIAL ADS
         // ============================================
 
-        // Splash screen interstitial - first app launch only
-        // Waterfall: Primary unit → Secondary unit
+        // Splash HIGH — single high-eCPM unit, tried first
         registerPlacementWithMultipleUnits(
-            placementId = AdPlacement.INTERSTITIAL_SPLASH,
+            placementId = AdPlacement.INTERSTITIAL_SPLASH_HIGH,
             type = "interstitial",
             adUnitIds = listOf(
-                "ca-app-pub-7121075950716954/9920077454",  // Primary
-                "ca-app-pub-7121075950716954/1830520200"   // Secondary
+                "ca-app-pub-7121075950716954/9920077454"   // Primary (high eCPM)
             ),
             enabled = true
         )
 
-        // Open app interstitial - second launch onwards (separate ad unit for independent tracking)
-        // Waterfall: Primary unit → Secondary unit
+        // Splash LOW — single all-fill unit, fallback when HIGH fails
         registerPlacementWithMultipleUnits(
-            placementId = AdPlacement.INTERSTITIAL_OPEN_APP,
+            placementId = AdPlacement.INTERSTITIAL_SPLASH_LOW,
             type = "interstitial",
             adUnitIds = listOf(
-                "ca-app-pub-7121075950716954/4748771125",  // Inter_high_splash_reopen (Primary)
-                "ca-app-pub-7121075950716954/2676684702"   // Inter_all_splash_reopen (Secondary)
+                "ca-app-pub-7121075950716954/1830520200"   // Secondary (all fill)
+            ),
+            enabled = true
+        )
+
+        // Open App HIGH — single high-eCPM unit, tried first
+        registerPlacementWithMultipleUnits(
+            placementId = AdPlacement.INTERSTITIAL_OPEN_APP_HIGH,
+            type = "interstitial",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/4748771125"   // Inter_high_splash_reopen
+            ),
+            enabled = true
+        )
+
+        // Open App LOW — single all-fill unit, fallback when HIGH fails
+        registerPlacementWithMultipleUnits(
+            placementId = AdPlacement.INTERSTITIAL_OPEN_APP_LOW,
+            type = "interstitial",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/2676684702"   // Inter_all_splash_reopen
             ),
             enabled = true
         )
@@ -223,6 +240,7 @@ class AdPlacementConfigService(
 
         // Template previewer scroll interstitial (shown while browsing templates)
         // Frequency controlled by ad_interstitial_interval_seconds (default 60s)
+        // + scroll_interval: only attempt every Nth page change (default 3)
         // Waterfall: Primary unit → Secondary unit
         registerPlacementWithMultipleUnits(
             placementId = AdPlacement.INTERSTITIAL_TEMPLATE_PREVIEWER_SCROLL,
@@ -231,6 +249,7 @@ class AdPlacementConfigService(
                 "ca-app-pub-7121075950716954/8224075141",  // Primary
                 "ca-app-pub-7121075950716954/3051639510"   // Secondary
             ),
+            extras = mapOf("scroll_interval" to 3),
             enabled = true
         )
 
@@ -673,6 +692,54 @@ class AdPlacementConfigService(
             enabled = true
         )
 
+        // Fullscreen native ad shown after splash/open-app interstitial closes (Drama app pattern)
+        // Only triggered by SPLASH_HIGH, SPLASH_LOW, OPEN_APP_HIGH, OPEN_APP_LOW
+        // Preloaded when interstitial is shown, displayed after close if ready
+        // Non-blocking: skipped if not loaded when interstitial closes
+        // Layout: native_full_screen_bait (fullscreen with prominent CTA button)
+        // Waterfall: Primary (high) → Secondary (all)
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_AFTER_SPLASH,
+            layoutName = "native_full_screen_bait",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/6220436755",  // Primary
+                "ca-app-pub-7121075950716954/3594273415"   // Secondary
+            ),
+            enabled = true
+        )
+
+        // Fullscreen native ad shown after onboarding-complete interstitial closes (Drama app pattern)
+        // Triggered by INTERSTITIAL_ONBOARDING_COMPLETE only
+        // Preloaded during PERSONALIZING step, displayed after close if ready
+        // Non-blocking: skipped if not loaded when interstitial closes
+        // Layout: native_full_screen_bait (fullscreen with prominent CTA button)
+        // Waterfall: Primary (high) → Secondary (all)
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_AFTER_ONBOARDING,
+            layoutName = "native_full_screen_bait",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/9968110073",  // Primary
+                "ca-app-pub-7121075950716954/7341946732"   // Secondary
+            ),
+            enabled = true
+        )
+
+        // Fullscreen native ad shown after all other interstitials close (Drama app pattern)
+        // Triggered by every interstitial not covered by NATIVE_AFTER_SPLASH/ONBOARDING
+        // Native ad starts loading when showInterstitial() is called
+        // Non-blocking: skipped if not loaded when interstitial closes
+        // Layout: native_full_screen_bait (fullscreen with prominent CTA button)
+        // Waterfall: Primary (high) → Secondary (all)
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_AFTER_INTER,
+            layoutName = "native_full_screen_bait",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/4336509440",  // Primary
+                "ca-app-pub-7121075950716954/9906576495"   // Secondary
+            ),
+            enabled = true
+        )
+
         // Search in-feed native ad (template search + song search)
         // Displayed at top of search results on all search states
         // Layout: native_small_row (horizontal row matching search list items)
@@ -684,7 +751,8 @@ class AdPlacementConfigService(
                 "ca-app-pub-7121075950716954/7251804638",  // Primary
                 "ca-app-pub-7121075950716954/1185923881"   // Secondary
             ),
-            enabled = true
+            enabled = true,
+            additionalExtras = mapOf("infeed_interval" to 10)
         )
 
         // Uninstall screen native ad (shown at bottom before uninstalling)
@@ -725,6 +793,19 @@ class AdPlacementConfigService(
             adUnitIds = listOf(
                 "ca-app-pub-7121075950716954/9525024469",  // Primary
                 "ca-app-pub-7121075950716954/1552989505"   // Secondary
+            ),
+            enabled = true
+        )
+
+        // Onboarding Welcome Back screen native ad (shown when resuming partial onboarding)
+        // Reuses NATIVE_WELCOME_BACK ad units initially
+        // Layout: native_big_bait_reversed
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_ONBOARDING_WELCOME_BACK,
+            layoutName = "native_big_bait_reversed",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/9525024469",  // Primary (reuse welcome_back)
+                "ca-app-pub-7121075950716954/1552989505"   // Secondary (reuse welcome_back)
             ),
             enabled = true
         )
@@ -770,7 +851,23 @@ class AdPlacementConfigService(
                 "ca-app-pub-7121075950716954/4667301062",  // Pro_NA_high_liked content
                 "ca-app-pub-7121075950716954/6996887879"   // Pro_NA_all_liked content
             ),
-            enabled = true
+            enabled = true,
+            additionalExtras = mapOf("infeed_interval" to 6)
+        )
+
+        // "Music for you" section in-feed native ad (liked songs empty state + songs list)
+        // Repeats every N songs based on infeed_interval config
+        // Layout: native_project_card
+        // Waterfall: Primary unit → Secondary unit
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_MUSIC_FOR_YOU_INFEED,
+            layoutName = "native_small_row",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/4524211708",  // Primary
+                "ca-app-pub-7121075950716954/6274453243"   // Secondary
+            ),
+            enabled = true,
+            additionalExtras = mapOf("infeed_interval" to 6)
         )
 
         // Gallery templates grid native ad (shown as item in staggered templates grid)
@@ -786,7 +883,8 @@ class AdPlacementConfigService(
                 "ca-app-pub-7121075950716954/1251475281",  // Primary
                 "ca-app-pub-7121075950716954/7733500455"   // Secondary
             ),
-            enabled = true
+            enabled = true,
+            additionalExtras = mapOf("infeed_interval" to 6)
         )
 
         // Featured templates carousel native ad (shown at 2nd position)
@@ -799,7 +897,8 @@ class AdPlacementConfigService(
                 "ca-app-pub-7121075950716954/1840370904",  // Primary
                 "ca-app-pub-7121075950716954/5831815710"   // Secondary
             ),
-            enabled = true
+            enabled = true,
+            additionalExtras = mapOf("infeed_interval" to 3)
         )
 
         // Songs station native ad (shown as item in station songs list)
@@ -951,6 +1050,21 @@ class AdPlacementConfigService(
             ),
             enabled = true
         )
+
+        // Home Screen Collapsible Native Ad
+        // Shown at the bottom of the Home screen on first entry and app reopen
+        // Layout: native_big_bait (large size layout)
+        // Waterfall: Primary unit (Pro_AIMV_NAc_high_Home) -> Secondary unit (Pro_AIMV_NAc_all_Home)
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_HOME_COLLAPSIBLE,
+            layoutName = "native_big_bait",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/7760749137",  // Primary (Pro_AIMV_NAc_high_Home)
+                "ca-app-pub-7121075950716954/9195864128"   // Secondary (Pro_AIMV_NAc_all_Home)
+            ),
+            enabled = true
+        )
+
 
         // Template Previewer Banner Native Ad (replaces standard banner)
         // Shown at the bottom of the template previewer screen
@@ -1280,7 +1394,8 @@ class AdPlacementConfigService(
         placementId: String,
         layoutName: String,
         adUnitIds: List<String>,
-        enabled: Boolean = true
+        enabled: Boolean = true,
+        additionalExtras: Map<String, Any> = emptyMap()
     ) {
         try {
             // Register placement with PlacementConfigService
@@ -1295,11 +1410,23 @@ class AdPlacementConfigService(
             }
 
             // Set local fallback config with layout in extras
+            val jsonExtras = buildMap<String, JsonPrimitive> {
+                put("layout", JsonPrimitive(layoutName))
+                additionalExtras.forEach { (k, v) ->
+                    when (v) {
+                        is Int -> put(k, JsonPrimitive(v))
+                        is Long -> put(k, JsonPrimitive(v))
+                        is String -> put(k, JsonPrimitive(v))
+                        is Boolean -> put(k, JsonPrimitive(v))
+                        else -> put(k, JsonPrimitive(v.toString()))
+                    }
+                }
+            }
             val config = CorePlacementConfig(
                 enabled = enabled,
                 type = "native",
                 units = units,
-                extras = mapOf("layout" to JsonPrimitive(layoutName))
+                extras = jsonExtras
             )
             placementConfigService.setLocalConfig(placementId, config)
 
@@ -1342,9 +1469,9 @@ class AdPlacementConfigService(
         Log.d(TAG, "📊 Quality ad types — 720p: $quality720pAdType, 1080p: $quality1080pAdType")
 
         // Banner → Native toggle
-        bannerUseNative = config.getString(
-            com.videomaker.aimusic.core.constants.RemoteConfigKeys.AD_BANNER_USE_NATIVE, "true"
-        ).toBoolean()
+        bannerUseNative = config.getBoolean(
+            com.videomaker.aimusic.core.constants.RemoteConfigKeys.AD_BANNER_USE_NATIVE, true
+        )
         Log.d(TAG, "📊 Banner use native: $bannerUseNative")
 
         // Bottom ad navigation bar padding toggle
@@ -1384,6 +1511,37 @@ class AdPlacementConfigService(
         return when (quality) {
             VideoQuality.HD_720 -> quality720pAdType
             VideoQuality.FHD_1080 -> quality1080pAdType
+        }
+    }
+
+    /**
+     * Create a dynamic "_last_only" placement from a source placement's last waterfall unit.
+     *
+     * Used for ad reload after the initial PRIMARY→ALT swap: the last unit in the ALT
+     * waterfall typically has the highest fill rate, so a single-unit placement loads fast.
+     *
+     * Uses [PlacementConfigService.setLocalConfig] (not `registerPlacement()`) so the
+     * dynamic placement is never overridden by Remote Config.
+     *
+     * @param sourcePlacementId The ALT placement to derive the last-only placement from
+     * @return The dynamic placement ID (e.g. "ad_native_onboarding_select_alt_last_only"),
+     *         or null if the source placement doesn't exist or has no units
+     */
+    fun createLastOnlyPlacement(sourcePlacementId: String): String? {
+        return try {
+            val sourceConfig = placementConfigService.getConfig(sourcePlacementId) ?: return null
+            val lastUnit = sourceConfig.units.lastOrNull() ?: return null
+            val dynamicPlacementId = "${sourcePlacementId}_last_only"
+            val dynamicConfig = CorePlacementConfig(
+                enabled = sourceConfig.enabled,
+                type = sourceConfig.type,
+                units = listOf(lastUnit),
+                extras = sourceConfig.extras
+            )
+            placementConfigService.setLocalConfig(dynamicPlacementId, dynamicConfig)
+            dynamicPlacementId
+        } catch (_: Exception) {
+            null
         }
     }
 

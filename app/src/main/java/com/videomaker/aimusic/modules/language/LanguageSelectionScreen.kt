@@ -42,9 +42,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -86,8 +90,12 @@ import com.videomaker.aimusic.ui.theme.Primary
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 import com.videomaker.aimusic.ui.theme.White20
 import com.videomaker.aimusic.ui.theme.White40
+import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
+import co.alcheclub.lib.acccore.ads.mediation.AdLoadResult
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.compose.koinInject
 import kotlin.math.roundToInt
@@ -158,6 +166,23 @@ fun LanguageSelectionScreen(
     var delayedHasSelection by remember { mutableStateOf(false) }
     var delayedButtonEnabled by remember { mutableStateOf(false) }
     var hasStartedDelay by remember { mutableStateOf(false) }
+
+    // --- ALT last-only reload state ---
+    val adsLoaderService: AdsLoaderService = koinInject()
+    val coroutineScope = rememberCoroutineScope()
+    val lastOnlyPlacement = remember {
+        adPlacementConfigService.createLastOnlyPlacement(AdPlacement.NATIVE_ONBOARDING_LANGUAGE_ALT)
+    }
+    var reloadKey by remember { mutableIntStateOf(0) }
+    var lastImpressionTime by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    var isReloading by remember { mutableStateOf(false) }
+
+    LaunchedEffect(reloadKey) {
+        if (reloadKey > 0) lastImpressionTime = System.currentTimeMillis()
+    }
+
+    val altPlacement = if (reloadKey > 0 && lastOnlyPlacement != null) lastOnlyPlacement
+        else AdPlacement.NATIVE_ONBOARDING_LANGUAGE_ALT
 
     // Cursor hint: idle timer key and visibility
     var interactionKey by remember { mutableStateOf(0L) }
@@ -344,6 +369,29 @@ fun LanguageSelectionScreen(
                                 onClick = {
                                     selectedLanguage = language.code
                                     onLanguageSelected(language.code)
+                                    // Reload ALT ad with last-only after swap (2s gap)
+                                    if (delayedHasSelection) {
+                                        val lop = lastOnlyPlacement
+                                        val now = System.currentTimeMillis()
+                                        if (lop != null && now - lastImpressionTime >= 2000L && !isReloading) {
+                                            isReloading = true
+                                            coroutineScope.launch(Dispatchers.IO) {
+                                                try {
+                                                    val result = adsLoaderService.loadNative(lop, forceReload = true)
+                                                    withContext(Dispatchers.Main) {
+                                                        if (result is AdLoadResult.Success || result is AdLoadResult.AlreadyLoading) {
+                                                            reloadKey++
+                                                        }
+                                                        isReloading = false
+                                                    }
+                                                } catch (e: CancellationException) {
+                                                    throw e
+                                                } catch (_: Exception) {
+                                                    withContext(Dispatchers.Main) { isReloading = false }
+                                                }
+                                            }
+                                        }
+                                    }
                                     Analytics.track(
                                         name = AnalyticsEvent.LANGUAGE_SELECT,
                                         params = mapOf(
@@ -422,12 +470,15 @@ fun LanguageSelectionScreen(
             ) {
                 if (delayedHasSelection) {
                     // ALT ad - shown after user selects a language
-                    NativeAdView(
-                        placement = AdPlacement.NATIVE_ONBOARDING_LANGUAGE_ALT,
-                        modifier = Modifier.fillMaxWidth(),
-                        isDebug = BuildConfig.DEBUG,
-                        onAdClicked = { adClickDetector.onAdClick(it) }
-                    )
+                    // key(reloadKey) recreates NativeAdView with fresh ad on reload
+                    key(reloadKey) {
+                        NativeAdView(
+                            placement = altPlacement,
+                            modifier = Modifier.fillMaxWidth(),
+                            isDebug = BuildConfig.DEBUG,
+                            onAdClicked = { adClickDetector.onAdClick(it) }
+                        )
+                    }
                 } else {
                     // PRIMARY ad - shown before user selects
                     NativeAdView(

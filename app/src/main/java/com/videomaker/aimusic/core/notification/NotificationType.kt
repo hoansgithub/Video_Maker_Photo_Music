@@ -7,5 +7,6 @@ enum class NotificationType(val analyticsValue: String) {
     FORGOTTEN_MASTERPIECE("forgotten_masterpiece"),
     SHARE_ENCOURAGEMENT("share_encouragement"),
     VIRAL_TEMPLATE("viral_template"),
-    TRENDING_SONG("trending_song")
+    TRENDING_SONG("trending_song"),
+    ONBOARDING_RESUME("onboarding_resume")
 }

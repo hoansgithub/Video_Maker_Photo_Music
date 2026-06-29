@@ -4,16 +4,9 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import co.alcheclub.lib.acccore.remoteconfig.RemoteConfig
-import com.videomaker.aimusic.core.constants.RemoteConfigKeys
 import com.videomaker.aimusic.domain.model.VideoTemplate
 import com.videomaker.aimusic.domain.repository.SongRepository
 import com.videomaker.aimusic.domain.repository.TemplateRepository
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 
 data class OnboardingGenre(
@@ -79,51 +72,20 @@ val ONBOARDING_GENRES = listOf(
     OnboardingGenre("meme", "Meme", genreImageRes("meme")),
 )
 
-// Firebase RC getBoolean(key) returns false silently for missing keys (defaultValue is only used
-// in the exception path). This helper returns true when the key hasn't been published yet.
-fun RemoteConfig.getStepEnabled(key: String): Boolean =
-    if (key in getAllKeys()) getBoolean(key, true) else true
-
-fun RemoteConfig.isGenreTemplateFlowAllOff(): Boolean =
-    !getStepEnabled(RemoteConfigKeys.ONBOARDING_GENRE_SELECTION_ENABLED) &&
-    !getStepEnabled(RemoteConfigKeys.ONBOARDING_TEMPLATE_PICK_ENABLED) &&
-    !getStepEnabled(RemoteConfigKeys.ONBOARDING_CONTENT_EXCLUSIVE_ENABLED) &&
-    !getStepEnabled(RemoteConfigKeys.ONBOARDING_MEDIA_PRIVACY_ENABLED)
-
 class GenreTemplateViewModel(
     private val templateRepository: TemplateRepository,
     private val songRepository: SongRepository,
-    remoteConfig: RemoteConfig
 ) : ViewModel() {
 
-    // Feature flags - default true so existing behaviour is preserved when keys not set in RC
-    val isGenreSelectionEnabled = remoteConfig.getStepEnabled(RemoteConfigKeys.ONBOARDING_GENRE_SELECTION_ENABLED)
-    val isTemplatePickEnabled = remoteConfig.getStepEnabled(RemoteConfigKeys.ONBOARDING_TEMPLATE_PICK_ENABLED)
-    val isContentExclusiveEnabled = remoteConfig.getStepEnabled(RemoteConfigKeys.ONBOARDING_CONTENT_EXCLUSIVE_ENABLED)
-    val isMediaPrivacyEnabled = remoteConfig.getStepEnabled(RemoteConfigKeys.ONBOARDING_MEDIA_PRIVACY_ENABLED)
-
-    private val enabledSteps: List<GenreTemplateStep> = GenreTemplateGate.enabledSteps(remoteConfig)
-
-    // Fired when the flow should proceed to FeatureSelectionActivity (all remaining steps done/skipped)
-    private val _navToNext = Channel<Unit>(Channel.BUFFERED)
-    val navToNext = _navToNext.receiveAsFlow()
-
-    // Single-select choices for the two new analytics-only screens.
+    // Single-select choices for analytics-only screens.
     // No pre-selection: null until the user taps an item.
     val selectedContentFilter = mutableStateOf<String?>(null)
     val selectedPrivacy = mutableStateOf<String?>(null)
-
-    // Initial visible step: first enabled screen in the fixed order
-    private val _currentStep = MutableStateFlow(
-        enabledSteps.firstOrNull() ?: GenreTemplateStep.TEMPLATE_PICK
-    )
-    val currentStep: StateFlow<GenreTemplateStep> = _currentStep.asStateFlow()
 
     val genres = mutableStateListOf<OnboardingGenre>()
     val selectedGenre = mutableStateOf<OnboardingGenre?>(null)
     val isGenresLoading = mutableStateOf(false)
 
-    // Must be declared before init{} — loadTemplates() is called from init when GENRE_SELECTION is off
     val suggestedTemplates = mutableStateListOf<VideoTemplate>()
     val selectedTemplate = mutableStateOf<VideoTemplate?>(null)
     val isTemplatesLoading = mutableStateOf(false)
@@ -131,16 +93,6 @@ class GenreTemplateViewModel(
 
     init {
         loadGenres()
-        when {
-            enabledSteps.isEmpty() -> {
-                // All steps off → skip the whole activity immediately
-                viewModelScope.launch { _navToNext.send(Unit) }
-            }
-            !isGenreSelectionEnabled && isTemplatePickEnabled -> {
-                // No genre screen but template pick is first → preload templates (no genre).
-                loadTemplates()
-            }
-        }
     }
 
     private fun loadGenres() {
@@ -164,51 +116,24 @@ class GenreTemplateViewModel(
 
     fun isStep1Valid(): Boolean = selectedGenre.value != null
 
-    fun onGenreNext() {
-        if (isTemplatesLoading.value) return
-        if (isTemplatePickEnabled) {
-            // Stay on GENRE_SELECTION while templates load (CTA disabled via isTemplatesLoading),
-            // then transition to TEMPLATE_PICK inside loadTemplates().
-            loadTemplates()
-        } else {
-            advanceFrom(GenreTemplateStep.GENRE_SELECTION)
-        }
-    }
-
-    private fun loadTemplates() {
+    /**
+     * Load templates for a given genre ID. Used by [TemplatePickActivity] when
+     * the genre was selected in a previous Activity and persisted to prefs.
+     */
+    fun loadTemplatesForGenreId(genreId: String?) {
         isTemplatesLoading.value = true
         templatesError.value = null
-        val genre = selectedGenre.value // null when GENRE_SELECTION is off
-
         viewModelScope.launch {
-            val templates = if (genre != null) {
-                // Genre was selected: prefer genre-tagged templates, fall back to featured
-                val result = templateRepository.getTemplatesByVibeTag(genre.id, limit = 4)
+            val templates = if (genreId != null) {
+                val result = templateRepository.getTemplatesByVibeTag(genreId, limit = 4)
                 result.getOrNull().takeIf { !it.isNullOrEmpty() }
                     ?: templateRepository.getFeaturedTemplates(limit = 4).getOrNull().orEmpty()
             } else {
-                // No genre (GENRE_SELECTION was off): use geo hot/featured templates
                 templateRepository.getFeaturedTemplates(limit = 4).getOrNull().orEmpty()
             }
-
             suggestedTemplates.clear()
             suggestedTemplates.addAll(templates)
             isTemplatesLoading.value = false
-
-            when {
-                templates.isNotEmpty() -> {
-                    _currentStep.value = GenreTemplateStep.TEMPLATE_PICK
-                }
-                else -> {
-                    // Templates unavailable. If we can't return to pick a genre, skip the template
-                    // step and continue to the next enabled step (or finish).
-                    if (!isGenreSelectionEnabled) {
-                        advanceFrom(GenreTemplateStep.TEMPLATE_PICK)
-                    } else {
-                        templatesError.value = "No templates available"
-                    }
-                }
-            }
         }
     }
 
@@ -216,29 +141,7 @@ class GenreTemplateViewModel(
         selectedTemplate.value = template
     }
 
-    fun goBackToStep1() {
-        if (!isGenreSelectionEnabled) return
-        selectedGenre.value = null
-        _currentStep.value = GenreTemplateStep.GENRE_SELECTION
-    }
-
-    fun onTemplateNext() = advanceFrom(GenreTemplateStep.TEMPLATE_PICK)
-
     fun selectContentFilter(id: String) { selectedContentFilter.value = id }
-    fun onContentExclusiveNext() = advanceFrom(GenreTemplateStep.CONTENT_EXCLUSIVE)
 
     fun selectPrivacy(id: String) { selectedPrivacy.value = id }
-    fun onMediaPrivacyNext() = advanceFrom(GenreTemplateStep.MEDIA_PRIVACY)
-
-    private fun advanceFrom(step: GenreTemplateStep) {
-        val next = GenreTemplateGate.nextStep(enabledSteps, step)
-        if (next == null) {
-            viewModelScope.launch { _navToNext.send(Unit) }
-        } else if (next == GenreTemplateStep.TEMPLATE_PICK) {
-            // Reaching TEMPLATE_PICK requires templates; load then transition.
-            loadTemplates()
-        } else {
-            _currentStep.value = next
-        }
-    }
 }

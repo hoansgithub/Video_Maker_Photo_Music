@@ -57,6 +57,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -92,6 +93,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import co.alcheclub.lib.acccore.ads.compose.BannerAdView
 import co.alcheclub.lib.acccore.ads.compose.NativeAdView
 import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
+import co.alcheclub.lib.acccore.ads.mediation.AdLoadResult
 import coil.compose.SubcomposeAsyncImage
 import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.R
@@ -132,8 +134,11 @@ import com.videomaker.aimusic.ui.theme.Primary
 import com.videomaker.aimusic.ui.theme.SplashBackground
 import com.videomaker.aimusic.ui.theme.TextPrimary
 import com.videomaker.aimusic.ui.theme.TextSecondary
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
 import kotlin.math.roundToInt
@@ -255,6 +260,37 @@ fun EditorScreen(
     val activity = context as? android.app.Activity
     val adsLoaderService = koinInject<AdsLoaderService>()
     val snackbarHostState = remember { androidx.compose.material3.SnackbarHostState() }
+
+    // --- Editor banner ad reload on tab interaction ---
+    var bannerAdReloadKey by remember { androidx.compose.runtime.mutableIntStateOf(0) }
+    var bannerAdLastImpressionTime by remember { androidx.compose.runtime.mutableLongStateOf(System.currentTimeMillis()) }
+    var isBannerAdReloading by remember { mutableStateOf(false) }
+
+    LaunchedEffect(bannerAdReloadKey) {
+        if (bannerAdReloadKey > 0) bannerAdLastImpressionTime = System.currentTimeMillis()
+    }
+
+    val reloadEditorBannerAd: () -> Unit = {
+        val now = System.currentTimeMillis()
+        if (now - bannerAdLastImpressionTime >= 2000L && !isBannerAdReloading) {
+            isBannerAdReloading = true
+            scope.launch(Dispatchers.IO) {
+                try {
+                    val result = adsLoaderService.loadNative(AdPlacement.NATIVE_EDITOR_BANNER, forceReload = true)
+                    withContext(Dispatchers.Main) {
+                        if (result is AdLoadResult.Success || result is AdLoadResult.AlreadyLoading) {
+                            bannerAdReloadKey++
+                        }
+                        isBannerAdReloading = false
+                    }
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (_: Exception) {
+                    withContext(Dispatchers.Main) { isBannerAdReloading = false }
+                }
+            }
+        }
+    }
 
     // Music Picker ViewModel - created once and reused
     // Commented out - using Supabase only
@@ -615,6 +651,7 @@ fun EditorScreen(
                     if (state.isPlaying) viewModel.stopPlayback()
                     showMusicSearchSheet = true
                 },
+                onTabInteraction = reloadEditorBannerAd,
                 showEffectSetPanel = showEffectSetSheet,
                 effectSetViewModel = effectSetViewModel,
                 onEffectPanelDismiss = {
@@ -1245,14 +1282,16 @@ fun EditorScreen(
                 )
             } else {
                 if (adPlacementConfigService.bannerUseNative) {
-                    NativeAdView(
-                        placement = AdPlacement.NATIVE_EDITOR_BANNER,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(100.dp),
-                        isDebug = BuildConfig.DEBUG,
-                        onAdClicked = { adClickDetector.onAdClick(it) }
-                    )
+                    key(bannerAdReloadKey) {
+                        NativeAdView(
+                            placement = AdPlacement.NATIVE_EDITOR_BANNER,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(100.dp),
+                            isDebug = BuildConfig.DEBUG,
+                            onAdClicked = { adClickDetector.onAdClick(it) }
+                        )
+                    }
                 } else {
                     BannerAdView(
                         placement = AdPlacement.BANNER_EDITOR,
@@ -1461,6 +1500,7 @@ internal fun EditorMainContent(
     onRatioClick: () -> Unit,
     onVolumeClick: () -> Unit = {},
     onMusicSelectorClick: () -> Unit = {},
+    onTabInteraction: () -> Unit = {},
     showEffectSetPanel: Boolean,
     effectSetViewModel: EffectSetViewModel,
     onEffectPanelDismiss: () -> Unit,
@@ -1834,6 +1874,7 @@ internal fun EditorMainContent(
                             onStickerClick = onStickerTabClick,
                             onRatioClick = onRatioClick,
                             onVolumeClick = onVolumeClick,
+                            onTabInteraction = onTabInteraction,
                             modifier = Modifier.fillMaxWidth()
                         )
                     }

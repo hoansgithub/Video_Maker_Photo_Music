@@ -211,6 +211,15 @@ val dataModule = module {
         )
     }
 
+    // Onboarding flow coordinator (singleton - manages step sequence, RC gating, ad preloading)
+    single {
+        com.videomaker.aimusic.modules.onboarding.OnboardingFlowCoordinator(
+            remoteConfig = get(),
+            preferencesManager = get(),
+            adsLoaderService = get()
+        )
+    }
+
     // Language config service (singleton - ConfigurableObject for Remote Config)
     // Centralized registration: Explicitly registered in VideoMakerApplication.kt
     single {
@@ -243,7 +252,7 @@ val dataModule = module {
     single { NotificationChannels() }
     single { NotificationRenderer(androidContext(), get()) }
     single { NotificationConversionTracker(get()) }
-    single { AppSessionTracker(get(), get()) }
+    single { AppSessionTracker(get(), get(), get()) }
 
     // Project Database
     single { ProjectDatabase.getInstance(androidContext()) }
@@ -392,8 +401,23 @@ val adsModule = module {
         )
     }
 
+    // Post-Interstitial Native Ad Manager (Drama app pattern)
+    // Native ad starts loading when showInterstitial() is called
+    // Non-blocking: skipped if native ad not loaded when interstitial closes
+    single {
+        com.videomaker.aimusic.core.ads.PostInterNativeAdManager(
+            adsLoaderService = get(),
+            adPlacementConfigService = get(),
+            coroutineScope = (androidContext().applicationContext as com.videomaker.aimusic.VideoMakerApplication).applicationScope
+        )
+    }
+
     // Ad Click Context Tracker (singleton - tracks ad click background state)
     single { com.videomaker.aimusic.core.ads.AdClickContextTracker() }
+
+    // Home screen collapsible ad tracker (singleton)
+    single { com.videomaker.aimusic.core.ads.HomeAdTracker() }
+
 
     // Ad Click Detector (singleton - handles ad click detection + preloads post-click AOA)
     single {
@@ -920,7 +944,17 @@ val presentationModule = module {
             checkLanguageSelectedUseCase = get(),
             preferencesManager = get(),
             remoteConfig = get(),  // Firebase Remote Config (from firebaseModule)
-            adsLoaderService = get()  // Ad loading service (from ACCCore-Ads)
+            adsLoaderService = get(),  // Ad loading service (from ACCCore-Ads)
+            adPlacementConfigService = get(),  // Placement enabled/disabled checks
+            notificationPermissionCoordinator = get()
+        )
+    }
+
+    // Loading Screen Low ViewModel (handles LOW priority splash ad independently)
+    viewModel {
+        com.videomaker.aimusic.modules.root.LoadingScreenLowViewModel(
+            adsLoaderService = get(),
+            adPlacementConfigService = get()
         )
     }
 
@@ -933,8 +967,8 @@ val presentationModule = module {
 
     // Onboarding Content ViewModel — registered as a singleton so that the
     // preload kicked off in LanguageSelectionActivity stays alive and its state
-    // is visible to OnboardingActivity (the spec's "centralized" intent). Using
-    // viewModel { } would create a fresh per-Activity instance and lose the data.
+    // is visible to WelcomePage Activities. Using viewModel { } would create a
+    // fresh per-Activity instance and lose the data.
     single {
         com.videomaker.aimusic.modules.onboarding.OnboardingContentViewModel(
             application = androidContext() as android.app.Application,
@@ -950,16 +984,11 @@ val presentationModule = module {
         com.videomaker.aimusic.modules.genretemplate.GenreTemplateViewModel(
             templateRepository = get(),
             songRepository = get(),
-            remoteConfig = get()
         )
     }
 
-    // Onboarding Survey (feature + platform) ViewModel
-    viewModel {
-        com.videomaker.aimusic.modules.onboardingsurvey.OnboardingSurveyViewModel(
-            remoteConfig = get()
-        )
-    }
+    // Onboarding Survey ViewModel
+    viewModel { com.videomaker.aimusic.modules.onboardingsurvey.OnboardingSurveyViewModel() }
 
     // Song Search ViewModel
     viewModel {

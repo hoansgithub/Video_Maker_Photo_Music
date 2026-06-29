@@ -20,7 +20,7 @@ fragmentKtx = "1.8.6"
 # ============================================
 # COMPOSE (December 2025 BOM)
 # ============================================
-composeBom = "2025.10.01"
+composeBom = "2026.06.00"
 lifecycleViewmodelCompose = "2.9.4"
 
 # ============================================
@@ -58,7 +58,7 @@ koin = "4.2.0"  # Matches ACCCoreAndroid
 # ============================================
 # ACCCORE (AlcheClub DI & Services)
 # ============================================
-acccore = "0.0.50"
+acccore = "0.0.52"
 
 # ============================================
 # FIREBASE (Optional - for analytics/crash reporting)
