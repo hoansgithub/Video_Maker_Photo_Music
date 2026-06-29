@@ -410,8 +410,8 @@ private fun EffectSetCard(
             )
 
             // Right-bottom indicator badge
-            val showNewItem = effectSet.isNew && downloadState is DownloadState.NotDownloaded
-            val showAds = effectSet.isPremium && isLocked
+            val showNewItem = effectSet.isNew
+            val showAds = effectSet.isPremium
 
             if (showNewItem) {
                 Image(

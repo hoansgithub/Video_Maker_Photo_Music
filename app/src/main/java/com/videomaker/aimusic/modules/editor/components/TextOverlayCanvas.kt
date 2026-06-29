@@ -205,11 +205,13 @@ fun TextOverlayCanvasContent(
                                         var currentDragY = startY
 
                                         // Detect hold (long press) of the first finger to trigger haptic feedback
+                                        var wasLifted = false
                                         val holdResult = withTimeoutOrNull(400L) {
                                             while (true) {
                                                 val event = awaitPointerEvent()
                                                 val pressed = event.changes.filter { it.pressed }
                                                 if (pressed.isEmpty()) {
+                                                    wasLifted = true
                                                     break // Finger lifted before hold threshold
                                                 }
                                                 if (pressed.size > 1) {
@@ -229,52 +231,95 @@ fun TextOverlayCanvasContent(
 
                                         var hasDraggedOrPinched = false
 
-                                        while (true) {
-                                            val event = awaitPointerEvent()
-                                            val pressedChanges = event.changes.filter { it.pressed }
-                                            if (pressedChanges.isEmpty()) {
-                                                break
-                                            }
+                                        if (!wasLifted) {
+                                            while (true) {
+                                                val event = awaitPointerEvent()
+                                                val pressedChanges = event.changes.filter { it.pressed }
+                                                if (pressedChanges.isEmpty()) {
+                                                    break
+                                                }
 
-                                            activePointers = pressedChanges.map { it.id }
+                                                activePointers = pressedChanges.map { it.id }
 
-                                            if (pressedChanges.size >= 2) {
-                                                    val p1 = pressedChanges[0]
-                                                    val p2 = pressedChanges[1]
-                                                    val p1Pos = p1.position
-                                                    val p2Pos = p2.position
-                                                    val currentCoords = visualCoordinates
-                                                    val p1Window = currentCoords?.localToWindow(p1Pos) ?: p1Pos
-                                                    val p2Window = currentCoords?.localToWindow(p2Pos) ?: p2Pos
+                                                if (pressedChanges.size >= 2) {
+                                                        val p1 = pressedChanges[0]
+                                                        val p2 = pressedChanges[1]
+                                                        val p1Pos = p1.position
+                                                        val p2Pos = p2.position
+                                                        val currentCoords = visualCoordinates
+                                                        val p1Window = currentCoords?.localToWindow(p1Pos) ?: p1Pos
+                                                        val p2Window = currentCoords?.localToWindow(p2Pos) ?: p2Pos
 
-                                                    val dx = p2Window.x - p1Window.x
-                                                    val dy = p2Window.y - p1Window.y
-                                                    val currentDistance = hypot(dx, dy)
-                                                    val currentAngle = Math.toDegrees(atan2(dy.toDouble(), dx.toDouble())).toFloat()
-                                                    val currentCenterWindow = Offset((p1Window.x + p2Window.x) / 2f, (p1Window.y + p2Window.y) / 2f)
+                                                        val dx = p2Window.x - p1Window.x
+                                                        val dy = p2Window.y - p1Window.y
+                                                        val currentDistance = hypot(dx, dy)
+                                                        val currentAngle = Math.toDegrees(atan2(dy.toDouble(), dx.toDouble())).toFloat()
+                                                        val currentCenterWindow = Offset((p1Window.x + p2Window.x) / 2f, (p1Window.y + p2Window.y) / 2f)
 
-                                                    if (!isMultiTouch) {
-                                                        isMultiTouch = true
-                                                        initialDistance = currentDistance
-                                                        initialAngle = currentAngle
-                                                        initialScale = currentOverlay.scale
-                                                        initialRotation = currentOverlay.rotation
+                                                        if (!isMultiTouch) {
+                                                            isMultiTouch = true
+                                                            initialDistance = currentDistance
+                                                            initialAngle = currentAngle
+                                                            initialScale = currentOverlay.scale
+                                                            initialRotation = currentOverlay.rotation
+                                                            initialCenterX = currentOverlay.xPercentage
+                                                            initialCenterY = currentOverlay.yPercentage
+                                                            initialCenterPoint = currentCenterWindow
+                                                            lastTapTime = 0L // Reset double tap
+                                                        } else {
+                                                            val scaleFactor = if (initialDistance > 0f) currentDistance / initialDistance else 1f
+                                                            val deltaAngle = currentAngle - initialAngle
+
+                                                            val newScale = (initialScale * scaleFactor).coerceIn(0.3f, 5.0f)
+                                                            val newRotation = (initialRotation + deltaAngle) % 360f
+
+                                                            // Allow pan during multi-touch using stable window coordinates
+                                                            val centerDeltaWindow = currentCenterWindow - initialCenterPoint
+                                                            val newX = initialCenterX + (centerDeltaWindow.x / currentCanvasWidth)
+                                                            val newY = initialCenterY + (centerDeltaWindow.y / currentCanvasHeight)
+
+                                                            if (!hasDraggedOrPinched) {
+                                                                hasDraggedOrPinched = true
+                                                                Analytics.trackEditBoxDrag(AnalyticsEvent.Value.TypeTool.TEXT)
+                                                            }
+                                                            currentOnUpdateText(
+                                                                currentOverlay.id,
+                                                                newX,
+                                                                newY,
+                                                                newRotation,
+                                                                newScale
+                                                            )
+                                                        }
+                                                        pressedChanges.forEach { it.consume() }
+                                                } else {
+                                                    // Handle single-finger drag
+                                                    val change = pressedChanges.first()
+
+                                                    if (isMultiTouch) {
+                                                        isMultiTouch = false
+                                                        singleFingerDownPosition = change.position
                                                         initialCenterX = currentOverlay.xPercentage
                                                         initialCenterY = currentOverlay.yPercentage
-                                                        initialCenterPoint = currentCenterWindow
-                                                        lastTapTime = 0L // Reset double tap
-                                                    } else {
-                                                        val scaleFactor = if (initialDistance > 0f) currentDistance / initialDistance else 1f
-                                                        val deltaAngle = currentAngle - initialAngle
+                                                    }
 
-                                                        val newScale = (initialScale * scaleFactor).coerceIn(0.3f, 5.0f)
-                                                        val newRotation = (initialRotation + deltaAngle) % 360f
+                                                    val diff = change.position - singleFingerDownPosition
 
-                                                        // Allow pan during multi-touch using stable window coordinates
-                                                        val centerDeltaWindow = currentCenterWindow - initialCenterPoint
-                                                        val newX = initialCenterX + (centerDeltaWindow.x / currentCanvasWidth)
-                                                        val newY = initialCenterY + (centerDeltaWindow.y / currentCanvasHeight)
+                                                    // Use full touchSlop to protect double tap from wiggles
+                                                    if (!hasDragged && diff.getDistance() > viewConfiguration.touchSlop) {
+                                                        hasDragged = true
+                                                        lastTapTime = 0L // Reset so drag is not counted towards double tap
+                                                    }
 
+                                                    if (hasDragged) {
+                                                        change.consume()
+                                                        val currentCoords = visualCoordinates
+                                                        val currentPosWindow = currentCoords?.localToWindow(change.position) ?: change.position
+                                                        val previousPosWindow = currentCoords?.localToWindow(change.previousPosition) ?: change.previousPosition
+                                                        val dragDeltaWindow = currentPosWindow - previousPosWindow
+
+                                                        val newX = currentOverlay.xPercentage + (dragDeltaWindow.x / currentCanvasWidth)
+                                                        val newY = currentOverlay.yPercentage + (dragDeltaWindow.y / currentCanvasHeight)
+                                                        
                                                         if (!hasDraggedOrPinched) {
                                                             hasDraggedOrPinched = true
                                                             Analytics.trackEditBoxDrag(AnalyticsEvent.Value.TypeTool.TEXT)
@@ -283,55 +328,13 @@ fun TextOverlayCanvasContent(
                                                             currentOverlay.id,
                                                             newX,
                                                             newY,
-                                                            newRotation,
-                                                            newScale
+                                                            currentOverlay.rotation,
+                                                            currentOverlay.scale
                                                         )
                                                     }
-                                                    pressedChanges.forEach { it.consume() }
-                                            } else {
-                                                // Handle single-finger drag
-                                                val change = pressedChanges.first()
-
-                                                if (isMultiTouch) {
-                                                    isMultiTouch = false
-                                                    singleFingerDownPosition = change.position
-                                                    initialCenterX = currentOverlay.xPercentage
-                                                    initialCenterY = currentOverlay.yPercentage
-                                                }
-
-                                                val diff = change.position - singleFingerDownPosition
-
-                                                // Lower threshold (0.5x touchSlop) for responsive drag
-                                                if (!hasDragged && diff.getDistance() > viewConfiguration.touchSlop * 0.5f) {
-                                                    hasDragged = true
-                                                    lastTapTime = 0L // Reset so drag is not counted towards double tap
-                                                }
-
-                                                if (hasDragged) {
-                                                    change.consume()
-                                                    val currentCoords = visualCoordinates
-                                                    val currentPosWindow = currentCoords?.localToWindow(change.position) ?: change.position
-                                                    val previousPosWindow = currentCoords?.localToWindow(change.previousPosition) ?: change.previousPosition
-                                                    val dragDeltaWindow = currentPosWindow - previousPosWindow
-
-                                                    val newX = currentOverlay.xPercentage + (dragDeltaWindow.x / currentCanvasWidth)
-                                                    val newY = currentOverlay.yPercentage + (dragDeltaWindow.y / currentCanvasHeight)
-                                                    
-                                                    if (!hasDraggedOrPinched) {
-                                                        hasDraggedOrPinched = true
-                                                        Analytics.trackEditBoxDrag(AnalyticsEvent.Value.TypeTool.TEXT)
-                                                    }
-                                                    currentOnUpdateText(
-                                                        currentOverlay.id,
-                                                        newX,
-                                                        newY,
-                                                        currentOverlay.rotation,
-                                                        currentOverlay.scale
-                                                    )
                                                 }
                                             }
                                         }
-                                        lastTapTime = 0L
                                     }
                                 }
                             }

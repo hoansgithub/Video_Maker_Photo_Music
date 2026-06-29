@@ -599,7 +599,7 @@
     <string name="retention_dialog_stay">Manatili</string>
 
     <!-- Onboarding survey & asset picker -->
-    <string name="ai_level_title">Piliin ang iyong istilo ng paglikha</string>
+    <string name="ai_level_title">Paano mo gustong baguhin ng AI ang iyong larawan?</string>
     <string name="ai_level_light_touch_title">Bahagyang Pagbabago</string>
     <string name="ai_level_light_touch_banner">Panatilihing natural.\nMukhang ikaw pa rin, mas maganda lang</string>
     <string name="ai_level_deep_swap_title">Malalim na Pagpapalit</string>
@@ -667,4 +667,21 @@
     <string name="text_overlay_desc_rotate_scale">I-rotate at i-scale</string>
     <string name="text_overlay_font_ad_error">Bigo sa pag-load ng Ad, mangyaring subukang muli.</string>
     <string name="text_overlay_system_default">System Default</string>
+
+    <!-- Language Setup Dialog -->
+    <string name="language_setting_up">Iniaayos ang mga bagay-bagay sa iyong wika…</string>
+    <string name="language_setting_up_done">Tapos na! Tuklasin natin ang app.</string>
+
+    <!-- Added by translation script -->
+    <string name="personalizing_step_style">Pagse-set up ng iyong istilo</string>
+    <string name="personalizing_step_templates">Paghahanda ng mga template ng AI</string>
+    <string name="personalizing_step_songs">Paghahanap ng mga trending na kanta</string>
+    <string name="personalizing_step_effects">Naglo-load ng mga epekto</string>
+    <string name="personalizing_step_ready">Tapos na! Handa nang lumikha</string>
+    <string name="ai_face_swap_title">I-cartoonize ang iyong portrait</string>
+    <string name="survey_face_swap_title">Lumikha ng Iyong AI Photo Face swap</string>
+    <string name="survey_dance_swap_title">Gawin ang Iyong AI Dance Video</string>
+    <string name="survey_before">dati</string>
+    <string name="survey_after">Pagkatapos</string>
+    <string name="survey_swipe_hint">Pahiwatig sa Pag-swipe</string>
 </resources>

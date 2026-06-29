@@ -599,7 +599,7 @@
     <string name="retention_dialog_stay">ابقَ</string>
 
     <!-- Onboarding survey & asset picker -->
-    <string name="ai_level_title">اختر أسلوب الإبداع الخاص بك</string>
+    <string name="ai_level_title">كيف تريد أن يقوم الذكاء الاصطناعي بتحويل صورتك؟</string>
     <string name="ai_level_light_touch_title">لمسة خفيفة</string>
     <string name="ai_level_light_touch_banner">حافظ على المظهر الطبيعي.\nتبدو مثل نفسك، لكن بشكل أفضل</string>
     <string name="ai_level_deep_swap_title">تبديل عميق</string>
@@ -667,4 +667,21 @@
     <string name="text_overlay_desc_rotate_scale">تدوير وتكبير/تصغير</string>
     <string name="text_overlay_font_ad_error">فشل تحميل الإعلان، يرجى المحاولة مرة أخرى.</string>
     <string name="text_overlay_system_default">افتراضي النظام</string>
+
+    <!-- Language Setup Dialog -->
+    <string name="language_setting_up">جاري إعداد الأمور بلغتك…</string>
+    <string name="language_setting_up_done">تم! لنستكشف التطبيق.</string>
+
+    <!-- Added by translation script -->
+    <string name="personalizing_step_style">إعداد أسلوبك</string>
+    <string name="personalizing_step_templates">إعداد قوالب الذكاء الاصطناعي</string>
+    <string name="personalizing_step_songs">العثور على الأغاني الشائعة</string>
+    <string name="personalizing_step_effects">تحميل التأثيرات</string>
+    <string name="personalizing_step_ready">منتهي! جاهز للإنشاء</string>
+    <string name="ai_face_swap_title">رسم صورتك بالكرتون</string>
+    <string name="survey_face_swap_title">قم بإنشاء مبادلة وجه AI Photo الخاصة بك</string>
+    <string name="survey_dance_swap_title">قم بإنشاء فيديو الرقص الخاص بك بالذكاء الاصطناعي</string>
+    <string name="survey_before">قبل</string>
+    <string name="survey_after">بعد</string>
+    <string name="survey_swipe_hint">انتقد تلميح</string>
 </resources>

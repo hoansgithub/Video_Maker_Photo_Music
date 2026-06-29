@@ -606,7 +606,7 @@
     <string name="retention_dialog_stay">থাকুন</string>
 
     <!-- Onboarding survey & asset picker -->
-    <string name="ai_level_title">আপনার তৈরির স্টাইল বেছে নিন</string>
+    <string name="ai_level_title">আপনি কিভাবে এআই আপনার ছবি রূপান্তর করতে চান?</string>
     <string name="ai_level_light_touch_title">হালকা ছোঁয়া</string>
     <string name="ai_level_light_touch_banner">স্বাভাবিকতা বজায় রাখুন।\nআপনার মতোই দেখতে, শুধু আরও ভালো</string>
     <string name="ai_level_deep_swap_title">ডিপ সোয়াপ</string>
@@ -672,4 +672,21 @@
     <string name="text_overlay_desc_rotate_scale">ঘোরান এবং আকার পরিবর্তন করুন</string>
     <string name="text_overlay_font_ad_error">বিজ্ঞাপন লোড করা ব্যর্থ হয়েছে, অনুগ্রহ করে আবার চেষ্টা করুন।</string>
     <string name="text_overlay_system_default">সিস্টেম ডিফল্ট</string>
+
+    <!-- Language Setup Dialog -->
+    <string name="language_setting_up">আপনার ভাষায় সবকিছু সেট করা হচ্ছে…</string>
+    <string name="language_setting_up_done">শেষ! চলুন অ্যাপটি এক্সপ্লোর করি।</string>
+
+    <!-- Added by translation script -->
+    <string name="personalizing_step_style">আপনার শৈলী সেট আপ</string>
+    <string name="personalizing_step_templates">এআই টেমপ্লেট প্রস্তুত করা হচ্ছে</string>
+    <string name="personalizing_step_songs">ট্রেন্ডিং গান খোঁজা</string>
+    <string name="personalizing_step_effects">লোডিং প্রভাব</string>
+    <string name="personalizing_step_ready">সম্পন্ন ! তৈরি করতে প্রস্তুত</string>
+    <string name="ai_face_swap_title">আপনার প্রতিকৃতি কার্টুনাইজ করুন</string>
+    <string name="survey_face_swap_title">আপনার এআই ফটো ফেস সোয়াপ তৈরি করুন</string>
+    <string name="survey_dance_swap_title">আপনার এআই ডান্স ভিডিও তৈরি করুন</string>
+    <string name="survey_before">আগে</string>
+    <string name="survey_after">পরে</string>
+    <string name="survey_swipe_hint">সোয়াইপ ইঙ্গিত</string>
 </resources>

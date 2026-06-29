@@ -18,12 +18,20 @@ class OnboardingSurveyViewModel : ViewModel() {
     private val _selectedAiLevel = MutableStateFlow<Set<String>>(emptySet())
     val selectedAiLevel: StateFlow<Set<String>> = _selectedAiLevel.asStateFlow()
 
+    private val _selectedFaceSwap = MutableStateFlow<Set<String>>(emptySet())
+    val selectedFaceSwap: StateFlow<Set<String>> = _selectedFaceSwap.asStateFlow()
+
+    private val _selectedDanceSwap = MutableStateFlow<Set<String>>(emptySet())
+    val selectedDanceSwap: StateFlow<Set<String>> = _selectedDanceSwap.asStateFlow()
+
     fun selectAiLevel(id: String) { _selectedAiLevel.value = setOf(id) }
 
     fun selectedFlow(step: OnboardingSurveyStep): StateFlow<Set<String>> = when (step) {
         OnboardingSurveyStep.FEATURE -> selectedFeatures
         OnboardingSurveyStep.PLATFORM -> selectedPlatforms
         OnboardingSurveyStep.AI_LEVEL -> selectedAiLevel
+        OnboardingSurveyStep.AI_FACE_SWAP -> selectedFaceSwap
+        OnboardingSurveyStep.AI_DANCE -> selectedDanceSwap
     }
 
     /** Toggles selection. Returns true if [id] is now selected (used to decide select-tracking / ad reload). */
@@ -36,6 +44,8 @@ class OnboardingSurveyViewModel : ViewModel() {
             OnboardingSurveyStep.FEATURE -> _selectedFeatures
             OnboardingSurveyStep.PLATFORM -> _selectedPlatforms
             OnboardingSurveyStep.AI_LEVEL -> _selectedFeatures // unreachable (handled above)
+            OnboardingSurveyStep.AI_FACE_SWAP -> _selectedFaceSwap
+            OnboardingSurveyStep.AI_DANCE -> _selectedDanceSwap
         }
         val current = flow.value
         val nowSelected = id !in current

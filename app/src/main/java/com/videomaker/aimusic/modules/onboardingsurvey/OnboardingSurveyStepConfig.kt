@@ -63,4 +63,8 @@ fun configFor(step: OnboardingSurveyStep): OnboardingSurveyStepConfig = when (st
     OnboardingSurveyStep.PLATFORM -> PLATFORM_CONFIG
     OnboardingSurveyStep.AI_LEVEL ->
         error("AI_LEVEL renders via AiLevelScreen, not OnboardingSurveyList")
+    OnboardingSurveyStep.AI_FACE_SWAP ->
+        error("AI_FACE_SWAP renders via FaceSwapScreen, not OnboardingSurveyList")
+    OnboardingSurveyStep.AI_DANCE ->
+        error("AI_DANCE renders via DanceSwapScreen, not OnboardingSurveyList")
 }

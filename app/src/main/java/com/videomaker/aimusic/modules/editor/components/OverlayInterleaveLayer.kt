@@ -93,8 +93,11 @@ fun OverlayInterleaveLayer(
                         downloadedFontIds = downloadedFontIds,
                         onLoadFont = textOverlayViewModel::downloadFontIfNeeded,
                         onSelectText = { id ->
-                            textOverlayViewModel.setSelectedTextOverlayId(id)
-                            if (id != null) onTextTapped(id)
+                            if (id != null) {
+                                onTextTapped(id)
+                            } else {
+                                textOverlayViewModel.setSelectedTextOverlayId(null)
+                            }
                         },
                         onUpdateText = { id, x, y, rot, sc ->
                             textOverlayViewModel.updateTextOverlay(

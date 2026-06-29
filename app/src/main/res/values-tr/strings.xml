@@ -599,7 +599,7 @@
     <string name="retention_dialog_stay">Kal</string>
 
     <!-- Onboarding survey & asset picker -->
-    <string name="ai_level_title">Yaratım tarzını seç</string>
+    <string name="ai_level_title">Yapay zekanın fotoğrafınızı nasıl dönüştürmesini istiyorsunuz?</string>
     <string name="ai_level_light_touch_title">Hafif Dokunuş</string>
     <string name="ai_level_light_touch_banner">Doğallığını koru.\nKendin gibi görün, sadece daha iyi</string>
     <string name="ai_level_deep_swap_title">Derin Değişim</string>
@@ -667,4 +667,21 @@
     <string name="text_overlay_desc_rotate_scale">Döndür ve ölçekle</string>
     <string name="text_overlay_font_ad_error">Reklam yüklenemedi, lütfen tekrar deneyin.</string>
     <string name="text_overlay_system_default">Sistem Varsayılanı</string>
+
+    <!-- Language Setup Dialog -->
+    <string name="language_setting_up">Her şey dilinizde ayarlanıyor…</string>
+    <string name="language_setting_up_done">Tamamlandı! Uygulamayı keşfedelim.</string>
+
+    <!-- Added by translation script -->
+    <string name="personalizing_step_style">Stilinizi ayarlama</string>
+    <string name="personalizing_step_templates">Yapay zeka şablonlarının hazırlanması</string>
+    <string name="personalizing_step_songs">Trend olan şarkıları bulma</string>
+    <string name="personalizing_step_effects">Efektler yükleniyor</string>
+    <string name="personalizing_step_ready">Tamamlamak! Oluşturmaya hazır</string>
+    <string name="ai_face_swap_title">Portrenizi karikatürize edin</string>
+    <string name="survey_face_swap_title">Yapay Zeka Fotoğrafınızı Oluşturun Yüz Değiştirme</string>
+    <string name="survey_dance_swap_title">Yapay Zeka Dans Videonuzu Oluşturun</string>
+    <string name="survey_before">Önce</string>
+    <string name="survey_after">Sonrasında</string>
+    <string name="survey_swipe_hint">İpucunu Kaydırma</string>
 </resources>

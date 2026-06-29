@@ -606,7 +606,7 @@
     <string name="retention_dialog_stay">Duro</string>
 
     <!-- Onboarding survey & asset picker -->
-    <string name="ai_level_title">Yan ọ̀nà ìṣẹ̀dá rẹ</string>
+    <string name="ai_level_title">Bawo ni o ṣe fẹ AI lati yi fọto rẹ pada?</string>
     <string name="ai_level_light_touch_title">Ìfọwọ́kàn Fẹ́ẹ́rẹ́</string>
     <string name="ai_level_light_touch_banner">Jẹ́ kí ó dúró bí ti gidi.\nDàbí ara rẹ, kìkì pé ó dára jù</string>
     <string name="ai_level_deep_swap_title">Ìyípadà Jíjìn</string>
@@ -672,4 +672,21 @@
     <string name="text_overlay_desc_rotate_scale">Yi pada ki o si wọn</string>
     <string name="text_overlay_font_ad_error">Kuna lati gbe Ipolowo soke, jọwọ gbiyanju lẹẹkansi.</string>
     <string name="text_overlay_system_default">Eto Aiyipada</string>
+
+    <!-- Language Setup Dialog -->
+    <string name="language_setting_up">N ṣeto awọn nkan ni ede rẹ…</string>
+    <string name="language_setting_up_done">O ti ṣetan! Jẹ ki a ṣawari app naa.</string>
+
+    <!-- Added by translation script -->
+    <string name="personalizing_step_style">Ṣiṣeto aṣa rẹ</string>
+    <string name="personalizing_step_templates">Ngbaradi AI awọn awoṣe</string>
+    <string name="personalizing_step_songs">Wiwa awọn orin aṣa</string>
+    <string name="personalizing_step_effects">Awọn ipa ikojọpọ</string>
+    <string name="personalizing_step_ready">Ti ṣe! Setan lati ṣẹda</string>
+    <string name="ai_face_swap_title">Ṣe aworan aworan rẹ</string>
+    <string name="survey_face_swap_title">Ṣẹda swap oju Fọto AI rẹ</string>
+    <string name="survey_dance_swap_title">Ṣẹda rẹ AI Dance Video</string>
+    <string name="survey_before">Ṣaaju ki o to</string>
+    <string name="survey_after">Lẹhin</string>
+    <string name="survey_swipe_hint">Ra Itoju</string>
 </resources>
