@@ -77,6 +77,14 @@
     <string name="home_tab_projects">Library</string>
     <string name="home_tab_ai">AI</string>
 
+    <!-- AI Tab -->
+    <string name="ai_banner_coming_soon">COMING SOON</string>
+    <string name="ai_banner_title">Trending AI Video</string>
+    <string name="ai_banner_remind_me">Remind Me</string>
+    <string name="ai_section_video_generator">AI Video Generator</string>
+    <string name="ai_section_dance">AI Dance</string>
+    <string name="ai_templates_empty">No templates yet</string>
+
     <!-- Gallery Tab -->
     <string name="gallery_filter_for_you">For you</string>
     <string name="gallery_hot_songs">Hot Songs</string>

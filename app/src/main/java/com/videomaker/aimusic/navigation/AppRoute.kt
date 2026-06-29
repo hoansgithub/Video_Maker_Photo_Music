@@ -170,6 +170,15 @@ sealed interface AppRoute : NavKey {
     data class TemplateList(val selectedVibeTagId: String? = null) : AppRoute
 
     /**
+     * AI template list: fixed tabs (All / AI Video Generator / AI Dance). "All" loads both
+     * AI vibe tags; the other tabs load their single tag.
+     *
+     * @param selectedVibeTagId null = "All" tab, or one of the AI vibe tag IDs to focus that tab.
+     */
+    @Serializable
+    data class TemplateAIList(val selectedVibeTagId: String? = null) : AppRoute
+
+    /**
      * Template preview: apply a template to user-selected images OR sample images.
      *
      * @param templateId ID of the template to open first. Empty string = open at top-ranked template.

@@ -91,6 +91,7 @@ import com.videomaker.aimusic.media.audio.AudioPreviewCache
 import com.videomaker.aimusic.modules.gallery.GalleryScreen
 import com.videomaker.aimusic.modules.gallery.GalleryUiState
 import com.videomaker.aimusic.modules.gallery.GalleryViewModel
+import com.videomaker.aimusic.modules.home.components.AiTabContent
 import com.videomaker.aimusic.modules.home.components.HomeFabOverlay
 import com.videomaker.aimusic.modules.songs.MusicPlayerBottomSheet
 import com.videomaker.aimusic.modules.songs.SongsScreen
@@ -139,6 +140,7 @@ private val ZeroProgress: () -> Float = { 0f }
 fun HomeScreen(
     galleryViewModel: GalleryViewModel,
     songsViewModel: SongsViewModel,
+    aiViewModel: AiTabViewModel,
     initialTab: Int = 0,
     onSettingsClick: (String) -> Unit = {},
     onCreateClick: () -> Unit = {},
@@ -148,6 +150,7 @@ fun HomeScreen(
     onNavigateToWeeklyRankingList: () -> Unit = {},
     onNavigateToTemplateDetail: (String, String?) -> Unit = { _, _ -> },
     onNavigateToAllTemplates: (String?) -> Unit = {},
+    onNavigateToAiTemplates: (String?) -> Unit = {},
     onNavigateToAssetPicker: (songId: Long) -> Unit = {},
     onNavigateToTemplatePreviewerWithSong: (songId: Long) -> Unit = {}
 ) {
@@ -607,7 +610,24 @@ fun HomeScreen(
                                 onNavigateToTemplatePreviewerWithSong.invoke(it) },
                             onListScroll = { isSongsCtaVisible = false }
                         )
-                        2 -> AiTabContent()
+                        2 -> AiTabContent(
+                            viewModel = aiViewModel,
+                            isShowPaddingBottom = bottomSectionHeight == 0,
+                            topBarHeight = topBarHeight,
+                            onCreateClick = onCreateClick,
+                            onSeeAllVideoGenerator = {
+                                onNavigateToAiTemplates(AiTabViewModel.TAG_VIDEO_GENERATOR)
+                            },
+                            onSeeAllDance = {
+                                onNavigateToAiTemplates(AiTabViewModel.TAG_DANCE)
+                            },
+                            onTemplateClick = { template ->
+                                onNavigateToTemplateDetail(
+                                    template.id,
+                                    AnalyticsEvent.Value.Location.AI
+                                )
+                            }
+                        )
                     }
                 }
 
@@ -786,19 +806,6 @@ fun HomeScreen(
             )
         }
     }
-}
-
-/**
- * AI Tab - placeholder for upcoming AI features. Intentionally empty for now (just the
- * surface background) so content can be added later.
- */
-@Composable
-private fun AiTabContent() {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surface)
-    )
 }
 
 /**

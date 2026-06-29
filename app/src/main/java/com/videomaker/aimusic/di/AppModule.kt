@@ -815,6 +815,33 @@ class TemplateListViewModelFactory(
 }
 
 /**
+ * Factory wrapper for AiTabViewModel.
+ */
+class AiTabViewModelFactory(
+    private val templateRepository: TemplateRepository
+) {
+    fun create(): com.videomaker.aimusic.modules.home.AiTabViewModel {
+        return com.videomaker.aimusic.modules.home.AiTabViewModel(
+            templateRepository = templateRepository
+        )
+    }
+}
+
+/**
+ * Factory wrapper for TemplateAIListViewModel.
+ */
+class TemplateAIListViewModelFactory(
+    private val templateRepository: TemplateRepository
+) {
+    fun create(initialVibeTagId: String?): com.videomaker.aimusic.modules.templateailist.TemplateAIListViewModel {
+        return com.videomaker.aimusic.modules.templateailist.TemplateAIListViewModel(
+            templateRepository = templateRepository,
+            initialVibeTagId = initialVibeTagId
+        )
+    }
+}
+
+/**
  * Factory wrapper for SuggestedSongsListViewModel.
  */
 class SuggestedSongsListViewModelFactory(
@@ -1170,6 +1197,20 @@ val presentationModule = module {
     // Template List ViewModel factory (singleton - stateless factory)
     single {
         TemplateListViewModelFactory(
+            templateRepository = get()
+        )
+    }
+
+    // AI Tab ViewModel factory (singleton - stateless factory)
+    single {
+        AiTabViewModelFactory(
+            templateRepository = get()
+        )
+    }
+
+    // AI Template List ViewModel factory (singleton - stateless factory)
+    single {
+        TemplateAIListViewModelFactory(
             templateRepository = get()
         )
     }

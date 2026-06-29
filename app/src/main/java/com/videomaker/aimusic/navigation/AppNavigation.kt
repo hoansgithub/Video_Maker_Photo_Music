@@ -49,11 +49,13 @@ import com.videomaker.aimusic.core.popup.TrendingPopupState
 import com.videomaker.aimusic.core.popup.TrendingPopupTab
 import com.videomaker.aimusic.di.AssetPickerViewModelFactory
 import com.videomaker.aimusic.di.EditorViewModelFactory
+import com.videomaker.aimusic.di.AiTabViewModelFactory
 import com.videomaker.aimusic.di.ExportViewModelFactory
 import com.videomaker.aimusic.di.GalleryViewModelFactory
 import com.videomaker.aimusic.di.ProjectsViewModelFactory
 import com.videomaker.aimusic.di.SongsViewModelFactory
 import com.videomaker.aimusic.di.SuggestedSongsListViewModelFactory
+import com.videomaker.aimusic.di.TemplateAIListViewModelFactory
 import com.videomaker.aimusic.di.TemplateListViewModelFactory
 import com.videomaker.aimusic.di.TemplatePreviewerViewModelFactory
 import com.videomaker.aimusic.di.UninstallViewModelFactory
@@ -64,6 +66,7 @@ import com.videomaker.aimusic.modules.editor.EditorViewModel
 import com.videomaker.aimusic.modules.export.ExportScreen
 import com.videomaker.aimusic.modules.export.ExportViewModel
 import com.videomaker.aimusic.modules.gallery.GalleryViewModel
+import com.videomaker.aimusic.modules.home.AiTabViewModel
 import com.videomaker.aimusic.modules.home.HomeScreen
 import com.videomaker.aimusic.modules.language.LanguageSelectionScreen
 import com.videomaker.aimusic.modules.language.domain.usecase.ApplyLanguageUseCase
@@ -81,6 +84,8 @@ import com.videomaker.aimusic.modules.settings.SettingsScreen
 import com.videomaker.aimusic.modules.settings.UninstallScreen
 import com.videomaker.aimusic.modules.settings.UninstallViewModel
 import com.videomaker.aimusic.modules.songs.SongsViewModel
+import com.videomaker.aimusic.modules.templateailist.TemplateAIListScreen
+import com.videomaker.aimusic.modules.templateailist.TemplateAIListViewModel
 import com.videomaker.aimusic.modules.templatelist.TemplateListScreen
 import com.videomaker.aimusic.modules.templatelist.TemplateListViewModel
 import com.videomaker.aimusic.modules.templatepreviewer.TemplatePreviewerScreen
@@ -423,6 +428,11 @@ fun AppNavigation(
                     key = "songs",
                     factory = createSafeViewModelFactory { songsFactory.create() }
                 )
+                val aiFactory = koinInject<AiTabViewModelFactory>()
+                val aiViewModel: AiTabViewModel = viewModel(
+                    key = "ai",
+                    factory = createSafeViewModelFactory { aiFactory.create() }
+                )
                 val homeAdTracker = koinInject<com.videomaker.aimusic.core.ads.HomeAdTracker>()
 
                 // Auto-open MusicPlayerBottomSheet when launched from widget song tap
@@ -440,6 +450,7 @@ fun AppNavigation(
                 HomeScreen(
                     galleryViewModel = galleryViewModel,
                     songsViewModel = songsViewModel,
+                    aiViewModel = aiViewModel,
                     initialTab = route.initialTab,
                     onCreateClick = {
                         homeAdTracker.onNavigateAway()
@@ -482,6 +493,11 @@ fun AppNavigation(
                         homeAdTracker.onNavigateAway()
                         // Navigate to template list with selected tag filter
                         backStack.add(AppRoute.TemplateList(selectedVibeTagId))
+                    },
+                    onNavigateToAiTemplates = { selectedVibeTagId ->
+                        homeAdTracker.onNavigateAway()
+                        // Dedicated AI list with fixed tabs; focuses the tab for the clicked section
+                        backStack.add(AppRoute.TemplateAIList(selectedVibeTagId))
                     },
                     onNavigateToAssetPicker = { songId ->
                         homeAdTracker.onNavigateAway()
@@ -768,6 +784,26 @@ fun AppNavigation(
                     }
                 )
                 TemplateListScreen(
+                    viewModel = viewModel,
+                    onNavigateBack = { backStack.safeRemoveLast() },
+                    onNavigateToTemplatePreviewer = { templateId ->
+                        backStack.add(AppRoute.TemplatePreviewer(
+                            templateId = templateId,
+                            imageUris = emptyList()
+                        ))
+                    }
+                )
+            }
+
+            entry<AppRoute.TemplateAIList> { route ->
+                val factory: TemplateAIListViewModelFactory = koinInject()
+                val viewModel: TemplateAIListViewModel = viewModel(
+                    key = "template_ai_list_${route.selectedVibeTagId}",
+                    factory = createSafeViewModelFactory {
+                        factory.create(route.selectedVibeTagId)
+                    }
+                )
+                TemplateAIListScreen(
                     viewModel = viewModel,
                     onNavigateBack = { backStack.safeRemoveLast() },
                     onNavigateToTemplatePreviewer = { templateId ->
