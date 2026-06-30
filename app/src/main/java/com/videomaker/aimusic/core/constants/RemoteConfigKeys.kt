@@ -156,6 +156,7 @@ object RemoteConfigKeys {
     const val ONBOARDING_AI_DANCE_ENABLED = "onboarding_ai_dance_enabled"
     const val ONBOARDING_NON_AI_LYRIC_ENABLED = "onboarding_non_ai_lyric_enabled"
     const val ONBOARDING_NON_AI_MUSIC_VIDEO_ENABLED = "onboarding_non_ai_music_video_enabled"
+    const val ONBOARDING_AI_PROMOTE_ENABLED = "onboarding_ai_promote_enabled"
 
     /**
      * Dynamic sort order for the Feature Survey items (JSON array of item IDs).

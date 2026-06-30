@@ -701,5 +701,6 @@
     <!-- NON_AI (Non-AI survey screens) -->
     <string name="survey_non_ai_lyric_title">Lyric Music Videos</string>
     <string name="survey_non_ai_music_video_title">Create Your Unique Video Style</string>
+    <string name="survey_ai_promote_title">Plus Many AI Features</string>
 
 </resources>

@@ -79,6 +79,10 @@ import kotlin.time.Duration.Companion.milliseconds
 fun DanceSwapScreen(
     modifier: Modifier = Modifier
 ) {
+    LaunchedEffect(Unit) {
+        Analytics.track(OnboardingSurveyAnalytics.EVENT_AI_DANCE_RENDER)
+    }
+
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 

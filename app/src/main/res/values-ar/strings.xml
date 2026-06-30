@@ -684,4 +684,8 @@
     <string name="survey_before">قبل</string>
     <string name="survey_after">بعد</string>
     <string name="survey_swipe_hint">انتقد تلميح</string>
+    <!-- NON_AI (Non-AI survey screens) -->
+    <string name="survey_non_ai_lyric_title">فيديوهات موسيقية مع كلمات الأغاني</string>
+    <string name="survey_non_ai_music_video_title">أنشئ أسلوب الفيديو الفريد الخاص بك</string>
+    <string name="survey_ai_promote_title">بالإضافة إلى العديد من ميزات الذكاء الاصطناعي</string>
 </resources>

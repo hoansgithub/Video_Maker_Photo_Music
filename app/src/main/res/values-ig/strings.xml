@@ -690,4 +690,8 @@
     <string name="survey_before">Tupu</string>
     <string name="survey_after">Mgbe</string>
     <string name="survey_swipe_hint">Sụgharịa ntụnye</string>
+    <!-- NON_AI (Non-AI survey screens) -->
+    <string name="survey_non_ai_lyric_title">Vidiyo egwu egwu</string>
+    <string name="survey_non_ai_music_video_title">Mepụta ụdị vidiyo pụrụ iche gị</string>
+    <string name="survey_ai_promote_title">Gbakwunyere ọtụtụ atụmatụ AI</string>
 </resources>

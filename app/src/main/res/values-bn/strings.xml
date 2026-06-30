@@ -689,4 +689,8 @@
     <string name="survey_before">আগে</string>
     <string name="survey_after">পরে</string>
     <string name="survey_swipe_hint">সোয়াইপ ইঙ্গিত</string>
+    <!-- NON_AI (Non-AI survey screens) -->
+    <string name="survey_non_ai_lyric_title">লিরিক মিউজিক ভিডিও</string>
+    <string name="survey_non_ai_music_video_title">আপনার নিজস্ব অনন্য ভিডিও শৈলী তৈরি করুন</string>
+    <string name="survey_ai_promote_title">এছাড়াও অনেক এআই বৈশিষ্ট্য</string>
 </resources>
