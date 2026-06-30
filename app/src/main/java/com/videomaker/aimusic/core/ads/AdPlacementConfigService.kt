@@ -956,6 +956,25 @@ class AdPlacementConfigService(
             additionalExtras = mapOf("infeed_interval" to 6)
         )
 
+        // AI template list in-feed native ad (TemplateAIListScreen, all tabs)
+        // First ad after the X-th template (first_position, default 2), then one ad
+        // every Y templates (infeed_interval, default 3)
+        // Layout: native_project_card (blends with template cards, like NATIVE_GALLERY_GRID)
+        // Waterfall: Primary (Pro_AIMV_NA_high_AI tpt) -> Secondary (Pro_AIMV_NA_all_AI tpt)
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_AI_TEMPLATE_GRID,
+            layoutName = "native_project_card",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/7429097719",  // Primary (Pro_AIMV_NA_high_AI tpt)
+                "ca-app-pub-7121075950716954/1360714510"   // Secondary (Pro_AIMV_NA_all_AI tpt)
+            ),
+            enabled = true,
+            additionalExtras = mapOf(
+                "first_position" to 2,
+                "infeed_interval" to 3
+            )
+        )
+
         // Featured templates carousel native ad (shown at 2nd position)
         // Layout: native_showcase_item (fullscreen media with gradient + CTA overlay)
         // Waterfall: Primary unit -> Secondary unit

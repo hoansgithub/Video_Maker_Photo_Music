@@ -53,6 +53,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import co.alcheclub.lib.acccore.ads.compose.NativeAdView
 import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.R
+import co.alcheclub.lib.acccore.ads.loader.AdsLoaderService
 import com.videomaker.aimusic.core.ads.AdClickDetector
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
@@ -237,11 +238,14 @@ private fun AiPagedContent(
 // GRID ITEMS (Template + Ad)
 // ============================================
 
-private const val AD_INSERTION_INDEX = 3
+// In-feed ad cadence defaults (overridable via NATIVE_AI_TEMPLATE_GRID extras):
+// first ad after the X-th template, then one ad every Y templates.
+private const val DEFAULT_AD_FIRST_POSITION = 2
+private const val DEFAULT_AD_INTERVAL = 3
 
 private sealed class AiGridItem {
     data class TemplateItem(val template: VideoTemplate) : AiGridItem()
-    data object AdItem : AiGridItem()
+    data class AdItem(val adIndex: Int) : AiGridItem()
 }
 
 private fun parseAspectRatio(aspectRatio: String): Float {
@@ -271,20 +275,39 @@ private fun AiPageGrid(
     val gridState = rememberLazyGridState()
     val pullRefreshState = rememberPullToRefreshState()
     val adClickDetector: AdClickDetector = koinInject()
+    val adsLoaderService: AdsLoaderService = koinInject()
+
+    // In-feed cadence from Remote Config (X = first position, Y = repeat interval).
+    val adFirstPosition = remember {
+        val config = adsLoaderService.getPlacementConfig(AdPlacement.NATIVE_AI_TEMPLATE_GRID)
+        config?.extras?.get("first_position")?.toString()?.trim('"')?.toIntOrNull()
+            ?.takeIf { it > 0 } ?: DEFAULT_AD_FIRST_POSITION
+    }
+    val adInterval = remember {
+        val config = adsLoaderService.getPlacementConfig(AdPlacement.NATIVE_AI_TEMPLATE_GRID)
+        config?.extras?.get("infeed_interval")?.toString()?.trim('"')?.toIntOrNull()
+            ?.takeIf { it > 0 } ?: DEFAULT_AD_INTERVAL
+    }
 
     val distinctTemplates = remember(pageState.items) {
         pageState.items.distinctBy { it.id }
     }
-    val gridItems = remember(distinctTemplates) {
+    val gridItems = remember(distinctTemplates, adFirstPosition, adInterval) {
         buildList {
             if (distinctTemplates.isEmpty()) return@buildList
-            if (distinctTemplates.size < AD_INSERTION_INDEX) {
+            if (distinctTemplates.size < adFirstPosition) {
+                // Fewer templates than the first slot → single ad at the end.
                 distinctTemplates.forEach { add(AiGridItem.TemplateItem(it)) }
-                add(AiGridItem.AdItem)
+                add(AiGridItem.AdItem(0))
             } else {
+                var adCount = 0
                 distinctTemplates.forEachIndexed { index, template ->
                     add(AiGridItem.TemplateItem(template))
-                    if (index == AD_INSERTION_INDEX - 1) add(AiGridItem.AdItem)
+                    val templatesSoFar = index + 1
+                    val isFirstAd = templatesSoFar == adFirstPosition
+                    val isRepeatAd = templatesSoFar > adFirstPosition &&
+                        (templatesSoFar - adFirstPosition) % adInterval == 0
+                    if (isFirstAd || isRepeatAd) add(AiGridItem.AdItem(adCount++))
                 }
             }
         }
@@ -349,7 +372,7 @@ private fun AiPageGrid(
                         key = { item ->
                             when (item) {
                                 is AiGridItem.TemplateItem -> "template_${item.template.id}"
-                                is AiGridItem.AdItem -> "ad_native_ai_grid"
+                                is AiGridItem.AdItem -> "ad_native_ai_grid_${item.adIndex}"
                             }
                         },
                         contentType = { item ->
@@ -393,7 +416,7 @@ private fun AiPageGrid(
                             }
                             is AiGridItem.AdItem -> {
                                 NativeAdView(
-                                    placement = AdPlacement.NATIVE_GALLERY_GRID,
+                                    placement = AdPlacement.NATIVE_AI_TEMPLATE_GRID,
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(vertical = 4.dp),

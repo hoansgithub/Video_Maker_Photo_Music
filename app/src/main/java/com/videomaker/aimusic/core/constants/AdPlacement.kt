@@ -1146,6 +1146,22 @@ object AdPlacement {
      */
     const val NATIVE_AI_SYSTEM_ERROR_ALT = "ad_native_ai_system_error_alt"
 
+    /**
+     * In-feed native ad shown in the AI template list grid (TemplateAIListScreen),
+     * across all tabs (All / AI Video Generator / AI Dance).
+     * First ad after the X-th template (extras.first_position, default 2), then one ad
+     * every Y templates thereafter (extras.infeed_interval, default 3).
+     *
+     * Layout: native_project_card (blends with template cards, like NATIVE_GALLERY_GRID)
+     *
+     * Ad units (priority order):
+     * - Primary (Pro_AIMV_NA_high_AI tpt): ca-app-pub-7121075950716954/7429097719
+     * - Secondary (Pro_AIMV_NA_all_AI tpt): ca-app-pub-7121075950716954/1360714510
+     *
+     * Remote Config key: ad_native_ai_template_grid
+     */
+    const val NATIVE_AI_TEMPLATE_GRID = "ad_native_ai_template_grid"
+
 
     /**
      * Rewarded ad shown when user wants to download video to gallery.
@@ -1430,6 +1446,7 @@ object AdPlacement {
         NATIVE_SELECT_PHOTO_COLLAPSIBLE,
         NATIVE_AI_SYSTEM_ERROR,
         NATIVE_AI_SYSTEM_ERROR_ALT,
+        NATIVE_AI_TEMPLATE_GRID,
         NATIVE_TEMPLATE_PREVIEWER_BANNER,
         NATIVE_EDITOR_BANNER,
         NATIVE_EDITOR_LOADING,

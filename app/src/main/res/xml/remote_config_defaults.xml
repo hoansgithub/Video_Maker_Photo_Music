@@ -272,6 +272,10 @@
     <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/1251475281","enabled":true},{"id":"ca-app-pub-7121075950716954/7733500455","enabled":true}],"extras":{"layout":"native_project_card"}}</value>
   </entry>
   <entry>
+    <key>ad_native_ai_template_grid</key>
+    <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/7429097719","enabled":true},{"id":"ca-app-pub-7121075950716954/1360714510","enabled":true}],"extras":{"layout":"native_project_card","first_position":2,"infeed_interval":3}}</value>
+  </entry>
+  <entry>
     <key>ad_native_gallery_hot_tpt</key>
     <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/1840370904","enabled":true},{"id":"ca-app-pub-7121075950716954/5831815710","enabled":true}],"extras":{"layout":"native_big_clean","click_reload_enabled":true,"click_reload_max_count":10}}</value>
   </entry>
