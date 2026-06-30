@@ -12,6 +12,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -25,6 +26,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import com.videomaker.aimusic.ui.components.PrimaryButton
 
@@ -42,6 +44,9 @@ fun AiCreditsErrorDialog(
     onTryAgain: () -> Unit,
     onTryLater: () -> Unit
 ) {
+    // System displays popup (fires on each display since the caller loops it every 10s).
+    LaunchedEffect(Unit) { Analytics.trackAiErrorRender() }
+
     Dialog(
         onDismissRequest = {},
         properties = DialogProperties(
@@ -92,7 +97,10 @@ fun AiCreditsErrorDialog(
 
             PrimaryButton(
                 text = stringResource(R.string.ai_credits_try_again),
-                onClick = onTryAgain,
+                onClick = {
+                    Analytics.trackAiErrorAgain()
+                    onTryAgain()
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp)
@@ -101,7 +109,10 @@ fun AiCreditsErrorDialog(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickableSingle { onTryLater() }
+                    .clickableSingle {
+                        Analytics.trackAiErrorLater()
+                        onTryLater()
+                    }
                     .padding(vertical = 14.dp),
                 contentAlignment = Alignment.Center
             ) {

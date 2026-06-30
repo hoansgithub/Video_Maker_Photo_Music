@@ -51,6 +51,9 @@ import co.alcheclub.lib.acccore.ads.compose.NativeAdView
 import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.core.ads.AdClickDetector
+import com.videomaker.aimusic.core.analytics.Analytics
+import com.videomaker.aimusic.core.analytics.AnalyticsEvent
+import com.videomaker.aimusic.core.analytics.onFirstVisible
 import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.domain.model.VibeTag
 import com.videomaker.aimusic.domain.model.VideoTemplate
@@ -79,6 +82,9 @@ fun TemplateAIListScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
     val currentTabIndex by viewModel.currentTabIndex.collectAsStateWithLifecycle()
+
+    // System rendered the AI all-template screen.
+    LaunchedEffect(Unit) { Analytics.trackAiAllTemplateRender() }
 
     // Refresh on locale change (template names are localized).
     val locale = LocalConfiguration.current.locales[0]?.toLanguageTag()
@@ -181,6 +187,7 @@ private fun AiPagedContent(
             vibeTags = aiTabs,
             selectedTagId = selectedTagId,
             onTagSelected = { tagId ->
+                Analytics.trackAiTemplateTabClick(tagId ?: AnalyticsEvent.Value.AiTemplateTab.ALL)
                 val newIndex = when (tagId) {
                     AiTabViewModel.TAG_VIDEO_GENERATOR -> TemplateAIListViewModel.TAB_VIDEO_GENERATOR
                     AiTabViewModel.TAG_DANCE -> TemplateAIListViewModel.TAB_DANCE
@@ -351,7 +358,26 @@ private fun AiPageGrid(
                                     isPremium = template.isPremium,
                                     useCount = template.useCount,
                                     viewCount = template.viewCount,
-                                    onClick = { onTemplateClick(template) }
+                                    modifier = Modifier.onFirstVisible(key = template.id) {
+                                        Analytics.trackTemplateImpression(
+                                            templateId = template.id,
+                                            templateName = template.name,
+                                            location = AnalyticsEvent.Value.Location.AI,
+                                            screenSessionId = "",
+                                            isPremium = template.isPremium,
+                                            style = AnalyticsEvent.Value.Style.AI
+                                        )
+                                    },
+                                    onClick = {
+                                        Analytics.trackTemplateClick(
+                                            templateId = template.id,
+                                            templateName = template.name,
+                                            location = AnalyticsEvent.Value.Location.AI,
+                                            isPremium = template.isPremium,
+                                            style = AnalyticsEvent.Value.Style.AI
+                                        )
+                                        onTemplateClick(template)
+                                    }
                                 )
                             }
                             is AiGridItem.AdItem -> {

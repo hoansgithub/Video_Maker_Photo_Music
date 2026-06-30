@@ -18,6 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -33,6 +34,7 @@ import androidx.compose.material3.Text
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import com.videomaker.aimusic.ui.components.PrimaryButton
 
@@ -51,8 +53,20 @@ fun AiPhotoGuideDialog(
     onSelectPhoto: () -> Unit,
     onDismiss: () -> Unit
 ) {
+    // System displays popup.
+    LaunchedEffect(Unit) { Analytics.trackAiGuidePhotoRender() }
+
+    val handleSelect = {
+        Analytics.trackAiGuidePhotoSelect()
+        onSelectPhoto()
+    }
+    val handleClose = {
+        Analytics.trackAiGuidePhotoClose()
+        onDismiss()
+    }
+
     Dialog(
-        onDismissRequest = onDismiss,
+        onDismissRequest = handleClose,
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
         Box(
@@ -74,7 +88,7 @@ fun AiPhotoGuideDialog(
                         modifier = Modifier
                             .align(Alignment.TopEnd)
                             .size(24.dp)
-                            .clickableSingle { onDismiss() }
+                            .clickableSingle { handleClose() }
                     )
                 }
 
@@ -131,7 +145,7 @@ fun AiPhotoGuideDialog(
 
                 PrimaryButton(
                     text = stringResource(R.string.ai_guide_cta),
-                    onClick = onSelectPhoto,
+                    onClick = handleSelect,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp)

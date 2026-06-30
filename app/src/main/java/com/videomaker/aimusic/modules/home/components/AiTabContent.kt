@@ -63,6 +63,9 @@ import coil.request.ImageRequest
 import coil.size.Precision
 import coil.size.Size
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.core.analytics.Analytics
+import com.videomaker.aimusic.core.analytics.AnalyticsEvent
+import com.videomaker.aimusic.core.analytics.onFirstVisible
 import com.videomaker.aimusic.core.util.NumberFormatter
 import com.videomaker.aimusic.domain.model.VideoTemplate
 import com.videomaker.aimusic.modules.gallery.CreateNewVideoButton
@@ -366,7 +369,10 @@ private fun AiTemplateSection(
                 color = MaterialTheme.colorScheme.onSurface
             )
             IconButton(
-                onClick = onSeeAllClick,
+                onClick = {
+                    Analytics.trackAiAllTemplateClick()
+                    onSeeAllClick()
+                },
                 modifier = Modifier.size(48.dp)
             ) {
                 Icon(
@@ -397,7 +403,26 @@ private fun AiTemplateSection(
                 items(templates, key = { it.id }) { template ->
                     AiTemplateCard(
                         template = template,
-                        onClick = { onTemplateClick(template) }
+                        onClick = {
+                            Analytics.trackTemplateClick(
+                                templateId = template.id,
+                                templateName = template.name,
+                                location = AnalyticsEvent.Value.Location.AI,
+                                isPremium = template.isPremium,
+                                style = AnalyticsEvent.Value.Style.AI
+                            )
+                            onTemplateClick(template)
+                        },
+                        modifier = Modifier.onFirstVisible(key = template.id) {
+                            Analytics.trackTemplateImpression(
+                                templateId = template.id,
+                                templateName = template.name,
+                                location = AnalyticsEvent.Value.Location.AI,
+                                screenSessionId = "",
+                                isPremium = template.isPremium,
+                                style = AnalyticsEvent.Value.Style.AI
+                            )
+                        }
                     )
                 }
             }
