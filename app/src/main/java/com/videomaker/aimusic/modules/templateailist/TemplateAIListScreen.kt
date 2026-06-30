@@ -18,6 +18,7 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -41,8 +42,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -119,14 +122,21 @@ fun TemplateAIListScreen(
                 title = {},
                 navigationIcon = {
                     IconButton(onClick = { viewModel.onNavigateBack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(
+                            painter = painterResource(R.drawable.ic_arrow_down),
+                            tint = Color.White,
+                            contentDescription = null,
+                            modifier = Modifier
+                                .size(20.dp)
+                                .rotate(90f)
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
             )
         },
-        containerColor = MaterialTheme.colorScheme.background,
-        modifier = Modifier.background(MaterialTheme.colorScheme.background)
+        containerColor = Color(0xFF1A1A1A),
+        modifier = Modifier.background(Color(0xFF1A1A1A))
     ) { paddingValues ->
         AiPagedContent(
             viewModel = viewModel,
@@ -185,6 +195,7 @@ private fun AiPagedContent(
     Column(modifier = modifier.fillMaxSize()) {
         TagChipRow(
             vibeTags = aiTabs,
+            isAITab = true,
             selectedTagId = selectedTagId,
             onTagSelected = { tagId ->
                 Analytics.trackAiTemplateTabClick(tagId ?: AnalyticsEvent.Value.AiTemplateTab.ALL)

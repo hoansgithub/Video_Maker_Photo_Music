@@ -125,7 +125,6 @@ fun AiPhotoGuideDialog(
                         stringResource(R.string.ai_guide_good_face_visible)
                     ),
                     sampleImage = R.drawable.img_guidle_right,
-                    badge = R.drawable.ic_select_circle
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -138,7 +137,6 @@ fun AiPhotoGuideDialog(
                         stringResource(R.string.ai_guide_bad_group)
                     ),
                     sampleImage = R.drawable.img_guidle_error,
-                    badge = R.drawable.ic_close_circle
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -160,7 +158,6 @@ private fun GuideCard(
     @DrawableRes iconRes: Int,
     labels: List<String>,
     @DrawableRes sampleImage: Int,
-    @DrawableRes badge: Int
 ) {
     Row(
         modifier = Modifier
@@ -205,15 +202,6 @@ private fun GuideCard(
                 modifier = Modifier
                     .fillMaxSize()
                     .clip(RoundedCornerShape(12.dp))
-            )
-            Icon(
-                painter = painterResource(badge),
-                contentDescription = null,
-                tint = Color.Unspecified,
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(6.dp)
-                    .size(28.dp)
             )
         }
     }

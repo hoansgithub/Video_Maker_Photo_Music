@@ -324,7 +324,7 @@ private fun AiBanner(
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 Icon(
-                    imageVector = Icons.Default.Notifications,
+                    painter = painterResource(R.drawable.ic_bell),
                     contentDescription = null,
                     tint = Primary,
                     modifier = Modifier.size(16.dp)
