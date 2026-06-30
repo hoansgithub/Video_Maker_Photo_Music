@@ -736,7 +736,9 @@ fun AppNavigation(
                     onNavigateToHome = {
                         backStack.apply {
                             clear()
-                            add(AppRoute.Home(initialTab = 0)) // Tab 0 = Gallery (home gallery)
+                            // Fresh navId forces a brand-new Home entry so the pager honors
+                            // initialTab = 0 (Gallery) instead of restoring the last-viewed tab.
+                            add(AppRoute.Home(initialTab = 0, navId = System.currentTimeMillis()))
                         }
                     },
                     onNavigateToPreview = { projectId ->

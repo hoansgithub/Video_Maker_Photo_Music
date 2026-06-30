@@ -69,7 +69,11 @@ sealed interface AppRoute : NavKey {
         val initialTab: Int = 0,
         val initialSongId: Long = -1L,
         val highlightProjectId: String? = null,
-        val hintMode: String? = null
+        val hintMode: String? = null,
+        // Distinguishes an explicitly-recreated Home (e.g. "back to Gallery" from the editor) from
+        // an existing one, so it gets a FRESH saved-state holder and honors [initialTab] instead of
+        // restoring the previously-viewed pager page.
+        val navId: Long = 0L
     ) : AppRoute
 
     /**
