@@ -15,6 +15,7 @@ import com.videomaker.aimusic.core.ads.AdPlacementConfigService
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.compose.koinInject
@@ -35,6 +36,9 @@ class AdReloadState internal constructor(
     private val adsLoaderService: AdsLoaderService,
     private val tag: String,
 ) {
+    /** Fire-and-forget scope: ad loads survive Activity/composable lifecycle. */
+    private val adLoadScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+
     var reloadKey by mutableIntStateOf(0)
         private set
     var isReloadingAd by mutableStateOf(false)
@@ -52,14 +56,14 @@ class AdReloadState internal constructor(
      * of the _last_only placement if 2s have elapsed since the last impression
      * and no reload is in progress.
      */
-    fun onUserInteraction(coroutineScope: CoroutineScope) {
+    fun onUserInteraction() {
         val lop = lastOnlyPlacement ?: return
         val now = System.currentTimeMillis()
         if (now - lastAdImpressionTime < 2000L) return
         if (isReloadingAd) return
 
         isReloadingAd = true
-        coroutineScope.launch(Dispatchers.IO) {
+        adLoadScope.launch(Dispatchers.IO) {
             try {
                 val result = adsLoaderService.loadNative(lop, forceReload = true)
                 withContext(Dispatchers.Main) {
