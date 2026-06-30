@@ -29,7 +29,7 @@ class TextureManager(private val context: Context) {
 
     companion object {
         private const val TAG = "TextureManager"
-        private const val MAX_CACHED_TEXTURES = 4
+        private const val MAX_CACHED_TEXTURES = 3
     }
 
     // Cached GL texture IDs by image index (sliding window)
@@ -206,11 +206,18 @@ class TextureManager(private val context: Context) {
                 }
             }
 
-            // Hard clamp: scale down if bitmap exceeds GL hardware limit
-            if (glMaxTextureSize > 0 && (bitmap.width > glMaxTextureSize || bitmap.height > glMaxTextureSize)) {
+            // Hard clamp: scale down to viewport dimensions.
+            // inSampleSize is power-of-2 so decoded bitmaps can be ~2x viewport.
+            // On Mali GPUs, oversized textures exhaust GPU memory and crash in
+            // texSubImage2D. Clamp to 1x viewport (sharp enough for preview).
+            val clampW = if (maxTextureWidth > 0) maxTextureWidth else glMaxTextureSize
+            val clampH = if (maxTextureHeight > 0) maxTextureHeight else glMaxTextureSize
+            if (clampW > 0 && clampH > 0 &&
+                (bitmap.width > clampW || bitmap.height > clampH)
+            ) {
                 val scale = minOf(
-                    glMaxTextureSize.toFloat() / bitmap.width,
-                    glMaxTextureSize.toFloat() / bitmap.height
+                    clampW.toFloat() / bitmap.width,
+                    clampH.toFloat() / bitmap.height
                 )
                 val scaledWidth = (bitmap.width * scale).toInt().coerceAtLeast(1)
                 val scaledHeight = (bitmap.height * scale).toInt().coerceAtLeast(1)
@@ -219,10 +226,19 @@ class TextureManager(private val context: Context) {
                     bitmap.recycle()
                     bitmap = scaled
                 }
+                // createScaledBitmap may promote to ARGB_8888 — convert back to RGB_565
+                if (bitmap.config != Bitmap.Config.RGB_565) {
+                    val rgb565 = bitmap.copy(Bitmap.Config.RGB_565, false)
+                    if (rgb565 != null) {
+                        bitmap.recycle()
+                        bitmap = rgb565
+                    }
+                }
             }
 
-            // Store original aspect ratio (width / height)
-            aspectRatioCache[index] = bitmap.width.toFloat() / bitmap.height.toFloat()
+            Log.d(TAG, "Uploading texture[$index]: ${bitmap.width}x${bitmap.height} ${bitmap.config} (${bitmap.byteCount / 1024}KB)")
+
+            val bitmapAspectRatio = bitmap.width.toFloat() / bitmap.height.toFloat()
 
             // Generate a single texture ID for this entry
             val texIds = IntArray(1)
@@ -238,9 +254,9 @@ class TextureManager(private val context: Context) {
             GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE)
             GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE)
 
-            // Upload bitmap to GPU via safe pre-allocation path.
-            // Pre-allocates GPU memory first, then copies pixels — prevents
-            // native SIGSEGV in Mali/Adreno drivers on GPU OOM.
+            // Upload bitmap to GPU via safe ByteBuffer path.
+            // Copies pixels to a stable buffer first, then uploads — prevents
+            // native SIGSEGV in Mali drivers reading from bitmap native memory.
             if (!GLTextureUploader.safeTexImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0)) {
                 Log.w(TAG, "Safe texture upload failed for index $index, skipping")
                 GLES20.glDeleteTextures(1, texIds, 0)
@@ -251,6 +267,7 @@ class TextureManager(private val context: Context) {
 
             // Store in cache only after successful upload
             textureCache[index] = textureId
+            aspectRatioCache[index] = bitmapAspectRatio
         } catch (e: Exception) {
             Log.e(TAG, "Failed to load texture $uri: ${e.message}")
         } finally {
