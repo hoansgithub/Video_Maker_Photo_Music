@@ -11,7 +11,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onSizeChanged
@@ -55,7 +54,6 @@ fun OnboardingAltScreen(
     val density = LocalDensity.current
 
     val adReloadState = rememberAdReloadState(altPlacement)
-    val coroutineScope = rememberCoroutineScope()
 
     var bottomSectionHeight by remember { mutableStateOf(initialBottomHeight) }
     val bottomPaddingDp = with(density) { bottomSectionHeight.toDp() }
@@ -71,7 +69,7 @@ fun OnboardingAltScreen(
         // Content area: weight(1f) fills remaining space above the ad.
         Box(modifier = Modifier.weight(1f)) {
             content(
-                { adReloadState.onUserInteraction(coroutineScope) },
+                { adReloadState.onUserInteraction() },
                 bottomPaddingDp,
                 delayedButtonEnabled,
             )

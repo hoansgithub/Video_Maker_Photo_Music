@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 
 class OnboardingSurveyViewModel : ViewModel() {
 
@@ -47,9 +48,11 @@ class OnboardingSurveyViewModel : ViewModel() {
             OnboardingSurveyStep.AI_FACE_SWAP -> _selectedFaceSwap
             OnboardingSurveyStep.AI_DANCE -> _selectedDanceSwap
         }
-        val current = flow.value
-        val nowSelected = id !in current
-        flow.value = if (nowSelected) current + id else current - id
+        var nowSelected = false
+        flow.update { current ->
+            nowSelected = id !in current
+            if (nowSelected) current + id else current - id
+        }
         return nowSelected
     }
 
@@ -63,9 +66,12 @@ class OnboardingSurveyViewModel : ViewModel() {
             OnboardingSurveyStep.PLATFORM -> _selectedPlatforms
             else -> return false
         }
-        if (flow.value.isNotEmpty()) return false
-        flow.value = setOf(firstId)
-        return true
+        var didSelect = false
+        flow.update { current ->
+            if (current.isNotEmpty()) current
+            else { didSelect = true; setOf(firstId) }
+        }
+        return didSelect
     }
 
 }

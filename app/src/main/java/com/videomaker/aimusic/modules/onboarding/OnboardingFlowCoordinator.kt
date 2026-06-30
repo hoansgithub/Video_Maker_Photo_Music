@@ -65,13 +65,22 @@ class OnboardingFlowCoordinator(
     )
 
     /**
+     * Cached result of [enabledSteps]. Remote Config values don't change during a
+     * single onboarding session, so the list is computed once and reused.
+     */
+    private var cachedSteps: List<OnboardingStep>? = null
+
+    /**
      * Full ordered list filtered by Remote Config gates and ad placement config.
      *
      * [FULLSCREEN_AD] is excluded from the base enum order and dynamically inserted
      * after the welcome page specified by the placement's `inject_after` extra
      * (1 = after page 1, 2 = after page 2, 3 = after page 3; default 2).
+     *
+     * Result is cached for the lifetime of this coordinator instance.
      */
     fun enabledSteps(): List<OnboardingStep> {
+        cachedSteps?.let { return it }
         val steps = OnboardingStep.entries.filter { step ->
             when (step) {
                 // Handled separately — inserted at the dynamic injection point below
@@ -91,7 +100,7 @@ class OnboardingFlowCoordinator(
             }
         }
 
-        return steps
+        return steps.also { cachedSteps = it }
     }
 
     /** Next enabled step after [current], or null if [current] is last. */
@@ -268,8 +277,6 @@ class OnboardingFlowCoordinator(
      * Navigate from [current] to the next enabled step. If there are no more steps,
      * marks onboarding complete and navigates to [MainActivity].
      *
-     * Also preloads ads for the step AFTER the next step (2-ahead).
-     *
      * When leaving the ad injection point (FULLSCREEN_AD, or the injection-point
      * welcome page when FULLSCREEN_AD is disabled), shows [INTERSTITIAL_ONBOARDING]
      * as a transition ad before proceeding — if the placement is enabled on Firebase.
@@ -277,9 +284,6 @@ class OnboardingFlowCoordinator(
     fun navigateToNext(activity: BaseOnboardingActivity, current: OnboardingStep) {
         val next = nextStep(current)
         if (next != null) {
-            // Preload next+1 step's ads (1-step-ahead of the destination)
-            nextStep(next)?.let { preloadAdsForStep(it) }
-
             // Show onboarding interstitial as a transition ad when leaving
             // the ad injection point, then navigate on close.
             if (shouldShowOnboardingInterstitial(current)) {

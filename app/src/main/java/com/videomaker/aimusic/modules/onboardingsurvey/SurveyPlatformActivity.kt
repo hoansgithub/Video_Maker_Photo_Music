@@ -17,7 +17,6 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -41,7 +40,10 @@ import com.videomaker.aimusic.modules.language.OnboardingCtaButton
 import com.videomaker.aimusic.modules.onboarding.OnboardingStep
 import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import com.videomaker.aimusic.ui.theme.Primary
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -59,7 +61,8 @@ class SurveyPlatformActivity : BaseOnboardingActivity() {
         val adPlacementConfigService: AdPlacementConfigService = koinInject()
         val config = remember { PLATFORM_CONFIG }
         val density = LocalDensity.current
-        val scope = rememberCoroutineScope()
+        // Fire-and-forget scope: ad loads survive Activity lifecycle
+        val adLoadScope = remember { CoroutineScope(SupervisorJob() + Dispatchers.Main) }
         val selectedIds by viewModel.selectedFlow(OnboardingSurveyStep.PLATFORM).collectAsStateWithLifecycle()
 
         var bottomSectionHeight by remember { mutableStateOf(0) }
@@ -115,7 +118,7 @@ class SurveyPlatformActivity : BaseOnboardingActivity() {
                         // Reload ad from 2nd selection onward
                         if (nowSelected && !wasEmpty) {
                             reloadJob?.cancel()
-                            reloadJob = scope.launch {
+                            reloadJob = adLoadScope.launch {
                                 if (VideoMakerApplication.preloadNativeAdSuspend(config.placement)) {
                                     adReloadKey++
                                 }
