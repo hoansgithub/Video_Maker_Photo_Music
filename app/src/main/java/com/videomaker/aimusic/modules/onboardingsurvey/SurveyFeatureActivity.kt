@@ -45,6 +45,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import co.alcheclub.lib.acccore.remoteconfig.RemoteConfig
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.core.data.local.PreferencesManager
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.core.constants.RemoteConfigKeys
@@ -68,6 +69,7 @@ class SurveyFeatureActivity : BaseOnboardingActivity() {
 
     private val viewModel: OnboardingSurveyViewModel by viewModel()
     private val remoteConfig: RemoteConfig by inject()
+    private val preferencesManager: PreferencesManager by inject()
     private var sharedBottomHeight by mutableStateOf(0)
 
     @Composable
@@ -178,7 +180,6 @@ class SurveyFeatureActivity : BaseOnboardingActivity() {
                             params = mapOf(config.paramKey to id),
                         )
                     },
-                    bottomPaddingDp = bottomPadding,
                     onItemPositioned = { id, offset ->
                         itemOffsets[id] = offset
                     },
@@ -220,6 +221,7 @@ class SurveyFeatureActivity : BaseOnboardingActivity() {
                                         put(config.countKey, selectedIds.size.toString())
                                     },
                                 )
+                                preferencesManager.setPreferredFeatures(selectedIds.toList())
                                 navigateToNextStep()
                             },
                             enabled = selectedIds.isNotEmpty() && buttonEnabled,

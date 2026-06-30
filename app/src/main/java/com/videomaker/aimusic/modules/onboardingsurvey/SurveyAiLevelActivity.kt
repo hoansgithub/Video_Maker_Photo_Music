@@ -60,11 +60,10 @@ class SurveyAiLevelActivity : BaseOnboardingActivity() {
                         viewModel.selectAiLevel(id)
                         onUserInteraction()
                         Analytics.track(
-                            name = OnboardingSurveyAnalytics.EVENT_AI_LEVEL_SELECT,
-                            params = mapOf(OnboardingSurveyAnalytics.PARAM_AI_LEVEL to id),
+                             name = OnboardingSurveyAnalytics.EVENT_AI_LEVEL_SELECT,
+                             params = mapOf(OnboardingSurveyAnalytics.PARAM_AI_LEVEL to id),
                         )
                     },
-                    bottomPaddingDp = bottomPadding,
                 )
 
                 Box(

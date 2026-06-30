@@ -20,6 +20,8 @@ import com.videomaker.aimusic.modules.onboardingsurvey.SurveyAiLevelActivity
 import com.videomaker.aimusic.modules.onboardingsurvey.SurveyDanceSwapActivity
 import com.videomaker.aimusic.modules.onboardingsurvey.SurveyFaceSwapActivity
 import com.videomaker.aimusic.modules.onboardingsurvey.SurveyFeatureActivity
+import com.videomaker.aimusic.modules.onboardingsurvey.SurveyNonAiLyricActivity
+import com.videomaker.aimusic.modules.onboardingsurvey.SurveyNonAiMusicVideoActivity
 import com.videomaker.aimusic.modules.onboardingsurvey.SurveyPlatformActivity
 
 /**
@@ -53,6 +55,8 @@ class OnboardingFlowCoordinator(
         OnboardingStep.SURVEY_AI_LEVEL to RemoteConfigKeys.ONBOARDING_AI_LEVEL_ENABLED,
         OnboardingStep.SURVEY_AI_FACE_SWAP to RemoteConfigKeys.ONBOARDING_AI_FACE_SWAP_ENABLED,
         OnboardingStep.SURVEY_AI_DANCE to RemoteConfigKeys.ONBOARDING_AI_DANCE_ENABLED,
+        OnboardingStep.SURVEY_NON_AI_LYRIC to RemoteConfigKeys.ONBOARDING_NON_AI_LYRIC_ENABLED,
+        OnboardingStep.SURVEY_NON_AI_MUSIC_VIDEO to RemoteConfigKeys.ONBOARDING_NON_AI_MUSIC_VIDEO_ENABLED,
         OnboardingStep.WELCOME_PAGE_1 to RemoteConfigKeys.ONBOARDING_WELCOME_PAGE_1_ENABLED,
         OnboardingStep.WELCOME_PAGE_2 to RemoteConfigKeys.ONBOARDING_WELCOME_PAGE_2_ENABLED,
         OnboardingStep.WELCOME_PAGE_3 to RemoteConfigKeys.ONBOARDING_WELCOME_PAGE_3_ENABLED,
@@ -65,10 +69,37 @@ class OnboardingFlowCoordinator(
     )
 
     /**
+     * Feature-interest tags counted toward the **AI** flow. Everything else a user
+     * can pick (music video templates, lyric videos, beat sync, etc.) counts as Non-AI.
+     *
+     * - Any `ai_*` feature (e.g. ai_dance_video, ai_hair_swap, ai_avatar) → AI.
+     * - "Will explore later" → AI.
+     */
+    private val AI_EXTRA_FEATURE_TAGS = setOf("explore_later")
+
+    private fun isAiFeature(id: String): Boolean =
+        id.startsWith("ai_") || id in AI_EXTRA_FEATURE_TAGS
+
+    /**
+     * Resolve the user's flow by majority vote over their selected features:
+     *   AI count > / = Non-AI count → AI flow (ties and no selection default to AI);
+     *   Non-AI count > AI count     → Non-AI flow.
+     */
+    private fun isNonAiFlow(): Boolean {
+        val preferred = preferencesManager.getPreferredFeatures()
+        val aiCount = preferred.count { isAiFeature(it) }
+        val nonAiCount = preferred.size - aiCount
+        return nonAiCount > aiCount
+    }
+
+    /**
      * Cached result of [enabledSteps]. Remote Config values don't change during a
-     * single onboarding session, so the list is computed once and reused.
+     * single onboarding session, but the AI/Non-AI segmentation depends on the
+     * user's selected features (set at the FEATURE step), so the cache is keyed on
+     * that resolved flow and recomputed when it changes.
      */
     private var cachedSteps: List<OnboardingStep>? = null
+    private var cachedNonAiFlow: Boolean? = null
 
     /**
      * Full ordered list filtered by Remote Config gates and ad placement config.
@@ -80,11 +111,23 @@ class OnboardingFlowCoordinator(
      * Result is cached for the lifetime of this coordinator instance.
      */
     fun enabledSteps(): List<OnboardingStep> {
-        cachedSteps?.let { return it }
+        // Majority-vote segmentation; cache is reused only while the resolved flow is unchanged.
+        val nonAiFlow = isNonAiFlow()
+        cachedSteps?.let { if (cachedNonAiFlow == nonAiFlow) return it }
+
         val steps = OnboardingStep.entries.filter { step ->
             when (step) {
                 // Handled separately — inserted at the dynamic injection point below
                 OnboardingStep.FULLSCREEN_AD -> false
+                // AI survey screens: excluded when the user resolves to the Non-AI flow
+                OnboardingStep.SURVEY_AI_LEVEL,
+                OnboardingStep.SURVEY_AI_FACE_SWAP,
+                OnboardingStep.SURVEY_AI_DANCE ->
+                    !nonAiFlow && stepEnabled(stepGateKeys.getValue(step))
+                // Non-AI survey screens: included only when the user resolves to the Non-AI flow
+                OnboardingStep.SURVEY_NON_AI_LYRIC,
+                OnboardingStep.SURVEY_NON_AI_MUSIC_VIDEO ->
+                    nonAiFlow && stepEnabled(stepGateKeys.getValue(step))
                 else -> {
                     val key = stepGateKeys[step] ?: return@filter true
                     stepEnabled(key)
@@ -100,6 +143,7 @@ class OnboardingFlowCoordinator(
             }
         }
 
+        cachedNonAiFlow = nonAiFlow
         return steps.also { cachedSteps = it }
     }
 
@@ -131,6 +175,8 @@ class OnboardingFlowCoordinator(
         OnboardingStep.SURVEY_AI_LEVEL -> SurveyAiLevelActivity::class.java
         OnboardingStep.SURVEY_AI_FACE_SWAP -> SurveyFaceSwapActivity::class.java
         OnboardingStep.SURVEY_AI_DANCE -> SurveyDanceSwapActivity::class.java
+        OnboardingStep.SURVEY_NON_AI_LYRIC -> SurveyNonAiLyricActivity::class.java
+        OnboardingStep.SURVEY_NON_AI_MUSIC_VIDEO -> SurveyNonAiMusicVideoActivity::class.java
         OnboardingStep.WELCOME_PAGE_1 -> WelcomePage1Activity::class.java
         OnboardingStep.WELCOME_PAGE_2 -> WelcomePage2Activity::class.java
         OnboardingStep.FULLSCREEN_AD -> FullscreenAdActivity::class.java
@@ -165,6 +211,12 @@ class OnboardingFlowCoordinator(
         )
         OnboardingStep.SURVEY_AI_DANCE -> listOf(
             AdPlacement.NATIVE_ONBOARDING_AI_DANCE,
+        )
+        OnboardingStep.SURVEY_NON_AI_LYRIC -> listOf(
+            AdPlacement.NATIVE_ONBOARDING_NON_AI_LYRIC,
+        )
+        OnboardingStep.SURVEY_NON_AI_MUSIC_VIDEO -> listOf(
+            AdPlacement.NATIVE_ONBOARDING_NON_AI_MUSIC_VIDEO,
         )
         OnboardingStep.WELCOME_PAGE_1 -> listOf(
             AdPlacement.NATIVE_ONBOARDING_PAGE1,

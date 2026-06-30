@@ -67,4 +67,8 @@ fun configFor(step: OnboardingSurveyStep): OnboardingSurveyStepConfig = when (st
         error("AI_FACE_SWAP renders via FaceSwapScreen, not OnboardingSurveyList")
     OnboardingSurveyStep.AI_DANCE ->
         error("AI_DANCE renders via DanceSwapScreen, not OnboardingSurveyList")
+    OnboardingSurveyStep.NON_AI_LYRIC ->
+        error("NON_AI_LYRIC renders via NonAiLyricScreen, not OnboardingSurveyList")
+    OnboardingSurveyStep.NON_AI_MUSIC_VIDEO ->
+        error("NON_AI_MUSIC_VIDEO renders via NonAiMusicVideoScreen, not OnboardingSurveyList")
 }

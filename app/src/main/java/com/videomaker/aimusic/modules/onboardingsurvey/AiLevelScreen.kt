@@ -15,8 +15,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
@@ -31,13 +31,12 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import com.videomaker.aimusic.ui.theme.Primary
-import androidx.compose.ui.tooling.preview.Preview
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 
 @Composable
@@ -45,7 +44,6 @@ fun AiLevelScreen(
     items: List<AiLevelItem>,
     selectedId: String,
     onSelect: (String) -> Unit,
-    bottomPaddingDp: Dp,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -53,7 +51,7 @@ fun AiLevelScreen(
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(start = 20.dp, end = 20.dp, top = 16.dp)
-            .padding(bottom = bottomPaddingDp + 16.dp),
+            .padding(bottom = 96.dp),
     ) {
         Text(
             text = stringResource(R.string.ai_level_title),
@@ -189,7 +187,6 @@ private fun AiLevelScreenPreview() {
             items = AI_LEVEL_ITEMS,
             selectedId = "light_touch",
             onSelect = {},
-            bottomPaddingDp = 0.dp,
         )
     }
 }

@@ -77,7 +77,6 @@ import kotlin.time.Duration.Companion.milliseconds
 @OptIn(UnstableApi::class)
 @Composable
 fun DanceSwapScreen(
-    bottomPaddingDp: Dp,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -145,7 +144,7 @@ fun DanceSwapScreen(
         modifier = modifier
             .fillMaxSize()
             .background(OnboardingSurveyBackground)
-            .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = bottomPaddingDp + 12.dp)
+            .padding(start = 16.dp, end = 16.dp, top = 16.dp)
     ) {
         // Rounded card container holding the interactive split media slider
         Box(
@@ -259,7 +258,7 @@ fun DanceSwapScreen(
             // 5. Swipe hand guide (visible if not interacted yet)
             if (!isUserInteracting) {
                 Image(
-                    painter = painterResource(R.drawable.ic_hand_swipe),
+                    painter = painterResource(R.drawable.ic_hand),
                     contentDescription = stringResource(R.string.survey_swipe_hint),
                     modifier = Modifier
                         .size(64.dp)
