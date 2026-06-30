@@ -5,6 +5,7 @@ package com.videomaker.aimusic.domain.model
  *
  * Based on 2025 social media video specifications:
  * - 9:16: TikTok, Instagram Reels, YouTube Shorts
+ * - 3:4: Pinterest, Facebook Stories (portrait)
  * - 4:5: Instagram Feed, Facebook Feed (portrait)
  * - 1:1: Instagram Feed, Facebook Feed (square)
  * - 16:9: YouTube, Facebook (landscape)
@@ -12,6 +13,9 @@ package com.videomaker.aimusic.domain.model
 enum class AspectRatio(val width: Int, val height: Int, val displayName: String) {
     // Portrait - Most popular for short-form content
     RATIO_9_16(1080, 1920, "9:16 TikTok/Reels"),
+
+    // Portrait - Pinterest/Facebook Stories
+    RATIO_3_4(1080, 1440, "3:4 Pinterest"),
 
     // Portrait - Instagram/Facebook Feed
     RATIO_4_5(1080, 1350, "4:5 Instagram"),
@@ -32,6 +36,7 @@ enum class AspectRatio(val width: Int, val height: Int, val displayName: String)
             // Try ratio string (e.g., "9:16", "16:9")
             return when (value) {
                 "9:16" -> RATIO_9_16
+                "3:4" -> RATIO_3_4
                 "4:5" -> RATIO_4_5
                 "1:1" -> RATIO_1_1
                 "16:9" -> RATIO_16_9

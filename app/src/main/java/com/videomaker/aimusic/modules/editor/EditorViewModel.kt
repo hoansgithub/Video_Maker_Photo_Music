@@ -2273,6 +2273,7 @@ class EditorViewModel(
 private fun AspectRatio.toAnalyticsRatioSize(): String = when (this) {
     AspectRatio.RATIO_16_9 -> "16:9"
     AspectRatio.RATIO_9_16 -> "9:16"
+    AspectRatio.RATIO_3_4 -> "3:4"
     AspectRatio.RATIO_4_5 -> "4:5"
     AspectRatio.RATIO_1_1 -> "1:1"
 }
