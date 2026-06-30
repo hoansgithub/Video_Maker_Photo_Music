@@ -217,6 +217,10 @@ fun EditorScreen(
 
     // AI flow: the AI video generation "fails" → loop the "Free AI credits used up" popup every 10s.
     // "Try again" re-arms the 10s timer; "I'll try later" returns to Home/Gallery.
+    // Bottom native ad: NATIVE_AI_SYSTEM_ERROR initially, swapped to NATIVE_AI_SYSTEM_ERROR_ALT
+    // (force-reloaded for a fresh impression) on every "Try again" tap.
+    var aiErrorTryAgainTapped by remember { mutableStateOf(false) }
+    var aiErrorAltReloadKey by remember { androidx.compose.runtime.mutableIntStateOf(0) }
     if (isAiFlow) {
         var showAiCreditsDialog by remember { mutableStateOf(false) }
         var creditsLoopTick by remember { mutableStateOf(0) }
@@ -229,6 +233,8 @@ fun EditorScreen(
                 onTryAgain = {
                     showAiCreditsDialog = false
                     creditsLoopTick++
+                    aiErrorTryAgainTapped = true
+                    aiErrorAltReloadKey++
                 },
                 onTryLater = {
                     showAiCreditsDialog = false
@@ -284,6 +290,23 @@ fun EditorScreen(
     val activity = context as? android.app.Activity
     val adsLoaderService = koinInject<AdsLoaderService>()
     val snackbarHostState = remember { androidx.compose.material3.SnackbarHostState() }
+
+    // Force a fresh ALT ad each time the user taps "Try again" on the AI credits popup.
+    LaunchedEffect(aiErrorAltReloadKey) {
+        if (aiErrorAltReloadKey > 0) {
+            withContext(Dispatchers.IO) {
+                try {
+                    adsLoaderService.loadNative(
+                        AdPlacement.NATIVE_AI_SYSTEM_ERROR_ALT,
+                        forceReload = true
+                    )
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (_: Exception) {
+                }
+            }
+        }
+    }
 
     // --- Editor banner ad reload on tab interaction ---
     var bannerAdReloadKey by remember { androidx.compose.runtime.mutableIntStateOf(0) }
@@ -1321,13 +1344,35 @@ fun EditorScreen(
             Spacer(Modifier.navigationBarsPadding())
             if (editorScreenState == EditorScreenState.LOADING) {
                 // Native ad at bottom (edge-to-edge, no horizontal padding)
-                NativeAdView(
-                    placement = AdPlacement.NATIVE_EDITOR_LOADING,
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    isDebug = BuildConfig.DEBUG,
-                    onAdClicked = { adClickDetector.onAdClick(it) }
-                )
+                if (isAiFlow) {
+                    // AI "system error" screen: primary NA initially, _alt (force-reloaded)
+                    // after each "Try again" tap.
+                    if (aiErrorTryAgainTapped) {
+                        key(aiErrorAltReloadKey) {
+                            NativeAdView(
+                                placement = AdPlacement.NATIVE_AI_SYSTEM_ERROR_ALT,
+                                modifier = Modifier.fillMaxWidth(),
+                                isDebug = BuildConfig.DEBUG,
+                                onAdClicked = { adClickDetector.onAdClick(it) }
+                            )
+                        }
+                    } else {
+                        NativeAdView(
+                            placement = AdPlacement.NATIVE_AI_SYSTEM_ERROR,
+                            modifier = Modifier.fillMaxWidth(),
+                            isDebug = BuildConfig.DEBUG,
+                            onAdClicked = { adClickDetector.onAdClick(it) }
+                        )
+                    }
+                } else {
+                    NativeAdView(
+                        placement = AdPlacement.NATIVE_EDITOR_LOADING,
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        isDebug = BuildConfig.DEBUG,
+                        onAdClicked = { adClickDetector.onAdClick(it) }
+                    )
+                }
             } else {
                 if (adPlacementConfigService.bannerUseNative) {
                     key(bannerAdReloadKey) {

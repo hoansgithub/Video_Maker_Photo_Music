@@ -1117,6 +1117,35 @@ object AdPlacement {
      */
     const val NATIVE_AI_TAB = "ad_native_ai_tab"
 
+    /**
+     * Native ad shown at the bottom of the AI generation "system error" screen
+     * ("Free AI credits used up" / "Turning photos into motion…"), AI tab flow only.
+     * Shown on initial entry to the screen.
+     *
+     * Layout: native_big_bait
+     *
+     * Ad units (priority order):
+     * - Primary (Pro_AIMV_NA_high_SystemError): ca-app-pub-7121075950716954/6547260886
+     * - Secondary (Pro_AIMV_NA_all_SystemError): ca-app-pub-7121075950716954/3681424399
+     *
+     * Remote Config key: ad_native_ai_system_error
+     */
+    const val NATIVE_AI_SYSTEM_ERROR = "ad_native_ai_system_error"
+
+    /**
+     * ALT native ad for the AI generation "system error" screen — swapped in (and
+     * force-reloaded) each time the user taps "Try again" on the credits popup.
+     *
+     * Layout: native_big_bait
+     *
+     * Ad units (priority order):
+     * - Primary (Pro_AIMV_NA_high_SystemError_alt): ca-app-pub-7121075950716954/2368342725
+     * - Secondary (Pro_AIMV_NA_all_SystemError_alt): ca-app-pub-7121075950716954/2608015871
+     *
+     * Remote Config key: ad_native_ai_system_error_alt
+     */
+    const val NATIVE_AI_SYSTEM_ERROR_ALT = "ad_native_ai_system_error_alt"
+
 
     /**
      * Rewarded ad shown when user wants to download video to gallery.
@@ -1399,6 +1428,8 @@ object AdPlacement {
         NATIVE_HOME_BANNER,
         NATIVE_HOME_COLLAPSIBLE,
         NATIVE_SELECT_PHOTO_COLLAPSIBLE,
+        NATIVE_AI_SYSTEM_ERROR,
+        NATIVE_AI_SYSTEM_ERROR_ALT,
         NATIVE_TEMPLATE_PREVIEWER_BANNER,
         NATIVE_EDITOR_BANNER,
         NATIVE_EDITOR_LOADING,

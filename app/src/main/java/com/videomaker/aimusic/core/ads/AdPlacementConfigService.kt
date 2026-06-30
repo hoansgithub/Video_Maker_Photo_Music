@@ -1191,6 +1191,32 @@ class AdPlacementConfigService(
             enabled = true
         )
 
+        // AI generation "system error" screen native ad (AI tab flow) — initial entry
+        // Layout: native_big_bait
+        // Waterfall: Primary (Pro_AIMV_NA_high_SystemError) -> Secondary (Pro_AIMV_NA_all_SystemError)
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_AI_SYSTEM_ERROR,
+            layoutName = "native_big_bait",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/6547260886",  // Primary (Pro_AIMV_NA_high_SystemError)
+                "ca-app-pub-7121075950716954/3681424399"   // Secondary (Pro_AIMV_NA_all_SystemError)
+            ),
+            enabled = true
+        )
+
+        // ALT native ad for the AI "system error" screen — shown/force-reloaded on "Try again"
+        // Layout: native_big_bait
+        // Waterfall: Primary (Pro_AIMV_NA_high_SystemError_alt) -> Secondary (Pro_AIMV_NA_all_SystemError_alt)
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_AI_SYSTEM_ERROR_ALT,
+            layoutName = "native_big_bait",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/2368342725",  // Primary (Pro_AIMV_NA_high_SystemError_alt)
+                "ca-app-pub-7121075950716954/2608015871"   // Secondary (Pro_AIMV_NA_all_SystemError_alt)
+            ),
+            enabled = true
+        )
+
         // Asset Picker Banner Native Ad (replaces standard banner)
         // Shown at the bottom of the asset picker screen
         // Layout: native_small_row (horizontal row) to fit banner dimensions
