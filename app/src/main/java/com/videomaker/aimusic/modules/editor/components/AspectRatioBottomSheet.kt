@@ -3,6 +3,7 @@ package com.videomaker.aimusic.modules.editor.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,6 +11,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -101,12 +104,15 @@ internal fun SelectRatioBottomSheet(
 
             // Ratio options grid
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 listOf(
                     AspectRatio.RATIO_16_9,
                     AspectRatio.RATIO_9_16,
+                    AspectRatio.RATIO_3_4,
                     AspectRatio.RATIO_4_5,
                     AspectRatio.RATIO_1_1
                 ).forEach { ratio ->
@@ -117,7 +123,7 @@ internal fun SelectRatioBottomSheet(
                             onRatioClick(ratio)
                             selected = ratio
                         },
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.width(72.dp)
                     )
                 }
             }
@@ -196,12 +202,15 @@ fun RatioPanel(
 
         // Ratio options row
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState()),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             listOf(
                 AspectRatio.RATIO_16_9,
                 AspectRatio.RATIO_9_16,
+                AspectRatio.RATIO_3_4,
                 AspectRatio.RATIO_4_5,
                 AspectRatio.RATIO_1_1
             ).forEach { ratio ->
@@ -209,7 +218,7 @@ fun RatioPanel(
                     ratio = ratio,
                     isSelected = ratio == selectedRatio,
                     onClick = { onRatioSelected(ratio) },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.width(72.dp)
                 )
             }
         }
@@ -268,6 +277,7 @@ internal fun AspectRatioIcon(
     val (iconW, iconH) = when (ratio) {
         AspectRatio.RATIO_16_9 -> maxSize to (maxSize * (9f / 16f))
         AspectRatio.RATIO_9_16 -> (maxSize * (9f / 16f)) to maxSize
+        AspectRatio.RATIO_3_4 -> (maxSize * (3f / 4f)) to maxSize
         AspectRatio.RATIO_4_5 -> (maxSize * (4f / 5f)) to maxSize
         AspectRatio.RATIO_1_1 -> maxSize to maxSize
     }
@@ -287,6 +297,7 @@ internal val AspectRatio.shortLabel: String
     get() = when (this) {
         AspectRatio.RATIO_16_9 -> "16:9"
         AspectRatio.RATIO_9_16 -> "9:16"
+        AspectRatio.RATIO_3_4 -> "3:4"
         AspectRatio.RATIO_4_5 -> "4:5"
         AspectRatio.RATIO_1_1 -> "1:1"
     }

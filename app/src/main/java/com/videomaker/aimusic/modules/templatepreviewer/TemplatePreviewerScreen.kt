@@ -34,8 +34,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -1393,6 +1395,7 @@ private val AspectRatio.shortLabel: String
     get() = when (this) {
         AspectRatio.RATIO_16_9 -> "16:9"
         AspectRatio.RATIO_9_16 -> "9:16"
+        AspectRatio.RATIO_3_4 -> "3:4"
         AspectRatio.RATIO_4_5 -> "4:5"
         AspectRatio.RATIO_1_1 -> "1:1"
     }
@@ -1433,12 +1436,15 @@ private fun SelectRatioBottomSheet(
             )
 
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 listOf(
                     AspectRatio.RATIO_16_9,
                     AspectRatio.RATIO_9_16,
+                    AspectRatio.RATIO_3_4,
                     AspectRatio.RATIO_4_5,
                     AspectRatio.RATIO_1_1
                 ).forEach { ratio ->
@@ -1449,7 +1455,7 @@ private fun SelectRatioBottomSheet(
                             Analytics.trackRatioClick(ratio.shortLabel)
                             selected = ratio
                         },
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.width(72.dp)
                     )
                 }
             }
@@ -1528,6 +1534,7 @@ private fun AspectRatioIcon(ratio: AspectRatio, isSelected: Boolean) {
     val (iconW, iconH) = when (ratio) {
         AspectRatio.RATIO_16_9 -> maxSize to (maxSize * (9f / 16f))
         AspectRatio.RATIO_9_16 -> (maxSize * (9f / 16f)) to maxSize
+        AspectRatio.RATIO_3_4 -> (maxSize * (3f / 4f)) to maxSize
         AspectRatio.RATIO_4_5 -> (maxSize * (4f / 5f)) to maxSize
         AspectRatio.RATIO_1_1 -> maxSize to maxSize
     }
