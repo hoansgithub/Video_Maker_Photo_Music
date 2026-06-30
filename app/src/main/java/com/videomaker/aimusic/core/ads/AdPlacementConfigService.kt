@@ -838,6 +838,20 @@ class AdPlacementConfigService(
             enabled = true
         )
 
+        // AI tab "big bait" native ad (Home → AI tab, between the AI Video
+        // Generator and AI Dance sections)
+        // Layout: native_big_bait (large vertical layout with clickbait CTA)
+        // Waterfall: Primary unit → Secondary unit
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_AI_TAB,
+            layoutName = "native_big_bait",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/2799587564",  // Pro_AIMV_NA_high_AI tab
+                "ca-app-pub-7121075950716954/8933751070"   // Pro_AIMV_NA_all_AI tab
+            ),
+            enabled = true
+        )
+
         // Welcome Back screen native ad (shown when reopening app, session >= 2)
         // High-engagement placement for returning users
         // Layout: native_big_bait_reversed
@@ -940,6 +954,25 @@ class AdPlacementConfigService(
             ),
             enabled = true,
             additionalExtras = mapOf("infeed_interval" to 6)
+        )
+
+        // AI template list in-feed native ad (TemplateAIListScreen, all tabs)
+        // First ad after the X-th template (first_position, default 2), then one ad
+        // every Y templates (infeed_interval, default 3)
+        // Layout: native_project_card (blends with template cards, like NATIVE_GALLERY_GRID)
+        // Waterfall: Primary (Pro_AIMV_NA_high_AI tpt) -> Secondary (Pro_AIMV_NA_all_AI tpt)
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_AI_TEMPLATE_GRID,
+            layoutName = "native_project_card",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/7429097719",  // Primary (Pro_AIMV_NA_high_AI tpt)
+                "ca-app-pub-7121075950716954/1360714510"   // Secondary (Pro_AIMV_NA_all_AI tpt)
+            ),
+            enabled = true,
+            additionalExtras = mapOf(
+                "first_position" to 2,
+                "infeed_interval" to 3
+            )
         )
 
         // Featured templates carousel native ad (shown at 2nd position)
@@ -1120,6 +1153,20 @@ class AdPlacementConfigService(
             enabled = true
         )
 
+        // Select Photo (asset picker) Collapsible Native Ad — all flows
+        // Shown at the bottom of the "Select Your Image" screen across all picker flows
+        // Layout: native_big_bait (large size layout)
+        // Waterfall: Primary unit (Pro_AIMV_NAc_high_select photo) -> Secondary (Pro_AIMV_NAc_all_select photo)
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_SELECT_PHOTO_COLLAPSIBLE,
+            layoutName = "native_big_bait",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/4501084417",  // Primary (Pro_AIMV_NAc_high_select photo)
+                "ca-app-pub-7121075950716954/6307587731"   // Secondary (Pro_AIMV_NAc_all_select photo)
+            ),
+            enabled = true
+        )
+
 
         // Template Previewer Banner Native Ad (replaces standard banner)
         // Shown at the bottom of the template previewer screen
@@ -1159,6 +1206,32 @@ class AdPlacementConfigService(
             adUnitIds = listOf(
                 "ca-app-pub-7121075950716954/9046582121",  // Primary (from ad_native_export_generating)
                 "ca-app-pub-7121075950716954/1359663791"   // Secondary (from ad_native_export_generating)
+            ),
+            enabled = true
+        )
+
+        // AI generation "system error" screen native ad (AI tab flow) — initial entry
+        // Layout: native_big_bait
+        // Waterfall: Primary (Pro_AIMV_NA_high_SystemError) -> Secondary (Pro_AIMV_NA_all_SystemError)
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_AI_SYSTEM_ERROR,
+            layoutName = "native_big_bait",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/6547260886",  // Primary (Pro_AIMV_NA_high_SystemError)
+                "ca-app-pub-7121075950716954/3681424399"   // Secondary (Pro_AIMV_NA_all_SystemError)
+            ),
+            enabled = true
+        )
+
+        // ALT native ad for the AI "system error" screen — shown/force-reloaded on "Try again"
+        // Layout: native_big_bait
+        // Waterfall: Primary (Pro_AIMV_NA_high_SystemError_alt) -> Secondary (Pro_AIMV_NA_all_SystemError_alt)
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_AI_SYSTEM_ERROR_ALT,
+            layoutName = "native_big_bait",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/2368342725",  // Primary (Pro_AIMV_NA_high_SystemError_alt)
+                "ca-app-pub-7121075950716954/2608015871"   // Secondary (Pro_AIMV_NA_all_SystemError_alt)
             ),
             enabled = true
         )

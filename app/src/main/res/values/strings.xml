@@ -77,6 +77,30 @@
     <string name="home_tab_projects">Library</string>
     <string name="home_tab_ai">AI</string>
 
+    <!-- AI Tab -->
+    <string name="ai_banner_coming_soon">COMING SOON</string>
+    <string name="ai_banner_title">Trending AI Video</string>
+    <string name="ai_banner_remind_me">Remind Me</string>
+    <string name="ai_remind_toast">We\'ll remind you later</string>
+    <string name="ai_section_video_generator">AI Video Generator</string>
+    <string name="ai_section_dance">AI Dance</string>
+    <string name="ai_templates_empty">No templates yet</string>
+    <!-- AI photo guide popup -->
+    <string name="ai_guide_title">Use the Right Photos</string>
+    <string name="ai_guide_desc">High-quality photos help AI create the best results.</string>
+    <string name="ai_guide_good_front_facing">Front-facing</string>
+    <string name="ai_guide_good_one_person">One person</string>
+    <string name="ai_guide_good_face_visible">Face fully visible</string>
+    <string name="ai_guide_bad_side_profile">Side profile</string>
+    <string name="ai_guide_bad_blurry">Blurry photos</string>
+    <string name="ai_guide_bad_group">Group photos</string>
+    <string name="ai_guide_cta">Select your photo</string>
+    <!-- AI credits error popup -->
+    <string name="ai_credits_title">Free AI credits used up</string>
+    <string name="ai_credits_desc">Your free AI credits have run out today. Please come back later to create more AI videos.</string>
+    <string name="ai_credits_try_again">Try again</string>
+    <string name="ai_credits_try_later">I\'ll try later</string>
+
     <!-- Gallery Tab -->
     <string name="gallery_filter_for_you">For you</string>
     <string name="gallery_hot_songs">Hot Songs</string>
@@ -337,6 +361,7 @@
     <string name="picker_add_more_photos">Add</string>
     <string name="picker_go_to_settings">Go to Settings</string>
     <string name="picker_min_selection">Add at least %d photos to create video</string>
+    <string name="picker_ai_min_selection">Add at least 1 photo to create video</string>
     <string name="picker_add_more_ideal">Add %d more photos to create a social-ready ~15s video.</string>
     <string name="picker_more_photos_longer">More photos, longer video (Max %d)</string>
     <string name="picker_max_reached">You\'ve reached the maximum of %d photos.</string>

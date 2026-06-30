@@ -27,6 +27,7 @@ import com.videomaker.aimusic.ui.theme.AppDimens
 @Composable
 fun TagChipRow(
     vibeTags: List<VibeTag>,
+    isAITab: Boolean = false,
     selectedTagId: String?,
     onTagSelected: (String?) -> Unit,
     modifier: Modifier = Modifier,
@@ -69,6 +70,7 @@ fun TagChipRow(
         item(key = "all_chip") {
             AppFilterChip(
                 text = showAllLabel,
+                isAITab = isAITab,
                 isSelected = selectedTagId == null,
                 onClick = { onTagSelected(null) }
             )
@@ -80,6 +82,7 @@ fun TagChipRow(
         ) { _, tag ->
             AppFilterChip(
                 text = if (tag.emoji.isNotEmpty()) "${tag.emoji} ${tag.displayName}" else tag.displayName,
+                isAITab = isAITab,
                 isSelected = tag.id == selectedTagId,
                 onClick = { onTagSelected(tag.id) }
             )

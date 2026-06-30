@@ -67,6 +67,26 @@ object AnalyticsEvent {
     const val TEMPLATE_SELECT = "template_select"
 
     // ============================================
+    // 4b. AI TAB FLOW
+    // ============================================
+    // Photo-guide popup (shown when entering the picker from the AI flow)
+    const val AI_GUIDEPHOTO_RENDER = "ai_guidephoto_render"
+    const val AI_GUIDEPHOTO_SELECT = "ai_guidephoto_select"
+    const val AI_GUIDEPHOTO_CLOSE = "ai_guidephoto_close"
+
+    // AI credits error popup (shown on the editor for the AI flow)
+    const val AI_ERROR_RENDER = "ai_error_render"
+    const val AI_ERROR_AGAIN = "ai_error_again"
+    const val AI_ERROR_LATER = "ai_error_later"
+
+    // "See all" AI templates: user opens the full AI template list / system renders it
+    const val AI_ALLTEMPLATE_CLICK = "ai_alltemplate_click"
+    const val AI_ALLTEMPLATE_RENDER = "ai_alltemplate_render"
+
+    // Tab switch on the AI all-template screen. param tab_name = all | ai_video_generator | ai_dance
+    const val AI_TEMPLATETAB_CLICK = "ai_templatetab_click"
+
+    // ============================================
     // 5. SONG SCREEN
     // ============================================
     const val SONG_TAB_SWIPE = "song_tab_swipe"
@@ -457,6 +477,16 @@ object AnalyticsEvent {
             const val SONG = "song"
             const val LIBRARY = "library"
             const val AI = "ai"
+        }
+
+        /**
+         * tab_name values for [AI_TEMPLATETAB_CLICK] on the AI all-template screen.
+         * [VIDEO_GENERATOR]/[DANCE] mirror the AI vibe-tag ids used to load each tab.
+         */
+        object AiTemplateTab {
+            const val ALL = "all"
+            const val VIDEO_GENERATOR = "ai_video_generator"
+            const val DANCE = "ai_dance"
         }
 
         object LibraryTab {

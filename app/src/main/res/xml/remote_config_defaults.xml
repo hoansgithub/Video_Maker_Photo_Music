@@ -230,6 +230,10 @@
     <key>ad_native_home_collapsible</key>
     <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/7760749137","enabled":true},{"id":"ca-app-pub-7121075950716954/9195864128","enabled":true}],"extras":{"layout":"native_big_bait","click_reload_enabled":true,"click_reload_max_count":10}}</value>
   </entry>
+  <entry>
+    <key>ad_native_select_photo_collapsible</key>
+    <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/4501084417","enabled":true},{"id":"ca-app-pub-7121075950716954/6307587731","enabled":true}],"extras":{"layout":"native_big_bait","click_reload_enabled":true,"click_reload_max_count":10}}</value>
+  </entry>
 
   <entry>
     <key>ad_native_template_previewer_banner</key>
@@ -244,6 +248,18 @@
     <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/9046582121","enabled":true},{"id":"ca-app-pub-7121075950716954/1359663791","enabled":true}],"extras":{"layout":"native_big_bait","click_reload_enabled":true,"click_reload_max_count":10}}</value>
   </entry>
   <entry>
+    <key>ad_native_ai_system_error</key>
+    <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/6547260886","enabled":true},{"id":"ca-app-pub-7121075950716954/3681424399","enabled":true}],"extras":{"layout":"native_big_bait","click_reload_enabled":true,"click_reload_max_count":10}}</value>
+  </entry>
+  <entry>
+    <key>ad_native_ai_system_error_alt</key>
+    <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/2368342725","enabled":true},{"id":"ca-app-pub-7121075950716954/2608015871","enabled":true}],"extras":{"layout":"native_big_bait","click_reload_enabled":true,"click_reload_max_count":10}}</value>
+  </entry>
+  <entry>
+    <key>ad_native_ai_tab</key>
+    <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/2799587564","enabled":true},{"id":"ca-app-pub-7121075950716954/8933751070","enabled":true}],"extras":{"layout":"native_big_bait","click_reload_enabled":true,"click_reload_max_count":10}}</value>
+  </entry>
+  <entry>
     <key>ad_native_asset_picker_banner</key>
     <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/1709251222","enabled":true},{"id":"ca-app-pub-7121075950716954/3435442033","enabled":true}],"extras":{"layout":"native_small_row","click_reload_enabled":true,"click_reload_max_count":10}}</value>
   </entry>
@@ -254,6 +270,10 @@
   <entry>
     <key>ad_native_gallery_grid</key>
     <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/1251475281","enabled":true},{"id":"ca-app-pub-7121075950716954/7733500455","enabled":true}],"extras":{"layout":"native_project_card"}}</value>
+  </entry>
+  <entry>
+    <key>ad_native_ai_template_grid</key>
+    <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/7429097719","enabled":true},{"id":"ca-app-pub-7121075950716954/1360714510","enabled":true}],"extras":{"layout":"native_project_card","first_position":2,"infeed_interval":3}}</value>
   </entry>
   <entry>
     <key>ad_native_gallery_hot_tpt</key>

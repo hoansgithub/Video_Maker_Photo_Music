@@ -285,6 +285,56 @@ object Analytics {
         )
     }
 
+    // ============================================
+    // AI TAB FLOW
+    // ============================================
+
+    /** AI photo-guide popup displayed (entering the picker from the AI flow). */
+    fun trackAiGuidePhotoRender() = trackSimple(AnalyticsEvent.AI_GUIDEPHOTO_RENDER)
+
+    /** User tapped "Select your photo" on the AI photo-guide popup. */
+    fun trackAiGuidePhotoSelect() = trackSimple(AnalyticsEvent.AI_GUIDEPHOTO_SELECT)
+
+    /** User dismissed the AI photo-guide popup ("x"). */
+    fun trackAiGuidePhotoClose() = trackSimple(AnalyticsEvent.AI_GUIDEPHOTO_CLOSE)
+
+    /** AI "credits used up" error popup displayed. */
+    fun trackAiErrorRender() = trackSimple(AnalyticsEvent.AI_ERROR_RENDER)
+
+    /** User tapped "Try again" on the AI error popup. */
+    fun trackAiErrorAgain() = trackSimple(AnalyticsEvent.AI_ERROR_AGAIN)
+
+    /** User tapped "I'll try later" / "x" on the AI error popup. */
+    fun trackAiErrorLater() = trackSimple(AnalyticsEvent.AI_ERROR_LATER)
+
+    /** User tapped the "See all" arrow to open the full AI template list. */
+    fun trackAiAllTemplateClick() = trackSimple(AnalyticsEvent.AI_ALLTEMPLATE_CLICK)
+
+    /** System rendered the AI all-template screen. */
+    fun trackAiAllTemplateRender() = trackSimple(AnalyticsEvent.AI_ALLTEMPLATE_RENDER)
+
+    /**
+     * User tapped a tab on the AI all-template screen.
+     * @param tabName one of [AnalyticsEvent.Value.AiTemplateTab] (all / ai_video_generator / ai_dance).
+     */
+    fun trackAiTemplateTabClick(tabName: String) {
+        trackWithPolicy(
+            eventName = AnalyticsEvent.AI_TEMPLATETAB_CLICK,
+            params = mapOf(AnalyticsEvent.Param.TAB_NAME to tabName),
+            requiredParams = setOf(AnalyticsEvent.Param.TAB_NAME),
+            policy = TrackingPolicy.NORMAL
+        )
+    }
+
+    private fun trackSimple(eventName: String) {
+        trackWithPolicy(
+            eventName = eventName,
+            params = emptyMap(),
+            requiredParams = emptySet(),
+            policy = TrackingPolicy.NORMAL
+        )
+    }
+
     /**
      * Maps an item's `is_premium` flag to the analytics `type` param value:
      * premium -> "ads", free -> "free".
@@ -497,7 +547,13 @@ object Analytics {
         )
     }
 
-    fun trackTemplateSelect(templateId: String, templateName: String, location: String, isPremium: Boolean) {
+    fun trackTemplateSelect(
+        templateId: String,
+        templateName: String,
+        location: String,
+        isPremium: Boolean,
+        style: String = AnalyticsEvent.Value.Style.MUSIC_SYNC
+    ) {
         getRatingTriggerManager()?.onTemplateSelected()
         trackWithPolicy(
             eventName = AnalyticsEvent.TEMPLATE_SELECT,
@@ -505,7 +561,8 @@ object Analytics {
                 AnalyticsEvent.Param.TEMPLATE_ID to templateId,
                 AnalyticsEvent.Param.TEMPLATE_NAME to templateName,
                 AnalyticsEvent.Param.LOCATION to location,
-                AnalyticsEvent.Param.TYPE to premiumType(isPremium)
+                AnalyticsEvent.Param.TYPE to premiumType(isPremium),
+                AnalyticsEvent.Param.STYLE to style
             ),
             requiredParams = setOf(
                 AnalyticsEvent.Param.TEMPLATE_ID,

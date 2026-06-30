@@ -30,6 +30,7 @@ private val ChipShape = RoundedCornerShape(999.dp)
 @Composable
 fun AppFilterChip(
     text: String,
+    isAITab: Boolean = false,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     isSelected: Boolean = false
@@ -39,10 +40,19 @@ fun AppFilterChip(
 
     Box(
         modifier = modifier
-            .background(White10, ChipShape)
-            .border(1.dp, borderColor, ChipShape)
+            .then(
+                if (isAITab) {
+                    Modifier
+                        .background(if (isSelected) White10 else Color.Transparent, ChipShape)
+                        .border(1.dp, White12, ChipShape)
+                } else {
+                    Modifier
+                        .background(White10, ChipShape)
+                        .border(1.dp, borderColor, ChipShape)
+                }
+            )
             .clickableSingle(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .padding(horizontal = 16.dp, vertical = 10.dp),
         contentAlignment = Alignment.Center
     ) {
         Text(
