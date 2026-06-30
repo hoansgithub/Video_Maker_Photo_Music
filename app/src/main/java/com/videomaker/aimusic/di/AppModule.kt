@@ -557,7 +557,8 @@ class AssetPickerViewModelFactory(
         selectedAssetUris: List<String> = emptyList(),
         isEditingMode: Boolean = false,
         durationSongId: Long = -1L,
-        durationTrimStartMs: Long = 0L
+        durationTrimStartMs: Long = 0L,
+        isAiFlow: Boolean = false
     ): AssetPickerViewModel {
         return AssetPickerViewModel(
             context = application,
@@ -577,7 +578,8 @@ class AssetPickerViewModelFactory(
             selectedAssetUris = selectedAssetUris,
             isEditingMode = isEditingMode,
             durationSongId = durationSongId,
-            durationTrimStartMs = durationTrimStartMs
+            durationTrimStartMs = durationTrimStartMs,
+            isAiFlow = isAiFlow
         )
     }
 }
@@ -781,7 +783,9 @@ class TemplatePreviewerViewModelFactory(
     fun create(
         templateId: String,
         imageUris: List<String>,
-        overrideSongId: Long = -1L
+        overrideSongId: Long = -1L,
+        isAiFlow: Boolean = false,
+        aiCategoryTagId: String? = null
     ): TemplatePreviewerViewModel {
         return TemplatePreviewerViewModel(
             initialTemplateId = templateId,
@@ -795,7 +799,9 @@ class TemplatePreviewerViewModelFactory(
             unlikeTemplateUseCase = unlikeTemplateUseCase,
             observeLikedTemplatesUseCase = observeLikedTemplatesUseCase,
             adsLoaderService = adsLoaderService,
-            unlockedTemplatesManager = unlockedTemplatesManager
+            unlockedTemplatesManager = unlockedTemplatesManager,
+            isAiFlow = isAiFlow,
+            aiCategoryTagId = aiCategoryTagId
         )
     }
 }

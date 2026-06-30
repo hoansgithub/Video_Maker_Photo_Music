@@ -31,10 +31,8 @@ class AiTabViewModel(
 ) : ViewModel() {
 
     companion object {
-        //"ai_video_generator"
-        const val TAG_VIDEO_GENERATOR = "party"
-        //"ai_dance"
-        const val TAG_DANCE = "love"
+        const val TAG_VIDEO_GENERATOR = "ai_video_generator"
+        const val TAG_DANCE = "ai_dance"
 
         /** The row is non-scrollable and only ever shows a handful of items. */
         private const val ROW_LIMIT = 4

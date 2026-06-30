@@ -209,7 +209,8 @@ class AssetPickerViewModel(
     // Duration-estimate only (does NOT affect selection/confirm logic). Used by the "add images to
     // existing project" flow so the picker's estimate matches the editor's beat-synced duration.
     private val durationSongId: Long = -1L,        // >= 0 = song to load beat-sync data for the estimate
-    private val durationTrimStartMs: Long = 0L     // matches the editor's trimStart for that flow
+    private val durationTrimStartMs: Long = 0L,     // matches the editor's trimStart for that flow
+    private val isAiFlow: Boolean = false           // AI flow: restrict selection to a single photo
 ) : ViewModel() {
 
     // Use applicationContext to prevent Activity memory leak
@@ -233,8 +234,14 @@ class AssetPickerViewModel(
      *  with the selected song overriding each template's own track. */
     val isSongToVideoMode: Boolean get() = overrideSongId >= 0L
 
-    /** Minimum number of images required before confirming */
-    val minSelection: Int get() = 2
+    /** True if launched from the AI flow (single-photo selection). */
+    val isAiMode: Boolean get() = isAiFlow
+
+    /** Minimum number of images required before confirming. AI flow needs exactly one photo. */
+    val minSelection: Int get() = if (isAiFlow) 1 else 2
+
+    /** Maximum number of images that can be selected. AI flow caps at a single photo. */
+    val maxSelection: Int get() = if (isAiFlow) 1 else MAX_SELECTION
 
     // ============================================
     // STATE
@@ -848,8 +855,17 @@ class AssetPickerViewModel(
      */
     fun addAssetSelection(asset: GalleryAsset) {
         val currentState = _uiState.value as? AssetPickerUiState.WithAssets ?: return
-        if (currentState.selectedAssets.size >= MAX_SELECTION) {
-            _messageEvent.value = "Maximum $MAX_SELECTION images can be selected"
+        // AI flow is single-select: a new tap replaces the current photo instead of being blocked.
+        if (isAiFlow && maxSelection == 1) {
+            Analytics.trackMediaSelect()
+            val updatedState = currentState.copyAssets(selectedAssets = listOf(asset))
+            _uiState.value = updatedState
+            persistSessionSnapshot(updatedState, modeForState(updatedState))
+            trackPromoteState()
+            return
+        }
+        if (currentState.selectedAssets.size >= maxSelection) {
+            _messageEvent.value = "Maximum $maxSelection images can be selected"
             return
         }
         val updatedSelection = currentState.selectedAssets + asset

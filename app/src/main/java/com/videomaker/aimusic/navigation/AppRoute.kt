@@ -130,7 +130,9 @@ sealed interface AppRoute : NavKey {
         // Duration-estimate only (add-images flow): the existing project's song + hook start so the
         // picker's duration matches what the editor will re-render. Does not affect selection.
         val durationSongId: Long = -1L,
-        val durationTrimStartMs: Long = 0L
+        val durationTrimStartMs: Long = 0L,
+        // AI flow: shows the photo-guide popup after permission + limits selection to 1 photo.
+        val isAiFlow: Boolean = false
     ) : AppRoute
 
     /**
@@ -145,7 +147,9 @@ sealed interface AppRoute : NavKey {
         val projectId: String? = null,
         val initialData: com.videomaker.aimusic.domain.model.EditorInitialData? = null,
         // Thumbnail of a saved project, so the editor's Loading state can show the first image.
-        val thumbnailUri: String? = null
+        val thumbnailUri: String? = null,
+        // AI flow: editor shows the "Free AI credits used up" popup on a 10s loop.
+        val isAiFlow: Boolean = false
     ) : AppRoute
 
     @Serializable
@@ -191,7 +195,12 @@ sealed interface AppRoute : NavKey {
         val templateId: String,
         val imageUris: List<String> = emptyList(), // Empty = browse mode with sample images
         val overrideSongId: Long = -1L,
-        val sourceLocation: String? = null
+        val sourceLocation: String? = null,
+        // AI flow: triggers the photo-guide popup + 1-photo picker + editor credits-loop downstream.
+        val isAiFlow: Boolean = false,
+        // AI flow: the AI category the user entered from. Swipe browses this category first,
+        // then the other AI categories, then loops. null = start with all AI categories.
+        val aiCategoryTagId: String? = null
     ) : AppRoute
 
     // ============================================

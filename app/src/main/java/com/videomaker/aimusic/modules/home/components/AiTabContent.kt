@@ -29,9 +29,17 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -64,10 +72,12 @@ import com.videomaker.aimusic.ui.components.ShimmerPlaceholder
 import com.videomaker.aimusic.ui.theme.Black60
 import com.videomaker.aimusic.ui.theme.Gray200
 import com.videomaker.aimusic.ui.theme.Neutral_N100
+import com.videomaker.aimusic.ui.theme.Neutral_N900
 import com.videomaker.aimusic.ui.theme.Primary
 import com.videomaker.aimusic.ui.theme.TemplateBadgeBackground
 import com.videomaker.aimusic.ui.theme.TextPrimary
 import com.videomaker.aimusic.ui.theme.White12
+import kotlinx.coroutines.delay
 
 /** Card geometry shared by every AI template row item (W:H = 120:180, 12dp radius). */
 private val AiCardWidth = 110.dp
@@ -99,10 +109,19 @@ fun AiTabContent(
     onRemindMeClick: () -> Unit = {},
     onSeeAllVideoGenerator: () -> Unit = {},
     onSeeAllDance: () -> Unit = {},
-    onTemplateClick: (VideoTemplate) -> Unit = {},
+    onTemplateClick: (VideoTemplate, String) -> Unit = { _, _ -> },
     modifier: Modifier = Modifier,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    // Transient "We'll remind you later" toast shown when the banner's Remind Me is tapped.
+    var showRemindToast by remember { mutableStateOf(false) }
+    LaunchedEffect(showRemindToast) {
+        if (showRemindToast) {
+            delay(1500L)
+            showRemindToast = false
+        }
+    }
 
     Box(
         modifier = modifier
@@ -126,7 +145,10 @@ fun AiTabContent(
                 .padding(bottom = 96.dp)
         ) {
             AiBanner(
-                onRemindMeClick = onRemindMeClick,
+                onRemindMeClick = {
+                    showRemindToast = true
+                    onRemindMeClick()
+                },
                 modifier = Modifier.padding(horizontal = AiContentHorizontalPadding)
             )
 
@@ -137,7 +159,7 @@ fun AiTabContent(
                 templates = uiState.videoGenerator,
                 isLoading = uiState.isLoading,
                 onSeeAllClick = onSeeAllVideoGenerator,
-                onTemplateClick = onTemplateClick
+                onTemplateClick = { onTemplateClick(it, AiTabViewModel.TAG_VIDEO_GENERATOR) }
             )
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -147,7 +169,7 @@ fun AiTabContent(
                 templates = uiState.dance,
                 isLoading = uiState.isLoading,
                 onSeeAllClick = onSeeAllDance,
-                onTemplateClick = onTemplateClick
+                onTemplateClick = { onTemplateClick(it, AiTabViewModel.TAG_DANCE) }
             )
         }
 
@@ -161,6 +183,48 @@ fun AiTabContent(
                     else Modifier
                 )
                 .padding(bottom = 16.dp)
+        )
+
+        AnimatedVisibility(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .then(
+                    if (isShowPaddingBottom) Modifier.navigationBarsPadding()
+                    else Modifier
+                )
+                .padding(bottom = 16.dp),
+            visible = showRemindToast,
+            enter = fadeIn() + expandVertically(),
+            exit = fadeOut() + shrinkVertically()
+        ) {
+            RemindMeToast()
+        }
+    }
+}
+
+/** Dark pill toast confirming the user will be reminded when the AI feature launches. */
+@Composable
+private fun RemindMeToast() {
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(120.dp))
+            .border(1.dp, Color.White.copy(0.12f),RoundedCornerShape(120.dp))
+            .background(Neutral_N900)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Icon(
+            painter = painterResource(R.drawable.ic_select_circle),
+            contentDescription = null,
+            tint = Color.Unspecified,
+            modifier = Modifier.size(20.dp)
+        )
+        Text(
+            text = stringResource(R.string.ai_remind_toast),
+            color = Color.White,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.W500
         )
     }
 }

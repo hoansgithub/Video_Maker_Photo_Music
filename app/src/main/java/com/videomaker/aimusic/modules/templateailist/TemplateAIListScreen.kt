@@ -74,7 +74,7 @@ import org.koin.compose.koinInject
 fun TemplateAIListScreen(
     viewModel: TemplateAIListViewModel,
     onNavigateBack: () -> Unit,
-    onNavigateToTemplatePreviewer: (String) -> Unit
+    onNavigateToTemplatePreviewer: (templateId: String, vibeTagId: String?) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
@@ -94,8 +94,14 @@ fun TemplateAIListScreen(
         navigationEvent?.let { event ->
             when (event) {
                 is TemplateAIListNavigationEvent.NavigateBack -> onNavigateBack()
-                is TemplateAIListNavigationEvent.NavigateToTemplatePreviewer ->
-                    onNavigateToTemplatePreviewer(event.templateId)
+                is TemplateAIListNavigationEvent.NavigateToTemplatePreviewer -> {
+                    val tag = when (currentTabIndex) {
+                        TemplateAIListViewModel.TAB_VIDEO_GENERATOR -> AiTabViewModel.TAG_VIDEO_GENERATOR
+                        TemplateAIListViewModel.TAB_DANCE -> AiTabViewModel.TAG_DANCE
+                        else -> null
+                    }
+                    onNavigateToTemplatePreviewer(event.templateId, tag)
+                }
             }
             viewModel.onNavigationHandled()
         }

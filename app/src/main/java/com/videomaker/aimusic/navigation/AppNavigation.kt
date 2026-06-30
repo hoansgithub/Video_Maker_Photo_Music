@@ -460,6 +460,15 @@ fun AppNavigation(
                             sourceLocation = AnalyticsEvent.Value.Location.GALLERY
                         ))
                     },
+                    onAiCreateClick = {
+                        homeAdTracker.onNavigateAway()
+                        backStack.add(AppRoute.TemplatePreviewer(
+                            templateId = "",
+                            imageUris = emptyList(),
+                            sourceLocation = AnalyticsEvent.Value.Location.AI,
+                            isAiFlow = true
+                        ))
+                    },
                     onSettingsClick = { location ->
                         homeAdTracker.onNavigateAway()
                         backStack.add(AppRoute.Settings(settingLocation = location))
@@ -486,13 +495,25 @@ fun AppNavigation(
                         backStack.add(AppRoute.TemplatePreviewer(
                             templateId = templateId,
                             imageUris = emptyList(), // Sample images mode
-                            sourceLocation = sourceLocation
+                            sourceLocation = sourceLocation,
+                            isAiFlow = sourceLocation == AnalyticsEvent.Value.Location.AI
                         ))
                     },
                     onNavigateToAllTemplates = { selectedVibeTagId ->
                         homeAdTracker.onNavigateAway()
                         // Navigate to template list with selected tag filter
                         backStack.add(AppRoute.TemplateList(selectedVibeTagId))
+                    },
+                    onNavigateToAiTemplateDetail = { templateId, vibeTagId ->
+                        homeAdTracker.onNavigateAway()
+                        // AI flow: swipe browses this category first, then the other AI categories.
+                        backStack.add(AppRoute.TemplatePreviewer(
+                            templateId = templateId,
+                            imageUris = emptyList(),
+                            sourceLocation = AnalyticsEvent.Value.Location.AI,
+                            isAiFlow = true,
+                            aiCategoryTagId = vibeTagId
+                        ))
                     },
                     onNavigateToAiTemplates = { selectedVibeTagId ->
                         homeAdTracker.onNavigateAway()
@@ -644,7 +665,7 @@ fun AppNavigation(
             entry<AppRoute.AssetPicker> { route ->
                 val factory: AssetPickerViewModelFactory = koinInject()
                 val pickerViewModel: AssetPickerViewModel = viewModel(
-                    key = "asset_picker_${route.projectId}_${route.templateId}_${route.overrideSongId}_${route.aspectRatio}_${route.sourceLocation}_${route.resumeDraftId}_${route.selectedAssetUris.size}_${route.isEditingMode}",
+                    key = "asset_picker_${route.projectId}_${route.templateId}_${route.overrideSongId}_${route.aspectRatio}_${route.sourceLocation}_${route.resumeDraftId}_${route.selectedAssetUris.size}_${route.isEditingMode}_${route.isAiFlow}",
                     factory = createSafeViewModelFactory {
                         factory.create(
                             projectId = route.projectId,
@@ -655,18 +676,20 @@ fun AppNavigation(
                             selectedAssetUris = route.selectedAssetUris,
                             isEditingMode = route.isEditingMode,
                             durationSongId = route.durationSongId,
-                            durationTrimStartMs = route.durationTrimStartMs
+                            durationTrimStartMs = route.durationTrimStartMs,
+                            isAiFlow = route.isAiFlow
                         )
                     }
                 )
                 AssetPickerScreen(
                     viewModel = pickerViewModel,
+                    isAiFlow = route.isAiFlow,
                     onNavigateToEditor = { projectId ->
                         backStack.apply {
                             val home = firstOrNull { it is AppRoute.Home } ?: AppRoute.Home()
                             clear()
                             add(home)
-                            add(AppRoute.Editor(projectId))
+                            add(AppRoute.Editor(projectId, isAiFlow = route.isAiFlow))
                         }
                     },
                     onNavigateToEditorWithData = { initialData ->
@@ -675,7 +698,7 @@ fun AppNavigation(
                             val home = firstOrNull { it is AppRoute.Home } ?: AppRoute.Home()
                             clear()
                             add(home)
-                            add(AppRoute.Editor(projectId = null, initialData = initialData))
+                            add(AppRoute.Editor(projectId = null, initialData = initialData, isAiFlow = route.isAiFlow))
                         }
                     },
                     onNavigateBack = { backStack.safeRemoveLast() },
@@ -707,6 +730,7 @@ fun AppNavigation(
                 )
                 EditorScreen(
                     viewModel = editorViewModel,
+                    isAiFlow = route.isAiFlow,
                     // musicPickerViewModelFactory = musicPickerFactory,
                     onNavigateBack = { backStack.safeRemoveLast() },
                     onNavigateToHome = {
@@ -806,10 +830,13 @@ fun AppNavigation(
                 TemplateAIListScreen(
                     viewModel = viewModel,
                     onNavigateBack = { backStack.safeRemoveLast() },
-                    onNavigateToTemplatePreviewer = { templateId ->
+                    onNavigateToTemplatePreviewer = { templateId, vibeTagId ->
                         backStack.add(AppRoute.TemplatePreviewer(
                             templateId = templateId,
-                            imageUris = emptyList()
+                            imageUris = emptyList(),
+                            sourceLocation = AnalyticsEvent.Value.Location.AI,
+                            isAiFlow = true,
+                            aiCategoryTagId = vibeTagId
                         ))
                     }
                 )
@@ -818,12 +845,14 @@ fun AppNavigation(
             entry<AppRoute.TemplatePreviewer> { route ->
                 val factory: TemplatePreviewerViewModelFactory = koinInject()
                 val viewModel: TemplatePreviewerViewModel = viewModel(
-                    key = "template_previewer_${route.templateId}_${route.overrideSongId}_${route.sourceLocation}",
+                    key = "template_previewer_${route.templateId}_${route.overrideSongId}_${route.sourceLocation}_${route.isAiFlow}_${route.aiCategoryTagId}",
                     factory = createSafeViewModelFactory {
                         factory.create(
                             templateId = route.templateId,
                             imageUris = route.imageUris,
-                            overrideSongId = route.overrideSongId
+                            overrideSongId = route.overrideSongId,
+                            isAiFlow = route.isAiFlow,
+                            aiCategoryTagId = route.aiCategoryTagId
                         )
                     }
                 )
@@ -838,7 +867,8 @@ fun AppNavigation(
                             templateId = template.id,
                             overrideSongId = overrideSongId,
                             aspectRatio = aspectRatio,
-                            sourceLocation = route.sourceLocation
+                            sourceLocation = route.sourceLocation,
+                            isAiFlow = route.isAiFlow
                         ))
                     },
                     onNavigateBack = { backStack.safeRemoveLast() }

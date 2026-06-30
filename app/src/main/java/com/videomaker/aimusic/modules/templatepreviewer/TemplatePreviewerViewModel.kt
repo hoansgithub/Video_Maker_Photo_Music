@@ -9,6 +9,7 @@ import com.videomaker.aimusic.domain.model.AspectRatio
 import com.videomaker.aimusic.domain.model.MusicSong
 import com.videomaker.aimusic.domain.model.ProjectSettings
 import com.videomaker.aimusic.domain.model.VideoTemplate
+import com.videomaker.aimusic.modules.home.AiTabViewModel
 
 import com.videomaker.aimusic.domain.repository.SongRepository
 import com.videomaker.aimusic.domain.repository.TemplateRepository
@@ -111,7 +112,10 @@ class TemplatePreviewerViewModel(
     private val unlikeTemplateUseCase: UnlikeTemplateUseCase,
     private val observeLikedTemplatesUseCase: ObserveLikedTemplatesUseCase,
     private val adsLoaderService: AdsLoaderService,
-    private val unlockedTemplatesManager: UnlockedTemplatesManager
+    private val unlockedTemplatesManager: UnlockedTemplatesManager,
+    /** AI flow: swipe browses AI categories ([aiCategoryTagId] first) instead of the global list. */
+    private val isAiFlow: Boolean = false,
+    private val aiCategoryTagId: String? = null
 ) : ViewModel() {
 
     private val imageUris: List<Uri> = imageUrisStr.mapNotNull { uriStr ->
@@ -453,6 +457,10 @@ class TemplatePreviewerViewModel(
     // ============================================
 
     private fun loadInitialTemplates() {
+        if (isAiFlow) {
+            loadInitialAiTemplates()
+            return
+        }
         viewModelScope.launch {
             _uiState.value = TemplatePreviewerUiState.Loading
             currentOffset = 0
@@ -501,6 +509,59 @@ class TemplatePreviewerViewModel(
                         )
                     }
                 }
+        }
+    }
+
+    /**
+     * AI flow loader: build the swipe list as [current AI category] + [other AI categories],
+     * deduped, starting on the tapped template. The list loops infinitely via the pager's modulo,
+     * so no further pagination is needed ([hasMorePages] stays false).
+     */
+    private fun loadInitialAiTemplates() {
+        viewModelScope.launch {
+            _uiState.value = TemplatePreviewerUiState.Loading
+            currentOffset = 0
+            hasMorePages = false
+
+            val initialTemplate = templateRepository.getTemplateById(initialTemplateId).getOrNull()
+
+            // Entered category first, then the remaining AI categories.
+            val allAiTags = listOf(AiTabViewModel.TAG_VIDEO_GENERATOR, AiTabViewModel.TAG_DANCE)
+            val orderedTags = if (aiCategoryTagId != null && aiCategoryTagId in allAiTags) {
+                listOf(aiCategoryTagId) + allAiTags.filter { it != aiCategoryTagId }
+            } else {
+                allAiTags
+            }
+
+            val combined = mutableListOf<VideoTemplate>()
+            val seen = mutableSetOf<String>()
+            for (tag in orderedTags) {
+                val list = templateRepository.getTemplatesByVibeTag(tag, AI_PAGE_SIZE, 0)
+                    .getOrNull().orEmpty()
+                for (t in list) if (seen.add(t.id)) combined.add(t)
+            }
+
+            // Ensure the tapped template is present and is the starting page.
+            var initialPage = combined.indexOfFirst { it.id == initialTemplateId }
+            var finalTemplates: List<VideoTemplate> = combined
+            if (initialPage < 0) {
+                if (initialTemplate != null) {
+                    finalTemplates = listOf(initialTemplate) + combined
+                }
+                initialPage = 0
+            }
+
+            _uiState.value = when {
+                finalTemplates.isNotEmpty() -> TemplatePreviewerUiState.Ready(
+                    templates = finalTemplates,
+                    initialPage = initialPage
+                )
+                initialTemplate != null -> TemplatePreviewerUiState.Ready(
+                    templates = listOf(initialTemplate),
+                    initialPage = 0
+                )
+                else -> TemplatePreviewerUiState.Error("Failed to load templates")
+            }
         }
     }
 
@@ -563,5 +624,6 @@ class TemplatePreviewerViewModel(
     companion object {
         private const val PAGE_SIZE = 15
         private const val LOAD_MORE_THRESHOLD = 3
+        private const val AI_PAGE_SIZE = 20
     }
 }

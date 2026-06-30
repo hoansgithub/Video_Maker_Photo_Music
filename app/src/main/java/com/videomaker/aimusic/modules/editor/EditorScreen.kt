@@ -166,7 +166,8 @@ fun EditorScreen(
     onNavigateToHome: () -> Unit,
     onNavigateToPreview: (String) -> Unit,
     onNavigateToExport: (String, com.videomaker.aimusic.domain.model.VideoQuality) -> Unit,
-    onNavigateToAddAssets: (projectId: String, assetUris: List<String>, songId: Long, hookStartMs: Long) -> Unit
+    onNavigateToAddAssets: (projectId: String, assetUris: List<String>, songId: Long, hookStartMs: Long) -> Unit,
+    isAiFlow: Boolean = false
 ) {
     val adClickDetector: AdClickDetector = koinInject()
     val adPlacementConfigService: AdPlacementConfigService = koinInject()
@@ -211,6 +212,29 @@ fun EditorScreen(
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
+    // AI flow: the AI video generation "fails" → loop the "Free AI credits used up" popup every 10s.
+    // "Try again" re-arms the 10s timer; "I'll try later" returns to Home/Gallery.
+    if (isAiFlow) {
+        var showAiCreditsDialog by remember { mutableStateOf(false) }
+        var creditsLoopTick by remember { mutableStateOf(0) }
+        LaunchedEffect(creditsLoopTick) {
+            delay(10_000L)
+            showAiCreditsDialog = true
+        }
+        if (showAiCreditsDialog) {
+            AiCreditsErrorDialog(
+                onTryAgain = {
+                    showAiCreditsDialog = false
+                    creditsLoopTick++
+                },
+                onTryLater = {
+                    showAiCreditsDialog = false
+                    onNavigateToHome()
+                }
+            )
         }
     }
 
@@ -484,7 +508,8 @@ fun EditorScreen(
     // Show the "after prepare" interstitial once: editor appears (Loading -> Success),
     // stays for 1s, then the (preloaded) fullscreen-image interstitial is shown.
     var afterPrepareInterShown by remember { mutableStateOf(false) }
-    val isEditorReady = uiState is EditorUiState.Success
+    // AI flow stays in the loading illusion → never trigger the "editor ready" interstitial.
+    val isEditorReady = !isAiFlow && uiState is EditorUiState.Success
     LaunchedEffect(isEditorReady) {
         if (isEditorReady && !afterPrepareInterShown && activity != null) {
             afterPrepareInterShown = true
@@ -535,6 +560,10 @@ fun EditorScreen(
     // - READY when everything is loaded and no processing is in progress.
     // - ERROR on data-load failure or preview build failure.
     val editorScreenState = when {
+        // AI flow: video generation is simulated — never leaves Loading; only the credits
+        // error popup (10s loop) is shown over the placeholder.
+        isAiFlow -> EditorScreenState.LOADING
+
         uiState.contentState == EditorContentState.ERROR ->
             EditorScreenState.ERROR
 
@@ -575,7 +604,8 @@ fun EditorScreen(
             // placeholder (controls become a shimmer skeleton); Success shows the real editor.
             EditorMainContent(
                 currentState = editorScreenState,
-                contentState = uiState.contentState,
+                // AI flow stays in Loading: never expose SUCCESS content to the editor UI.
+                contentState = if (isAiFlow) EditorContentState.LOADING else uiState.contentState,
                 project = successState?.previewProject, // Use previewProject: pendingSettings but actual assets
                 firstImageUri = lastFirstImageUri,
                 previewAspectRatio = previewAspectRatio,

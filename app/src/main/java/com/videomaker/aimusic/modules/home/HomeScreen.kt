@@ -144,6 +144,7 @@ fun HomeScreen(
     initialTab: Int = 0,
     onSettingsClick: (String) -> Unit = {},
     onCreateClick: () -> Unit = {},
+    onAiCreateClick: () -> Unit = {},
     onNavigateToSearch: () -> Unit = {},
     onNavigateToSongSearch: () -> Unit = {},
     onNavigateToSuggestedSongsList: () -> Unit = {},
@@ -151,6 +152,7 @@ fun HomeScreen(
     onNavigateToTemplateDetail: (String, String?) -> Unit = { _, _ -> },
     onNavigateToAllTemplates: (String?) -> Unit = {},
     onNavigateToAiTemplates: (String?) -> Unit = {},
+    onNavigateToAiTemplateDetail: (templateId: String, vibeTagId: String) -> Unit = { _, _ -> },
     onNavigateToAssetPicker: (songId: Long) -> Unit = {},
     onNavigateToTemplatePreviewerWithSong: (songId: Long) -> Unit = {}
 ) {
@@ -614,18 +616,15 @@ fun HomeScreen(
                             viewModel = aiViewModel,
                             isShowPaddingBottom = bottomSectionHeight == 0,
                             topBarHeight = topBarHeight,
-                            onCreateClick = onCreateClick,
+                            onCreateClick = onAiCreateClick,
                             onSeeAllVideoGenerator = {
                                 onNavigateToAiTemplates(AiTabViewModel.TAG_VIDEO_GENERATOR)
                             },
                             onSeeAllDance = {
                                 onNavigateToAiTemplates(AiTabViewModel.TAG_DANCE)
                             },
-                            onTemplateClick = { template ->
-                                onNavigateToTemplateDetail(
-                                    template.id,
-                                    AnalyticsEvent.Value.Location.AI
-                                )
+                            onTemplateClick = { template, vibeTagId ->
+                                onNavigateToAiTemplateDetail(template.id, vibeTagId)
                             }
                         )
                     }
