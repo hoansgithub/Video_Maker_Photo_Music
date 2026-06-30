@@ -1088,6 +1088,20 @@ object AdPlacement {
      */
     const val NATIVE_ONBOARDING_AI_PROMOTE = "ad_native_onboarding_ai_promote"
 
+    /**
+     * "Big bait" native ad shown on the Home → AI tab, placed between the
+     * AI Video Generator and AI Dance sections.
+     *
+     * Layout: native_big_bait (large vertical layout with clickbait CTA)
+     *
+     * Ad units (priority order):
+     * - Primary (Pro_AIMV_NA_high_AI tab): ca-app-pub-7121075950716954/2799587564
+     * - Secondary (Pro_AIMV_NA_all_AI tab): ca-app-pub-7121075950716954/8933751070
+     *
+     * Remote Config key: ad_native_ai_tab
+     */
+    const val NATIVE_AI_TAB = "ad_native_ai_tab"
+
 
     /**
      * Rewarded ad shown when user wants to download video to gallery.
@@ -1403,6 +1417,7 @@ object AdPlacement {
         NATIVE_ONBOARDING_NON_AI_LYRIC,
         NATIVE_ONBOARDING_NON_AI_MUSIC_VIDEO,
         NATIVE_ONBOARDING_AI_PROMOTE,
+        NATIVE_AI_TAB,
         NATIVE_ONBOARDING_SELECT,
         NATIVE_ONBOARDING_SELECT_ALT,
         NATIVE_ONBOARDING_SOCIAL,

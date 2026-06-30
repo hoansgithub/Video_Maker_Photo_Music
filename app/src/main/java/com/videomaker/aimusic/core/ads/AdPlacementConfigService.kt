@@ -838,6 +838,20 @@ class AdPlacementConfigService(
             enabled = true
         )
 
+        // AI tab "big bait" native ad (Home → AI tab, between the AI Video
+        // Generator and AI Dance sections)
+        // Layout: native_big_bait (large vertical layout with clickbait CTA)
+        // Waterfall: Primary unit → Secondary unit
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_AI_TAB,
+            layoutName = "native_big_bait",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/2799587564",  // Pro_AIMV_NA_high_AI tab
+                "ca-app-pub-7121075950716954/8933751070"   // Pro_AIMV_NA_all_AI tab
+            ),
+            enabled = true
+        )
+
         // Welcome Back screen native ad (shown when reopening app, session >= 2)
         // High-engagement placement for returning users
         // Layout: native_big_bait_reversed

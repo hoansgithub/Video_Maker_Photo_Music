@@ -60,9 +60,12 @@ import coil.compose.AsyncImagePainter
 import coil.compose.rememberAsyncImagePainter
 import coil.request.CachePolicy
 import coil.request.ImageRequest
+import co.alcheclub.lib.acccore.ads.compose.NativeAdView
 import coil.size.Precision
 import coil.size.Size
+import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.core.ads.AdClickDetector
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
 import com.videomaker.aimusic.core.analytics.onFirstVisible
@@ -80,7 +83,9 @@ import com.videomaker.aimusic.ui.theme.Primary
 import com.videomaker.aimusic.ui.theme.TemplateBadgeBackground
 import com.videomaker.aimusic.ui.theme.TextPrimary
 import com.videomaker.aimusic.ui.theme.White12
+import com.videomaker.aimusic.core.constants.AdPlacement
 import kotlinx.coroutines.delay
+import org.koin.compose.koinInject
 
 /** Card geometry shared by every AI template row item (W:H = 120:180, 12dp radius). */
 private val AiCardWidth = 110.dp
@@ -116,6 +121,7 @@ fun AiTabContent(
     modifier: Modifier = Modifier,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val adClickDetector: AdClickDetector = koinInject()
 
     // Transient "We'll remind you later" toast shown when the banner's Remind Me is tapped.
     var showRemindToast by remember { mutableStateOf(false) }
@@ -164,6 +170,23 @@ fun AiTabContent(
                 onSeeAllClick = onSeeAllVideoGenerator,
                 onTemplateClick = { onTemplateClick(it, AiTabViewModel.TAG_VIDEO_GENERATOR) }
             )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // "Big bait" native ad between the two AI sections. Self-sizes and
+            // self-hides when no ad is available (or ads are disabled/premium).
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = AiContentHorizontalPadding)
+            ) {
+                NativeAdView(
+                    placement = AdPlacement.NATIVE_AI_TAB,
+                    autoLoad = true,
+                    isDebug = BuildConfig.DEBUG,
+                    onAdClicked = { adClickDetector.onAdClick(it) }
+                )
+            }
 
             Spacer(modifier = Modifier.height(24.dp))
 
