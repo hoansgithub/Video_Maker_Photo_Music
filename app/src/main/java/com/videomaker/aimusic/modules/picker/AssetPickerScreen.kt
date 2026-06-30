@@ -230,6 +230,31 @@ fun AssetPickerScreen(
     val durationInfo by viewModel.durationInfo.collectAsStateWithLifecycle()
     val gridScrollState by viewModel.gridScrollState.collectAsStateWithLifecycle()
     val isConfirming by viewModel.isConfirming.collectAsStateWithLifecycle()
+
+    // Collapsible native ad shown on this screen across all picker flows.
+    val isCollapsibleAdDismissed by viewModel.isCollapsibleAdDismissed.collectAsStateWithLifecycle()
+    var isCollapsibleAdLoaded by remember { mutableStateOf(false) }
+    LaunchedEffect(isCollapsibleAdDismissed) {
+        if (adPlacementConfigService.isPlacementEnabled(AdPlacement.NATIVE_SELECT_PHOTO_COLLAPSIBLE) &&
+            !isCollapsibleAdDismissed
+        ) {
+            if (!adsLoaderService.isNativeAdReady(AdPlacement.NATIVE_SELECT_PHOTO_COLLAPSIBLE)) {
+                try {
+                    adsLoaderService.loadNative(AdPlacement.NATIVE_SELECT_PHOTO_COLLAPSIBLE)
+                } catch (e: Exception) {
+                    android.util.Log.w("AssetPickerScreen", "Failed to preload collapsible ad: ${e.message}")
+                }
+            }
+            isCollapsibleAdLoaded = adsLoaderService.isNativeAdReady(AdPlacement.NATIVE_SELECT_PHOTO_COLLAPSIBLE)
+            while (!isCollapsibleAdLoaded) {
+                delay(500)
+                isCollapsibleAdLoaded = adsLoaderService.isNativeAdReady(AdPlacement.NATIVE_SELECT_PHOTO_COLLAPSIBLE)
+            }
+        } else {
+            isCollapsibleAdLoaded = false
+        }
+    }
+
     var hasInitializedPermissionCheck by remember { mutableStateOf(false) }
     var showExitConfirmDialog by remember { mutableStateOf(false) }
     var hasTrackedMediaRender by remember { mutableStateOf(false) }
@@ -752,10 +777,46 @@ fun AssetPickerScreen(
                 onCameraClick = onCameraClick
             )
         }
+        // Collapsible native ad replaces the bottom banner while loaded and not
+        // dismissed; otherwise the standard picker banner is shown as before.
+        val showCollapsibleAd =
+            adPlacementConfigService.isPlacementEnabled(AdPlacement.NATIVE_SELECT_PHOTO_COLLAPSIBLE) &&
+            isCollapsibleAdLoaded &&
+            !isCollapsibleAdDismissed
+
         // Remote Config toggle: native ad (default) or standard banner
         Box {
             Spacer(Modifier.navigationBarsPadding())
-            if (adPlacementConfigService.bannerUseNative) {
+            if (showCollapsibleAd) {
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    NativeAdView(
+                        placement = AdPlacement.NATIVE_SELECT_PHOTO_COLLAPSIBLE,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(300.dp),
+                        isDebug = BuildConfig.DEBUG,
+                        onAdClicked = { adClickDetector.onAdClick(it) }
+                    )
+
+                    // Collapse button overlay: white circle with a black collapse icon.
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(top = 6.dp, end = 6.dp)
+                            .size(22.dp)
+                            .background(Color.White, shape = CircleShape)
+                            .clickable { viewModel.dismissCollapsibleAd() },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.KeyboardArrowDown,
+                            contentDescription = "Collapse ad",
+                            tint = Color.Black,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
+            } else if (adPlacementConfigService.bannerUseNative) {
                 NativeAdView(
                     placement = AdPlacement.NATIVE_ASSET_PICKER_BANNER,
                     modifier = Modifier

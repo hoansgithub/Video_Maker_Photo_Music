@@ -1134,6 +1134,20 @@ class AdPlacementConfigService(
             enabled = true
         )
 
+        // Select Photo (asset picker) Collapsible Native Ad — all flows
+        // Shown at the bottom of the "Select Your Image" screen across all picker flows
+        // Layout: native_big_bait (large size layout)
+        // Waterfall: Primary unit (Pro_AIMV_NAc_high_select photo) -> Secondary (Pro_AIMV_NAc_all_select photo)
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_SELECT_PHOTO_COLLAPSIBLE,
+            layoutName = "native_big_bait",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/4501084417",  // Primary (Pro_AIMV_NAc_high_select photo)
+                "ca-app-pub-7121075950716954/6307587731"   // Secondary (Pro_AIMV_NAc_all_select photo)
+            ),
+            enabled = true
+        )
+
 
         // Template Previewer Banner Native Ad (replaces standard banner)
         // Shown at the bottom of the template previewer screen

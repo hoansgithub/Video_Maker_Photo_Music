@@ -526,6 +526,21 @@ object AdPlacement {
     const val NATIVE_HOME_COLLAPSIBLE = "ad_native_home_collapsible"
 
     /**
+     * Collapsible native ad shown on the "Select Your Image" (asset picker) screen
+     * across all picker flows. Can be closed/collapsed by the user; falls back to the
+     * standard picker banner when not loaded or dismissed.
+     *
+     * Layout: native_big_bait (large size layout)
+     *
+     * Ad units (priority order):
+     * - Primary (Pro_AIMV_NAc_high_select photo): ca-app-pub-7121075950716954/4501084417
+     * - Secondary (Pro_AIMV_NAc_all_select photo): ca-app-pub-7121075950716954/6307587731
+     *
+     * Remote Config key: ad_native_select_photo_collapsible
+     */
+    const val NATIVE_SELECT_PHOTO_COLLAPSIBLE = "ad_native_select_photo_collapsible"
+
+    /**
      * Template previewer bottom banner native ad.
      * Replaces standard banner when ad_banner_use_native is true.
      *
@@ -1383,6 +1398,7 @@ object AdPlacement {
         NATIVE_MUSIC_FOR_YOU_INFEED,
         NATIVE_HOME_BANNER,
         NATIVE_HOME_COLLAPSIBLE,
+        NATIVE_SELECT_PHOTO_COLLAPSIBLE,
         NATIVE_TEMPLATE_PREVIEWER_BANNER,
         NATIVE_EDITOR_BANNER,
         NATIVE_EDITOR_LOADING,

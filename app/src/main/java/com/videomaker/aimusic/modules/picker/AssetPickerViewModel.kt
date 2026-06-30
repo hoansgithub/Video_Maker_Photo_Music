@@ -275,6 +275,16 @@ class AssetPickerViewModel(
     private val _messageEvent = MutableStateFlow<String?>(null)
     val messageEvent: StateFlow<String?> = _messageEvent.asStateFlow()
 
+    // Whether the user collapsed the AI-flow collapsible native ad. Scoped to this
+    // ViewModel (one screen visit), so the ad reappears the next time the picker opens.
+    private val _isCollapsibleAdDismissed = MutableStateFlow(false)
+    val isCollapsibleAdDismissed: StateFlow<Boolean> = _isCollapsibleAdDismissed.asStateFlow()
+
+    /** Called when the user taps the collapse button on the collapsible native ad. */
+    fun dismissCollapsibleAd() {
+        _isCollapsibleAdDismissed.value = true
+    }
+
     // Camera captures are app-private files, so keep them in-memory and merge on reloads.
     private val transientCameraAssets = mutableListOf<GalleryAsset>()
 
