@@ -23,6 +23,7 @@ import com.videomaker.aimusic.modules.onboardingsurvey.SurveyFeatureActivity
 import com.videomaker.aimusic.modules.onboardingsurvey.SurveyNonAiLyricActivity
 import com.videomaker.aimusic.modules.onboardingsurvey.SurveyNonAiMusicVideoActivity
 import com.videomaker.aimusic.modules.onboardingsurvey.SurveyPlatformActivity
+import com.videomaker.aimusic.modules.onboardingsurvey.SurveyAiPromoteActivity
 
 /**
  * Central coordinator for the flattened onboarding flow.
@@ -57,6 +58,7 @@ class OnboardingFlowCoordinator(
         OnboardingStep.SURVEY_AI_DANCE to RemoteConfigKeys.ONBOARDING_AI_DANCE_ENABLED,
         OnboardingStep.SURVEY_NON_AI_LYRIC to RemoteConfigKeys.ONBOARDING_NON_AI_LYRIC_ENABLED,
         OnboardingStep.SURVEY_NON_AI_MUSIC_VIDEO to RemoteConfigKeys.ONBOARDING_NON_AI_MUSIC_VIDEO_ENABLED,
+        OnboardingStep.SURVEY_AI_PROMOTE to RemoteConfigKeys.ONBOARDING_AI_PROMOTE_ENABLED,
         OnboardingStep.WELCOME_PAGE_1 to RemoteConfigKeys.ONBOARDING_WELCOME_PAGE_1_ENABLED,
         OnboardingStep.WELCOME_PAGE_2 to RemoteConfigKeys.ONBOARDING_WELCOME_PAGE_2_ENABLED,
         OnboardingStep.WELCOME_PAGE_3 to RemoteConfigKeys.ONBOARDING_WELCOME_PAGE_3_ENABLED,
@@ -177,6 +179,7 @@ class OnboardingFlowCoordinator(
         OnboardingStep.SURVEY_AI_DANCE -> SurveyDanceSwapActivity::class.java
         OnboardingStep.SURVEY_NON_AI_LYRIC -> SurveyNonAiLyricActivity::class.java
         OnboardingStep.SURVEY_NON_AI_MUSIC_VIDEO -> SurveyNonAiMusicVideoActivity::class.java
+        OnboardingStep.SURVEY_AI_PROMOTE -> SurveyAiPromoteActivity::class.java
         OnboardingStep.WELCOME_PAGE_1 -> WelcomePage1Activity::class.java
         OnboardingStep.WELCOME_PAGE_2 -> WelcomePage2Activity::class.java
         OnboardingStep.FULLSCREEN_AD -> FullscreenAdActivity::class.java
@@ -217,6 +220,9 @@ class OnboardingFlowCoordinator(
         )
         OnboardingStep.SURVEY_NON_AI_MUSIC_VIDEO -> listOf(
             AdPlacement.NATIVE_ONBOARDING_NON_AI_MUSIC_VIDEO,
+        )
+        OnboardingStep.SURVEY_AI_PROMOTE -> listOf(
+            AdPlacement.NATIVE_ONBOARDING_AI_PROMOTE,
         )
         OnboardingStep.WELCOME_PAGE_1 -> listOf(
             AdPlacement.NATIVE_ONBOARDING_PAGE1,

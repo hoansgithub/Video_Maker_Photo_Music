@@ -579,6 +579,17 @@ class AdPlacementConfigService(
             enabled = true
         )
 
+        // AI Promote survey screen native (bottom of AiPromoteScreen). Single placement, waterfall.
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_ONBOARDING_AI_PROMOTE,
+            layoutName = "native_big_bait_reversed",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/5186077755",  // Pro_AIMV_NA_high_AI Promo OB
+                "ca-app-pub-7121075950716954/1246832745"   // Pro_AIMV_NA_all_AI Promo OB
+            ),
+            enabled = true
+        )
+
         // Content-filter / age screen native (shown until first selection). Single placement, waterfall.
         registerNativePlacement(
             placementId = AdPlacement.NATIVE_ONBOARDING_CONTENT_EXCLUSIVE,

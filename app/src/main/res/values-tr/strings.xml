@@ -686,4 +686,5 @@
     <string name="survey_swipe_hint">İpucunu Kaydırma</string>
     <string name="survey_non_ai_lyric_title">Şarkı Sözü Müzik Videoları</string>
     <string name="survey_non_ai_music_video_title">Kendine özgü video stilini oluştur</string>
+    <string name="survey_ai_promote_title">Artı Birçok Yapay Zeka Özelliği</string>
 </resources>

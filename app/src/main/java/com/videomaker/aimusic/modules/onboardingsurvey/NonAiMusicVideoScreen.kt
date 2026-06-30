@@ -16,7 +16,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import com.videomaker.aimusic.core.analytics.Analytics
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -54,6 +56,10 @@ import org.koin.compose.koinInject
 fun NonAiMusicVideoScreen(
     modifier: Modifier = Modifier
 ) {
+    LaunchedEffect(Unit) {
+        Analytics.track(OnboardingSurveyAnalytics.EVENT_NON_AI_MUSIC_VIDEO_RENDER)
+    }
+
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val isPreview = LocalInspectionMode.current

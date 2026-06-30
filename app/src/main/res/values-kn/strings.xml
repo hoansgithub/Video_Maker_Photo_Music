@@ -691,4 +691,5 @@
     <string name="survey_swipe_hint">ಸ್ವೈಪ್ ಸುಳಿವು</string>
     <string name="survey_non_ai_lyric_title">ಲಿರಿಕ್ ಮ್ಯೂಸಿಕ್ ವೀಡಿಯೊಗಳು</string>
     <string name="survey_non_ai_music_video_title">ನಿಮ್ಮ ವಿಶಿಷ್ಟ ವೀಡಿಯೊ ಶೈಲಿಯನ್ನು ರಚಿಸಿ</string>
+    <string name="survey_ai_promote_title">ಜೊತೆಗೆ ಅನೇಕ AI ವೈಶಿಷ್ಟ್ಯಗಳು</string>
 </resources>
