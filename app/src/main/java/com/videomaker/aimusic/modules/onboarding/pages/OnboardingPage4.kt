@@ -79,7 +79,6 @@ fun FeatureSurveyPage(
     selectedFeatures: List<String>,
     onFeatureToggle: (String) -> Unit,
     modifier: Modifier = Modifier,
-    bottomPaddingDp: androidx.compose.ui.unit.Dp = 0.dp  // Dynamic bottom padding from parent
 ) {
     val cardAnimations = remember {
         featureItems.map { Pair(Animatable(0f), Animatable(32f)) }
@@ -103,7 +102,7 @@ fun FeatureSurveyPage(
             .padding(horizontal = 24.dp)
             .padding(
                 top = 26.dp,
-                bottom = bottomPaddingDp + 24.dp  // Dynamic padding based on measured bottom section height
+                bottom = 104.dp  // Constant padding to clear bottom section CTA button
             ),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {

@@ -25,6 +25,15 @@ class OnboardingSurveyViewModel : ViewModel() {
     private val _selectedDanceSwap = MutableStateFlow<Set<String>>(emptySet())
     val selectedDanceSwap: StateFlow<Set<String>> = _selectedDanceSwap.asStateFlow()
 
+    // Non-AI screens have no user selection (analytics-only): always empty.
+    private val _selectedNonAiLyric = MutableStateFlow<Set<String>>(emptySet())
+    val selectedNonAiLyric: StateFlow<Set<String>> = _selectedNonAiLyric.asStateFlow()
+
+    private val _selectedNonAiMusicVideo = MutableStateFlow<Set<String>>(emptySet())
+    val selectedNonAiMusicVideo: StateFlow<Set<String>> = _selectedNonAiMusicVideo.asStateFlow()
+
+    private val autoSelectedIds = mutableSetOf<String>()
+
     fun selectAiLevel(id: String) { _selectedAiLevel.value = setOf(id) }
 
     fun selectedFlow(step: OnboardingSurveyStep): StateFlow<Set<String>> = when (step) {
@@ -33,6 +42,8 @@ class OnboardingSurveyViewModel : ViewModel() {
         OnboardingSurveyStep.AI_LEVEL -> selectedAiLevel
         OnboardingSurveyStep.AI_FACE_SWAP -> selectedFaceSwap
         OnboardingSurveyStep.AI_DANCE -> selectedDanceSwap
+        OnboardingSurveyStep.NON_AI_LYRIC -> selectedNonAiLyric
+        OnboardingSurveyStep.NON_AI_MUSIC_VIDEO -> selectedNonAiMusicVideo
     }
 
     /** Toggles selection. Returns true if [id] is now selected (used to decide select-tracking / ad reload). */
@@ -47,12 +58,22 @@ class OnboardingSurveyViewModel : ViewModel() {
             OnboardingSurveyStep.AI_LEVEL -> _selectedFeatures // unreachable (handled above)
             OnboardingSurveyStep.AI_FACE_SWAP -> _selectedFaceSwap
             OnboardingSurveyStep.AI_DANCE -> _selectedDanceSwap
+            OnboardingSurveyStep.NON_AI_LYRIC -> _selectedNonAiLyric
+            OnboardingSurveyStep.NON_AI_MUSIC_VIDEO -> _selectedNonAiMusicVideo
         }
-        var nowSelected = false
-        flow.update { current ->
-            nowSelected = id !in current
-            if (nowSelected) current + id else current - id
+        val current = flow.value
+        var nextSelection = current
+        val autoSelectedInCurrent = current.filter { it in autoSelectedIds }
+        if (autoSelectedInCurrent.isNotEmpty()) {
+            if (id in autoSelectedIds) {
+                autoSelectedIds.remove(id)
+            } else {
+                nextSelection = current - autoSelectedInCurrent.toSet()
+                autoSelectedIds.removeAll(autoSelectedInCurrent.toSet())
+            }
         }
+        val nowSelected = id !in nextSelection
+        flow.value = if (nowSelected) nextSelection + id else nextSelection - id
         return nowSelected
     }
 
@@ -66,12 +87,11 @@ class OnboardingSurveyViewModel : ViewModel() {
             OnboardingSurveyStep.PLATFORM -> _selectedPlatforms
             else -> return false
         }
-        var didSelect = false
-        flow.update { current ->
-            if (current.isNotEmpty()) current
-            else { didSelect = true; setOf(firstId) }
-        }
-        return didSelect
+        if (flow.value.isNotEmpty()) return false
+        flow.value = setOf(firstId)
+        autoSelectedIds.add(firstId)
+        return true
     }
 
 }
+

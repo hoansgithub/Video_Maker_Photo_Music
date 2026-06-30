@@ -535,6 +535,50 @@ class AdPlacementConfigService(
             enabled = true
         )
 
+        // AI Face Swap survey screen native (bottom of FaceSwapScreen). Single placement, waterfall.
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_ONBOARDING_FACE_SWAP,
+            layoutName = "native_big_bait_reversed",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/5569221134",  // Pro_AIMV_NA_high_face swap OB
+                "ca-app-pub-7121075950716954/2943057798"   // Pro_AIMV_NA_all_face swap OB
+            ),
+            enabled = true
+        )
+
+        // AI Dance survey screen native (bottom of DanceSwapScreen). Single placement, waterfall.
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_ONBOARDING_AI_DANCE,
+            layoutName = "native_big_bait_reversed",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/9020546838",  // Pro_AIMV_NA_high_AI dance OB
+                "ca-app-pub-7121075950716954/1869649279"   // Pro_AIMV_NA_all_AI dance OB
+            ),
+            enabled = true
+        )
+
+        // Non-AI Lyric survey screen native (bottom of NonAiLyricScreen). Single placement, waterfall.
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_ONBOARDING_NON_AI_LYRIC,
+            layoutName = "native_big_bait_reversed",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/5702485441",  // Pro_AIMV_NA_high_lyric OB
+                "ca-app-pub-7121075950716954/6690731111"   // Pro_AIMV_NA_all_lyric OB
+            ),
+            enabled = true
+        )
+
+        // Non-AI Music Video survey screen native (bottom of NonAiMusicVideoScreen). Single placement, waterfall.
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_ONBOARDING_NON_AI_MUSIC_VIDEO,
+            layoutName = "native_big_bait_reversed",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/2751486100",  // Pro_AIMV_NA_high_unique style OB
+                "ca-app-pub-7121075950716954/9125322767"   // Pro_AIMV_NA_all_unique style OB
+            ),
+            enabled = true
+        )
+
         // Content-filter / age screen native (shown until first selection). Single placement, waterfall.
         registerNativePlacement(
             placementId = AdPlacement.NATIVE_ONBOARDING_CONTENT_EXCLUSIVE,

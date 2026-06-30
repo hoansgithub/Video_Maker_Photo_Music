@@ -86,7 +86,6 @@ class RightClipShape(private val fraction: Float) : Shape {
 
 @Composable
 fun FaceSwapScreen(
-    bottomPaddingDp: Dp,
     modifier: Modifier = Modifier
 ) {
     var isUserInteracting by remember { mutableStateOf(false) }
@@ -116,7 +115,7 @@ fun FaceSwapScreen(
         modifier = modifier
             .fillMaxSize()
             .background(OnboardingSurveyBackground)
-            .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = bottomPaddingDp + 12.dp)
+            .padding(start = 16.dp, end = 16.dp, top = 16.dp)
     ) {
         // Rounded card container holding the interactive split image slider
         Box(
@@ -227,7 +226,7 @@ fun FaceSwapScreen(
             // 5. Swipe hand guide (visible if not interacted yet)
             if (!isUserInteracting) {
                 Image(
-                    painter = painterResource(R.drawable.ic_hand_swipe),
+                    painter = painterResource(R.drawable.ic_hand),
                     contentDescription = stringResource(R.string.survey_swipe_hint),
                     modifier = Modifier
                         .size(64.dp)
@@ -283,8 +282,6 @@ fun FaceSwapScreen(
 @Composable
 private fun FaceSwapScreenPreview() {
     VideoMakerTheme {
-        FaceSwapScreen(
-            bottomPaddingDp = 100.dp
-        )
+        FaceSwapScreen()
     }
 }

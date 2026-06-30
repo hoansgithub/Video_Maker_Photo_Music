@@ -1070,6 +1070,18 @@ object AdPlacement {
      */
     const val NATIVE_ONBOARDING_AI_DANCE = "ad_native_onboarding_ai_dance"
 
+    /**
+     * Native ad shown at bottom of Non-AI Lyric survey screen.
+     * RC key: ad_native_onboarding_non_ai_lyric
+     */
+    const val NATIVE_ONBOARDING_NON_AI_LYRIC = "ad_native_onboarding_non_ai_lyric"
+
+    /**
+     * Native ad shown at bottom of Non-AI Music Video survey screen.
+     * RC key: ad_native_onboarding_non_ai_music_video
+     */
+    const val NATIVE_ONBOARDING_NON_AI_MUSIC_VIDEO = "ad_native_onboarding_non_ai_music_video"
+
 
     /**
      * Rewarded ad shown when user wants to download video to gallery.
@@ -1381,6 +1393,9 @@ object AdPlacement {
         NATIVE_ONBOARDING_MEDIA_PRIVACY,
         NATIVE_ONBOARDING_MEDIA_PRIVACY_ALT,
         NATIVE_ONBOARDING_FACE_SWAP,
+        NATIVE_ONBOARDING_AI_DANCE,
+        NATIVE_ONBOARDING_NON_AI_LYRIC,
+        NATIVE_ONBOARDING_NON_AI_MUSIC_VIDEO,
         NATIVE_ONBOARDING_SELECT,
         NATIVE_ONBOARDING_SELECT_ALT,
         NATIVE_ONBOARDING_SOCIAL,

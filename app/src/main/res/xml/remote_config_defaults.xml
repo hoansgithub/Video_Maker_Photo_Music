@@ -34,6 +34,18 @@
     <key>onboarding_ai_face_swap_enabled</key>
     <value>true</value>
   </entry>
+  <entry>
+    <key>onboarding_ai_dance_enabled</key>
+    <value>true</value>
+  </entry>
+  <entry>
+    <key>onboarding_non_ai_lyric_enabled</key>
+    <value>true</value>
+  </entry>
+  <entry>
+    <key>onboarding_non_ai_music_video_enabled</key>
+    <value>true</value>
+  </entry>
 
   <!-- Notification Config -->
   <entry>
@@ -168,7 +180,19 @@
   </entry>
   <entry>
     <key>ad_native_onboarding_face_swap</key>
-    <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/1923991765","enabled":true},{"id":"ca-app-pub-7121075950716954/1559057460","enabled":true}],"extras":{"layout":"native_big_bait_reversed","click_reload_enabled":true,"click_reload_max_count":10}}</value>
+    <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/5569221134","enabled":true},{"id":"ca-app-pub-7121075950716954/2943057798","enabled":true}],"extras":{"layout":"native_big_bait_reversed","click_reload_enabled":true,"click_reload_max_count":10}}</value>
+  </entry>
+  <entry>
+    <key>ad_native_onboarding_ai_dance</key>
+    <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/9020546838","enabled":true},{"id":"ca-app-pub-7121075950716954/1869649279","enabled":true}],"extras":{"layout":"native_big_bait_reversed","click_reload_enabled":true,"click_reload_max_count":10}}</value>
+  </entry>
+  <entry>
+    <key>ad_native_onboarding_non_ai_lyric</key>
+    <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/5702485441","enabled":true},{"id":"ca-app-pub-7121075950716954/6690731111","enabled":true}],"extras":{"layout":"native_big_bait_reversed","click_reload_enabled":true,"click_reload_max_count":10}}</value>
+  </entry>
+  <entry>
+    <key>ad_native_onboarding_non_ai_music_video</key>
+    <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/2751486100","enabled":true},{"id":"ca-app-pub-7121075950716954/9125322767","enabled":true}],"extras":{"layout":"native_big_bait_reversed","click_reload_enabled":true,"click_reload_max_count":10}}</value>
   </entry>
   <entry>
     <key>ad_native_onboarding_fullscreen</key>

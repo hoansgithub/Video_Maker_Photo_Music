@@ -57,9 +57,7 @@ class SurveyFaceSwapActivity : BaseOnboardingActivity() {
             }
 
             Box(Modifier.fillMaxSize().statusBarsPadding()) {
-                FaceSwapScreen(
-                    bottomPaddingDp = bottomPadding,
-                )
+                FaceSwapScreen()
 
                 Box(
                     modifier = Modifier
