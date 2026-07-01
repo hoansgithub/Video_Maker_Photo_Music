@@ -6,12 +6,10 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -27,7 +25,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.videomaker.aimusic.R
@@ -35,6 +33,7 @@ import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import com.videomaker.aimusic.ui.theme.Neutral_N600
 import com.videomaker.aimusic.ui.theme.Neutral_N900
 import com.videomaker.aimusic.ui.theme.Primary
+import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 
 @Composable
 fun MediaPrivacyScreen(selectedId: String, onSelect: (String) -> Unit) {
@@ -110,17 +109,28 @@ fun MediaPrivacyScreen(selectedId: String, onSelect: (String) -> Unit) {
                     if (item.id == "private_mode") {
                         Text(
                             text = "RECOMMENDED",
-                            color = if (item.id == selectedId) Neutral_N900 else Neutral_N600,
+                            color = Neutral_N900,
                             fontSize = 9.sp,
                             fontWeight = FontWeight.W800,
                             modifier = Modifier
                                 .align(Alignment.TopEnd)
-                                .background(if (item.id == selectedId) Primary else Color(0xFF404040), RoundedCornerShape(bottomStart = 22.dp, topEnd = 22.dp))
+                                .background(Primary, RoundedCornerShape(bottomStart = 22.dp, topEnd = 22.dp))
                                 .padding(end = 24.dp, start = 16.dp, top = 4.dp, bottom = 2.dp),
                         )
                     }
                 }
             }
         }
+    }
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFF1E1E1E)
+@Composable
+private fun MediaPrivacyScreenPreview() {
+    VideoMakerTheme {
+        MediaPrivacyScreen(
+            selectedId = "private_mode",
+            onSelect = {}
+        )
     }
 }

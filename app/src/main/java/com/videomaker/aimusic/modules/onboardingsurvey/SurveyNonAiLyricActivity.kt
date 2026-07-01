@@ -1,11 +1,15 @@
 package com.videomaker.aimusic.modules.onboardingsurvey
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -14,10 +18,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.ui.BaseOnboardingActivity
@@ -44,6 +54,8 @@ class SurveyNonAiLyricActivity : BaseOnboardingActivity() {
             Analytics.track(name = OnboardingSurveyAnalytics.EVENT_NON_AI_LYRIC_RENDER)
         }
 
+        var bottomContainerTopPx by remember { mutableStateOf(0f) }
+
         val stepContent: @Composable (
             onUserInteraction: () -> Unit,
             bottomPadding: Dp,
@@ -57,16 +69,15 @@ class SurveyNonAiLyricActivity : BaseOnboardingActivity() {
             }
 
             Box(Modifier.fillMaxSize().statusBarsPadding()) {
-                NonAiLyricScreen()
+                NonAiLyricScreen(bottomContainerTopPx = bottomContainerTopPx)
 
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .align(Alignment.BottomEnd)
-                        .then(
-                            if (bottomPadding == 0.dp) Modifier.navigationBarsPadding()
-                            else Modifier
-                        )
+                        .align(Alignment.BottomCenter)
+                        .onGloballyPositioned { coordinates ->
+                            bottomContainerTopPx = coordinates.positionInParent().y
+                        }
                         .clickableSingle { }
                 ) {
                     LocalAsyncImage(
@@ -75,23 +86,45 @@ class SurveyNonAiLyricActivity : BaseOnboardingActivity() {
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.matchParentSize(),
                     )
-                    Box(
+                    Column(
                         modifier = Modifier
-                            .align(Alignment.BottomEnd)
-                            .padding(top = 10.dp, bottom = 12.dp)
+                            .fillMaxWidth()
+                            .then(
+                                if (bottomPadding == 0.dp) Modifier.navigationBarsPadding()
+                                else Modifier
+                            )
+                            .padding(top = 16.dp, bottom = 12.dp)
                     ) {
-                        OnboardingCtaButton(
-                            text = stringResource(R.string.onboarding_next),
-                            onClick = {
-                                Analytics.track(
-                                    name = OnboardingSurveyAnalytics.EVENT_NON_AI_LYRIC_NEXT,
-                                )
-                                navigateToNextStep()
-                            },
-                            enabled = buttonEnabled && delayedEnabled,
-                            color = Primary,
-                            icon = R.drawable.ic_right_arrow,
+                        Text(
+                            text = stringResource(R.string.survey_non_ai_lyric_title),
+                            color = Color.White,
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center,
+                            lineHeight = 30.sp,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 24.dp)
                         )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.End)
+                                .padding(end = 16.dp)
+                        ) {
+                            OnboardingCtaButton(
+                                text = stringResource(R.string.onboarding_next),
+                                onClick = {
+                                    Analytics.track(
+                                        name = OnboardingSurveyAnalytics.EVENT_NON_AI_LYRIC_NEXT,
+                                    )
+                                    navigateToNextStep()
+                                },
+                                enabled = buttonEnabled && delayedEnabled,
+                                color = Primary,
+                                icon = R.drawable.ic_right_arrow,
+                            )
+                        }
                     }
                 }
             }

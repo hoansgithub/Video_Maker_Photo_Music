@@ -132,10 +132,6 @@ class SurveyPlatformActivity : BaseOnboardingActivity() {
                     modifier = Modifier
                         .fillMaxWidth()
                         .align(Alignment.BottomEnd)
-                        .then(
-                            if (bottomSectionHeight == 0) Modifier.navigationBarsPadding()
-                            else Modifier
-                        )
                         .clickableSingle { }
                 ) {
                     LocalAsyncImage(
@@ -147,6 +143,10 @@ class SurveyPlatformActivity : BaseOnboardingActivity() {
                     Box(
                         modifier = Modifier
                             .align(Alignment.BottomEnd)
+                            .then(
+                                if (bottomSectionHeight == 0) Modifier.navigationBarsPadding()
+                                else Modifier
+                            )
                             .padding(top = 10.dp, bottom = 12.dp)
                     ) {
                         OnboardingCtaButton(

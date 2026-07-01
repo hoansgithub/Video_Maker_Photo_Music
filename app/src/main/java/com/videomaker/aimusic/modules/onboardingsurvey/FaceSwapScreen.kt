@@ -9,16 +9,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -32,7 +28,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Path
@@ -42,20 +37,15 @@ import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.ui.theme.OnboardingSurveyBackground
 import com.videomaker.aimusic.ui.theme.SliderChevronColor
@@ -84,13 +74,13 @@ class RightClipShape(private val fraction: Float) : Shape {
 
 @Composable
 fun FaceSwapScreen(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    bottomContainerTopPx: Float = 0f
 ) {
     var isUserInteracting by remember { mutableStateOf(false) }
     val anim = remember { Animatable(0.5f) }
     val scope = rememberCoroutineScope()
     var widthPx by remember { mutableStateOf(1f) }
-    var titleTopPx by remember { mutableStateOf(0f) }
 
     LaunchedEffect(Unit) {
         com.videomaker.aimusic.core.analytics.Analytics.track(OnboardingSurveyAnalytics.EVENT_FACE_SWAP_RENDER)
@@ -113,7 +103,6 @@ fun FaceSwapScreen(
         modifier = modifier
             .fillMaxSize()
             .background(OnboardingSurveyBackground)
-            .padding(start = 16.dp, end = 16.dp, top = 16.dp)
     ) {
         // Rounded card container holding the interactive split image slider
         Box(
@@ -164,8 +153,12 @@ fun FaceSwapScreen(
             )
 
             val density = LocalDensity.current
-            val lineLengthDp = remember(titleTopPx) {
-                with(density) { titleTopPx.toDp() }
+            val lineLengthDp = remember(bottomContainerTopPx) {
+                if (bottomContainerTopPx > 0f) {
+                    with(density) { bottomContainerTopPx.toDp() }
+                } else {
+                    0.dp
+                }
             }
 
             // 3. Vertical divider line (White color) - stops at the top of AI Face Swap text
@@ -235,40 +228,6 @@ fun FaceSwapScreen(
                                     .roundToInt() // Positioned slightly below the center handle
                             )
                         }
-                )
-            }
-
-            // 6. Black gradient overlay at the bottom for readability of title
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp)
-                    .align(Alignment.BottomCenter)
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.9f))
-                        )
-                    )
-            )
-
-            // 7. Title in stacked arrangement
-            Column(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .padding(bottom = 80.dp)
-                    .onGloballyPositioned { coordinates ->
-                        titleTopPx = coordinates.positionInParent().y
-                    },
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                // Centered Title "AI Face Swap"
-                Text(
-                    text = stringResource(R.string.survey_face_swap_title),
-                    color = Color.White,
-                    fontSize = 32.sp,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center
                 )
             }
         }

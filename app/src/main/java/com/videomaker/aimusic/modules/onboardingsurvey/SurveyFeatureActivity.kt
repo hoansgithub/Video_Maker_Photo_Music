@@ -190,10 +190,6 @@ class SurveyFeatureActivity : BaseOnboardingActivity() {
                     modifier = Modifier
                         .fillMaxWidth()
                         .align(Alignment.BottomEnd)
-                        .then(
-                            if (bottomPadding == 0.dp) Modifier.navigationBarsPadding()
-                            else Modifier
-                        )
                         .clickableSingle { }
                 ) {
                     LocalAsyncImage(
@@ -205,6 +201,10 @@ class SurveyFeatureActivity : BaseOnboardingActivity() {
                     Box(
                         modifier = Modifier
                             .align(Alignment.BottomEnd)
+                            .then(
+                                if (bottomPadding == 0.dp) Modifier.navigationBarsPadding()
+                                else Modifier
+                            )
                             .padding(top = 10.dp, bottom = 12.dp)
                             .onGloballyPositioned { coords ->
                                 val topLeft = coords.positionInRoot()
