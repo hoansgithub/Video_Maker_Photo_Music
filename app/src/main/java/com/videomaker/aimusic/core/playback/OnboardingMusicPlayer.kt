@@ -61,7 +61,10 @@ class OnboardingMusicPlayer(
     // State flags (main-thread confined).
     private var released = false
     private var playRequested = false
-    private var adPaused = false
+    // Reference count of callers currently requesting silence (ad step + video survey screens).
+    // Counted (not a boolean) so that during an Activity transition the incoming screen's pause
+    // is not undone by the outgoing screen's resume firing late on dispose.
+    private var pauseRequestCount = 0
     private var appBackgrounded = false
 
     /**
@@ -89,15 +92,15 @@ class OnboardingMusicPlayer(
         applyPlaybackState()
     }
 
-    /** Pause while the fullscreen onboarding ad step is visible. */
+    /** Pause while a fullscreen ad step or a video survey screen is visible. Reference-counted. */
     fun pauseForAd() {
-        adPaused = true
+        pauseRequestCount++
         applyPlaybackState()
     }
 
-    /** Resume after leaving the fullscreen onboarding ad step (unless backgrounded/stopped). */
+    /** Release one pause request; resumes only when no caller still wants silence. */
     fun resumeAfterAd() {
-        adPaused = false
+        pauseRequestCount = (pauseRequestCount - 1).coerceAtLeast(0)
         applyPlaybackState()
     }
 
@@ -149,7 +152,7 @@ class OnboardingMusicPlayer(
     /** Plays or pauses the (prepared) engine according to the current desired state. */
     private fun applyPlaybackState() {
         val e = engine ?: return
-        if (playRequested && !adPaused && !appBackgrounded && !released) e.play() else e.pause()
+        if (playRequested && pauseRequestCount == 0 && !appBackgrounded && !released) e.play() else e.pause()
     }
 }
 

@@ -49,11 +49,13 @@ import com.videomaker.aimusic.core.popup.TrendingPopupState
 import com.videomaker.aimusic.core.popup.TrendingPopupTab
 import com.videomaker.aimusic.di.AssetPickerViewModelFactory
 import com.videomaker.aimusic.di.EditorViewModelFactory
+import com.videomaker.aimusic.di.AiTabViewModelFactory
 import com.videomaker.aimusic.di.ExportViewModelFactory
 import com.videomaker.aimusic.di.GalleryViewModelFactory
 import com.videomaker.aimusic.di.ProjectsViewModelFactory
 import com.videomaker.aimusic.di.SongsViewModelFactory
 import com.videomaker.aimusic.di.SuggestedSongsListViewModelFactory
+import com.videomaker.aimusic.di.TemplateAIListViewModelFactory
 import com.videomaker.aimusic.di.TemplateListViewModelFactory
 import com.videomaker.aimusic.di.TemplatePreviewerViewModelFactory
 import com.videomaker.aimusic.di.UninstallViewModelFactory
@@ -64,6 +66,7 @@ import com.videomaker.aimusic.modules.editor.EditorViewModel
 import com.videomaker.aimusic.modules.export.ExportScreen
 import com.videomaker.aimusic.modules.export.ExportViewModel
 import com.videomaker.aimusic.modules.gallery.GalleryViewModel
+import com.videomaker.aimusic.modules.home.AiTabViewModel
 import com.videomaker.aimusic.modules.home.HomeScreen
 import com.videomaker.aimusic.modules.language.LanguageSelectionScreen
 import com.videomaker.aimusic.modules.language.domain.usecase.ApplyLanguageUseCase
@@ -81,6 +84,8 @@ import com.videomaker.aimusic.modules.settings.SettingsScreen
 import com.videomaker.aimusic.modules.settings.UninstallScreen
 import com.videomaker.aimusic.modules.settings.UninstallViewModel
 import com.videomaker.aimusic.modules.songs.SongsViewModel
+import com.videomaker.aimusic.modules.templateailist.TemplateAIListScreen
+import com.videomaker.aimusic.modules.templateailist.TemplateAIListViewModel
 import com.videomaker.aimusic.modules.templatelist.TemplateListScreen
 import com.videomaker.aimusic.modules.templatelist.TemplateListViewModel
 import com.videomaker.aimusic.modules.templatepreviewer.TemplatePreviewerScreen
@@ -423,6 +428,11 @@ fun AppNavigation(
                     key = "songs",
                     factory = createSafeViewModelFactory { songsFactory.create() }
                 )
+                val aiFactory = koinInject<AiTabViewModelFactory>()
+                val aiViewModel: AiTabViewModel = viewModel(
+                    key = "ai",
+                    factory = createSafeViewModelFactory { aiFactory.create() }
+                )
                 val homeAdTracker = koinInject<com.videomaker.aimusic.core.ads.HomeAdTracker>()
 
                 // Auto-open MusicPlayerBottomSheet when launched from widget song tap
@@ -440,6 +450,7 @@ fun AppNavigation(
                 HomeScreen(
                     galleryViewModel = galleryViewModel,
                     songsViewModel = songsViewModel,
+                    aiViewModel = aiViewModel,
                     initialTab = route.initialTab,
                     onCreateClick = {
                         homeAdTracker.onNavigateAway()
@@ -447,6 +458,15 @@ fun AppNavigation(
                             templateId = "",
                             imageUris = emptyList(),
                             sourceLocation = AnalyticsEvent.Value.Location.GALLERY
+                        ))
+                    },
+                    onAiCreateClick = {
+                        homeAdTracker.onNavigateAway()
+                        backStack.add(AppRoute.TemplatePreviewer(
+                            templateId = "",
+                            imageUris = emptyList(),
+                            sourceLocation = AnalyticsEvent.Value.Location.AI,
+                            isAiFlow = true
                         ))
                     },
                     onSettingsClick = { location ->
@@ -475,13 +495,30 @@ fun AppNavigation(
                         backStack.add(AppRoute.TemplatePreviewer(
                             templateId = templateId,
                             imageUris = emptyList(), // Sample images mode
-                            sourceLocation = sourceLocation
+                            sourceLocation = sourceLocation,
+                            isAiFlow = sourceLocation == AnalyticsEvent.Value.Location.AI
                         ))
                     },
                     onNavigateToAllTemplates = { selectedVibeTagId ->
                         homeAdTracker.onNavigateAway()
                         // Navigate to template list with selected tag filter
                         backStack.add(AppRoute.TemplateList(selectedVibeTagId))
+                    },
+                    onNavigateToAiTemplateDetail = { templateId, vibeTagId ->
+                        homeAdTracker.onNavigateAway()
+                        // AI flow: swipe browses this category first, then the other AI categories.
+                        backStack.add(AppRoute.TemplatePreviewer(
+                            templateId = templateId,
+                            imageUris = emptyList(),
+                            sourceLocation = AnalyticsEvent.Value.Location.AI,
+                            isAiFlow = true,
+                            aiCategoryTagId = vibeTagId
+                        ))
+                    },
+                    onNavigateToAiTemplates = { selectedVibeTagId ->
+                        homeAdTracker.onNavigateAway()
+                        // Dedicated AI list with fixed tabs; focuses the tab for the clicked section
+                        backStack.add(AppRoute.TemplateAIList(selectedVibeTagId))
                     },
                     onNavigateToAssetPicker = { songId ->
                         homeAdTracker.onNavigateAway()
@@ -628,7 +665,7 @@ fun AppNavigation(
             entry<AppRoute.AssetPicker> { route ->
                 val factory: AssetPickerViewModelFactory = koinInject()
                 val pickerViewModel: AssetPickerViewModel = viewModel(
-                    key = "asset_picker_${route.projectId}_${route.templateId}_${route.overrideSongId}_${route.aspectRatio}_${route.sourceLocation}_${route.resumeDraftId}_${route.selectedAssetUris.size}_${route.isEditingMode}",
+                    key = "asset_picker_${route.projectId}_${route.templateId}_${route.overrideSongId}_${route.aspectRatio}_${route.sourceLocation}_${route.resumeDraftId}_${route.selectedAssetUris.size}_${route.isEditingMode}_${route.isAiFlow}",
                     factory = createSafeViewModelFactory {
                         factory.create(
                             projectId = route.projectId,
@@ -639,18 +676,20 @@ fun AppNavigation(
                             selectedAssetUris = route.selectedAssetUris,
                             isEditingMode = route.isEditingMode,
                             durationSongId = route.durationSongId,
-                            durationTrimStartMs = route.durationTrimStartMs
+                            durationTrimStartMs = route.durationTrimStartMs,
+                            isAiFlow = route.isAiFlow
                         )
                     }
                 )
                 AssetPickerScreen(
                     viewModel = pickerViewModel,
+                    isAiFlow = route.isAiFlow,
                     onNavigateToEditor = { projectId ->
                         backStack.apply {
                             val home = firstOrNull { it is AppRoute.Home } ?: AppRoute.Home()
                             clear()
                             add(home)
-                            add(AppRoute.Editor(projectId))
+                            add(AppRoute.Editor(projectId, isAiFlow = route.isAiFlow))
                         }
                     },
                     onNavigateToEditorWithData = { initialData ->
@@ -659,7 +698,7 @@ fun AppNavigation(
                             val home = firstOrNull { it is AppRoute.Home } ?: AppRoute.Home()
                             clear()
                             add(home)
-                            add(AppRoute.Editor(projectId = null, initialData = initialData))
+                            add(AppRoute.Editor(projectId = null, initialData = initialData, isAiFlow = route.isAiFlow))
                         }
                     },
                     onNavigateBack = { backStack.safeRemoveLast() },
@@ -691,12 +730,15 @@ fun AppNavigation(
                 )
                 EditorScreen(
                     viewModel = editorViewModel,
+                    isAiFlow = route.isAiFlow,
                     // musicPickerViewModelFactory = musicPickerFactory,
                     onNavigateBack = { backStack.safeRemoveLast() },
                     onNavigateToHome = {
                         backStack.apply {
                             clear()
-                            add(AppRoute.Home(initialTab = 0)) // Tab 0 = Gallery (home gallery)
+                            // Fresh navId forces a brand-new Home entry so the pager honors
+                            // initialTab = 0 (Gallery) instead of restoring the last-viewed tab.
+                            add(AppRoute.Home(initialTab = 0, navId = System.currentTimeMillis()))
                         }
                     },
                     onNavigateToPreview = { projectId ->
@@ -779,15 +821,40 @@ fun AppNavigation(
                 )
             }
 
+            entry<AppRoute.TemplateAIList> { route ->
+                val factory: TemplateAIListViewModelFactory = koinInject()
+                val viewModel: TemplateAIListViewModel = viewModel(
+                    key = "template_ai_list_${route.selectedVibeTagId}",
+                    factory = createSafeViewModelFactory {
+                        factory.create(route.selectedVibeTagId)
+                    }
+                )
+                TemplateAIListScreen(
+                    viewModel = viewModel,
+                    onNavigateBack = { backStack.safeRemoveLast() },
+                    onNavigateToTemplatePreviewer = { templateId, vibeTagId ->
+                        backStack.add(AppRoute.TemplatePreviewer(
+                            templateId = templateId,
+                            imageUris = emptyList(),
+                            sourceLocation = AnalyticsEvent.Value.Location.AI,
+                            isAiFlow = true,
+                            aiCategoryTagId = vibeTagId
+                        ))
+                    }
+                )
+            }
+
             entry<AppRoute.TemplatePreviewer> { route ->
                 val factory: TemplatePreviewerViewModelFactory = koinInject()
                 val viewModel: TemplatePreviewerViewModel = viewModel(
-                    key = "template_previewer_${route.templateId}_${route.overrideSongId}_${route.sourceLocation}",
+                    key = "template_previewer_${route.templateId}_${route.overrideSongId}_${route.sourceLocation}_${route.isAiFlow}_${route.aiCategoryTagId}",
                     factory = createSafeViewModelFactory {
                         factory.create(
                             templateId = route.templateId,
                             imageUris = route.imageUris,
-                            overrideSongId = route.overrideSongId
+                            overrideSongId = route.overrideSongId,
+                            isAiFlow = route.isAiFlow,
+                            aiCategoryTagId = route.aiCategoryTagId
                         )
                     }
                 )
@@ -802,7 +869,8 @@ fun AppNavigation(
                             templateId = template.id,
                             overrideSongId = overrideSongId,
                             aspectRatio = aspectRatio,
-                            sourceLocation = route.sourceLocation
+                            sourceLocation = route.sourceLocation,
+                            isAiFlow = route.isAiFlow
                         ))
                     },
                     onNavigateBack = { backStack.safeRemoveLast() }

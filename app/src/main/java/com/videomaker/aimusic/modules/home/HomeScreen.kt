@@ -63,6 +63,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -91,6 +92,7 @@ import com.videomaker.aimusic.media.audio.AudioPreviewCache
 import com.videomaker.aimusic.modules.gallery.GalleryScreen
 import com.videomaker.aimusic.modules.gallery.GalleryUiState
 import com.videomaker.aimusic.modules.gallery.GalleryViewModel
+import com.videomaker.aimusic.modules.home.components.AiTabContent
 import com.videomaker.aimusic.modules.home.components.HomeFabOverlay
 import com.videomaker.aimusic.modules.songs.MusicPlayerBottomSheet
 import com.videomaker.aimusic.modules.songs.SongsScreen
@@ -139,15 +141,19 @@ private val ZeroProgress: () -> Float = { 0f }
 fun HomeScreen(
     galleryViewModel: GalleryViewModel,
     songsViewModel: SongsViewModel,
+    aiViewModel: AiTabViewModel,
     initialTab: Int = 0,
     onSettingsClick: (String) -> Unit = {},
     onCreateClick: () -> Unit = {},
+    onAiCreateClick: () -> Unit = {},
     onNavigateToSearch: () -> Unit = {},
     onNavigateToSongSearch: () -> Unit = {},
     onNavigateToSuggestedSongsList: () -> Unit = {},
     onNavigateToWeeklyRankingList: () -> Unit = {},
     onNavigateToTemplateDetail: (String, String?) -> Unit = { _, _ -> },
     onNavigateToAllTemplates: (String?) -> Unit = {},
+    onNavigateToAiTemplates: (String?) -> Unit = {},
+    onNavigateToAiTemplateDetail: (templateId: String, vibeTagId: String) -> Unit = { _, _ -> },
     onNavigateToAssetPicker: (songId: Long) -> Unit = {},
     onNavigateToTemplatePreviewerWithSong: (songId: Long) -> Unit = {}
 ) {
@@ -607,7 +613,21 @@ fun HomeScreen(
                                 onNavigateToTemplatePreviewerWithSong.invoke(it) },
                             onListScroll = { isSongsCtaVisible = false }
                         )
-                        2 -> AiTabContent()
+                        2 -> AiTabContent(
+                            viewModel = aiViewModel,
+                            isShowPaddingBottom = bottomSectionHeight == 0,
+                            topBarHeight = topBarHeight,
+                            onCreateClick = onAiCreateClick,
+                            onSeeAllVideoGenerator = {
+                                onNavigateToAiTemplates(AiTabViewModel.TAG_VIDEO_GENERATOR)
+                            },
+                            onSeeAllDance = {
+                                onNavigateToAiTemplates(AiTabViewModel.TAG_DANCE)
+                            },
+                            onTemplateClick = { template, vibeTagId ->
+                                onNavigateToAiTemplateDetail(template.id, vibeTagId)
+                            }
+                        )
                     }
                 }
 
@@ -789,19 +809,6 @@ fun HomeScreen(
 }
 
 /**
- * AI Tab - placeholder for upcoming AI features. Intentionally empty for now (just the
- * surface background) so content can be added later.
- */
-@Composable
-private fun AiTabContent() {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surface)
-    )
-}
-
-/**
  * Custom Top Bar with tab titles on the left and settings on the right
  */
 @Composable
@@ -885,7 +892,7 @@ private fun HomeTopBar(
                 onSettingsClick(currentLocation)
             }) {
                 Icon(
-                    imageVector = Icons.Default.Settings,
+                    painter = painterResource(R.drawable.ic_menu),
                     contentDescription = stringResource(R.string.settings),
                     tint = MaterialTheme.colorScheme.onSurface
                 )

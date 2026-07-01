@@ -535,6 +535,61 @@ class AdPlacementConfigService(
             enabled = true
         )
 
+        // AI Face Swap survey screen native (bottom of FaceSwapScreen). Single placement, waterfall.
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_ONBOARDING_FACE_SWAP,
+            layoutName = "native_big_bait_reversed",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/5569221134",  // Pro_AIMV_NA_high_face swap OB
+                "ca-app-pub-7121075950716954/2943057798"   // Pro_AIMV_NA_all_face swap OB
+            ),
+            enabled = true
+        )
+
+        // AI Dance survey screen native (bottom of DanceSwapScreen). Single placement, waterfall.
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_ONBOARDING_AI_DANCE,
+            layoutName = "native_big_bait_reversed",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/9020546838",  // Pro_AIMV_NA_high_AI dance OB
+                "ca-app-pub-7121075950716954/1869649279"   // Pro_AIMV_NA_all_AI dance OB
+            ),
+            enabled = true
+        )
+
+        // Non-AI Lyric survey screen native (bottom of NonAiLyricScreen). Single placement, waterfall.
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_ONBOARDING_NON_AI_LYRIC,
+            layoutName = "native_big_bait_reversed",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/5702485441",  // Pro_AIMV_NA_high_lyric OB
+                "ca-app-pub-7121075950716954/6690731111"   // Pro_AIMV_NA_all_lyric OB
+            ),
+            enabled = true
+        )
+
+        // Non-AI Music Video survey screen native (bottom of NonAiMusicVideoScreen). Single placement, waterfall.
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_ONBOARDING_NON_AI_MUSIC_VIDEO,
+            layoutName = "native_big_bait_reversed",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/2751486100",  // Pro_AIMV_NA_high_unique style OB
+                "ca-app-pub-7121075950716954/9125322767"   // Pro_AIMV_NA_all_unique style OB
+            ),
+            enabled = true
+        )
+
+        // AI Promote survey screen native (bottom of AiPromoteScreen). Single placement, waterfall.
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_ONBOARDING_AI_PROMOTE,
+            layoutName = "native_big_bait_reversed",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/5186077755",  // Pro_AIMV_NA_high_AI Promo OB
+                "ca-app-pub-7121075950716954/1246832745"   // Pro_AIMV_NA_all_AI Promo OB
+            ),
+            enabled = true
+        )
+
         // Content-filter / age screen native (shown until first selection). Single placement, waterfall.
         registerNativePlacement(
             placementId = AdPlacement.NATIVE_ONBOARDING_CONTENT_EXCLUSIVE,
@@ -783,6 +838,20 @@ class AdPlacementConfigService(
             enabled = true
         )
 
+        // AI tab "big bait" native ad (Home → AI tab, between the AI Video
+        // Generator and AI Dance sections)
+        // Layout: native_big_bait (large vertical layout with clickbait CTA)
+        // Waterfall: Primary unit → Secondary unit
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_AI_TAB,
+            layoutName = "native_big_bait",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/2799587564",  // Pro_AIMV_NA_high_AI tab
+                "ca-app-pub-7121075950716954/8933751070"   // Pro_AIMV_NA_all_AI tab
+            ),
+            enabled = true
+        )
+
         // Welcome Back screen native ad (shown when reopening app, session >= 2)
         // High-engagement placement for returning users
         // Layout: native_big_bait_reversed
@@ -885,6 +954,25 @@ class AdPlacementConfigService(
             ),
             enabled = true,
             additionalExtras = mapOf("infeed_interval" to 6)
+        )
+
+        // AI template list in-feed native ad (TemplateAIListScreen, all tabs)
+        // First ad after the X-th template (first_position, default 2), then one ad
+        // every Y templates (infeed_interval, default 3)
+        // Layout: native_project_card (blends with template cards, like NATIVE_GALLERY_GRID)
+        // Waterfall: Primary (Pro_AIMV_NA_high_AI tpt) -> Secondary (Pro_AIMV_NA_all_AI tpt)
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_AI_TEMPLATE_GRID,
+            layoutName = "native_project_card",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/7429097719",  // Primary (Pro_AIMV_NA_high_AI tpt)
+                "ca-app-pub-7121075950716954/1360714510"   // Secondary (Pro_AIMV_NA_all_AI tpt)
+            ),
+            enabled = true,
+            additionalExtras = mapOf(
+                "first_position" to 2,
+                "infeed_interval" to 3
+            )
         )
 
         // Featured templates carousel native ad (shown at 2nd position)
@@ -1065,6 +1153,20 @@ class AdPlacementConfigService(
             enabled = true
         )
 
+        // Select Photo (asset picker) Collapsible Native Ad — all flows
+        // Shown at the bottom of the "Select Your Image" screen across all picker flows
+        // Layout: native_big_bait (large size layout)
+        // Waterfall: Primary unit (Pro_AIMV_NAc_high_select photo) -> Secondary (Pro_AIMV_NAc_all_select photo)
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_SELECT_PHOTO_COLLAPSIBLE,
+            layoutName = "native_big_bait",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/4501084417",  // Primary (Pro_AIMV_NAc_high_select photo)
+                "ca-app-pub-7121075950716954/6307587731"   // Secondary (Pro_AIMV_NAc_all_select photo)
+            ),
+            enabled = true
+        )
+
 
         // Template Previewer Banner Native Ad (replaces standard banner)
         // Shown at the bottom of the template previewer screen
@@ -1108,6 +1210,32 @@ class AdPlacementConfigService(
             enabled = true
         )
 
+        // AI generation "system error" screen native ad (AI tab flow) — initial entry
+        // Layout: native_big_bait
+        // Waterfall: Primary (Pro_AIMV_NA_high_SystemError) -> Secondary (Pro_AIMV_NA_all_SystemError)
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_AI_SYSTEM_ERROR,
+            layoutName = "native_big_bait",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/6547260886",  // Primary (Pro_AIMV_NA_high_SystemError)
+                "ca-app-pub-7121075950716954/3681424399"   // Secondary (Pro_AIMV_NA_all_SystemError)
+            ),
+            enabled = true
+        )
+
+        // ALT native ad for the AI "system error" screen — shown/force-reloaded on "Try again"
+        // Layout: native_big_bait
+        // Waterfall: Primary (Pro_AIMV_NA_high_SystemError_alt) -> Secondary (Pro_AIMV_NA_all_SystemError_alt)
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_AI_SYSTEM_ERROR_ALT,
+            layoutName = "native_big_bait",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/2368342725",  // Primary (Pro_AIMV_NA_high_SystemError_alt)
+                "ca-app-pub-7121075950716954/2608015871"   // Secondary (Pro_AIMV_NA_all_SystemError_alt)
+            ),
+            enabled = true
+        )
+
         // Asset Picker Banner Native Ad (replaces standard banner)
         // Shown at the bottom of the asset picker screen
         // Layout: native_small_row (horizontal row) to fit banner dimensions
@@ -1133,6 +1261,19 @@ class AdPlacementConfigService(
             adUnitIds = listOf(
                 "ca-app-pub-7121075950716954/9046582121",  // Primary
                 "ca-app-pub-7121075950716954/1359663791"   // Secondary
+            ),
+            enabled = true
+        )
+
+        // AI Music Video bottom "banner" native ad (AI template list + My Videos screens)
+        // Rendered banner-size via native_small_row (compact horizontal row)
+        // Waterfall: Primary unit → Secondary unit
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_AIMV_BOTTOM,
+            layoutName = "native_small_row",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/1709251222",  // Primary (Pro_AIMV_NA_high_Bottom BN)
+                "ca-app-pub-7121075950716954/3435442033"   // Secondary (Pro_AIMV_NA_all_Bottom BN)
             ),
             enabled = true
         )

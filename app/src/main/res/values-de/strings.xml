@@ -694,4 +694,8 @@
     <string name="survey_before">Vor</string>
     <string name="survey_after">Nach</string>
     <string name="survey_swipe_hint">Swipe-Hinweis</string>
+    <!-- NON_AI (Non-AI survey screens) -->
+    <string name="survey_non_ai_lyric_title">Musikvideos mit Songtexten</string>
+    <string name="survey_non_ai_music_video_title">Erstellen Sie Ihren einzigartigen Videostil</string>
+    <string name="survey_ai_promote_title">Plus viele KI-Funktionen</string>
 </resources>

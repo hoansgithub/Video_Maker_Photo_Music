@@ -689,4 +689,7 @@
     <string name="survey_before">Antes</string>
     <string name="survey_after">Depois</string>
     <string name="survey_swipe_hint">Dica de deslizar</string>
+    <string name="survey_non_ai_lyric_title">Vídeos musicais com letra</string>
+    <string name="survey_non_ai_music_video_title">Crie seu estilo de vídeo único</string>
+    <string name="survey_ai_promote_title">Mais muitos recursos de IA</string>
 </resources>

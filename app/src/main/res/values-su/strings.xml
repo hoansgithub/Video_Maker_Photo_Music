@@ -694,4 +694,7 @@
     <string name="survey_before">Sateuacanna</string>
     <string name="survey_after">Sanggeus</string>
     <string name="survey_swipe_hint">Gesek Pitunjuk</string>
+    <string name="survey_non_ai_lyric_title">Video Musik Lirik</string>
+    <string name="survey_non_ai_music_video_title">Jieun gaya video unik anjeun</string>
+    <string name="survey_ai_promote_title">Sareng seueur Fitur AI sanésna</string>
 </resources>

@@ -694,4 +694,8 @@
     <string name="survey_before">Kafin</string>
     <string name="survey_after">Bayan</string>
     <string name="survey_swipe_hint">Shafa Alamun</string>
+    <!-- NON_AI (Non-AI survey screens) -->
+    <string name="survey_non_ai_lyric_title">Bidiyon Kiɗa na Waƙoƙi</string>
+    <string name="survey_non_ai_music_video_title">Ƙirƙiri Salon Bidiyon Ku Na Musamman</string>
+    <string name="survey_ai_promote_title">Tare da Yawancin Siffofin AI</string>
 </resources>

@@ -80,7 +80,6 @@ class FeatureSelectionActivity : BaseOnboardingActivity() {
                             )
                         }
                     },
-                    bottomPaddingDp = bottomPadding
                 )
                 Box(
                     modifier = Modifier

@@ -557,7 +557,8 @@ class AssetPickerViewModelFactory(
         selectedAssetUris: List<String> = emptyList(),
         isEditingMode: Boolean = false,
         durationSongId: Long = -1L,
-        durationTrimStartMs: Long = 0L
+        durationTrimStartMs: Long = 0L,
+        isAiFlow: Boolean = false
     ): AssetPickerViewModel {
         return AssetPickerViewModel(
             context = application,
@@ -577,7 +578,8 @@ class AssetPickerViewModelFactory(
             selectedAssetUris = selectedAssetUris,
             isEditingMode = isEditingMode,
             durationSongId = durationSongId,
-            durationTrimStartMs = durationTrimStartMs
+            durationTrimStartMs = durationTrimStartMs,
+            isAiFlow = isAiFlow
         )
     }
 }
@@ -781,7 +783,9 @@ class TemplatePreviewerViewModelFactory(
     fun create(
         templateId: String,
         imageUris: List<String>,
-        overrideSongId: Long = -1L
+        overrideSongId: Long = -1L,
+        isAiFlow: Boolean = false,
+        aiCategoryTagId: String? = null
     ): TemplatePreviewerViewModel {
         return TemplatePreviewerViewModel(
             initialTemplateId = templateId,
@@ -795,7 +799,9 @@ class TemplatePreviewerViewModelFactory(
             unlikeTemplateUseCase = unlikeTemplateUseCase,
             observeLikedTemplatesUseCase = observeLikedTemplatesUseCase,
             adsLoaderService = adsLoaderService,
-            unlockedTemplatesManager = unlockedTemplatesManager
+            unlockedTemplatesManager = unlockedTemplatesManager,
+            isAiFlow = isAiFlow,
+            aiCategoryTagId = aiCategoryTagId
         )
     }
 }
@@ -808,6 +814,33 @@ class TemplateListViewModelFactory(
 ) {
     fun create(initialVibeTagId: String?): com.videomaker.aimusic.modules.templatelist.TemplateListViewModel {
         return com.videomaker.aimusic.modules.templatelist.TemplateListViewModel(
+            templateRepository = templateRepository,
+            initialVibeTagId = initialVibeTagId
+        )
+    }
+}
+
+/**
+ * Factory wrapper for AiTabViewModel.
+ */
+class AiTabViewModelFactory(
+    private val templateRepository: TemplateRepository
+) {
+    fun create(): com.videomaker.aimusic.modules.home.AiTabViewModel {
+        return com.videomaker.aimusic.modules.home.AiTabViewModel(
+            templateRepository = templateRepository
+        )
+    }
+}
+
+/**
+ * Factory wrapper for TemplateAIListViewModel.
+ */
+class TemplateAIListViewModelFactory(
+    private val templateRepository: TemplateRepository
+) {
+    fun create(initialVibeTagId: String?): com.videomaker.aimusic.modules.templateailist.TemplateAIListViewModel {
+        return com.videomaker.aimusic.modules.templateailist.TemplateAIListViewModel(
             templateRepository = templateRepository,
             initialVibeTagId = initialVibeTagId
         )
@@ -1170,6 +1203,20 @@ val presentationModule = module {
     // Template List ViewModel factory (singleton - stateless factory)
     single {
         TemplateListViewModelFactory(
+            templateRepository = get()
+        )
+    }
+
+    // AI Tab ViewModel factory (singleton - stateless factory)
+    single {
+        AiTabViewModelFactory(
+            templateRepository = get()
+        )
+    }
+
+    // AI Template List ViewModel factory (singleton - stateless factory)
+    single {
+        TemplateAIListViewModelFactory(
             templateRepository = get()
         )
     }

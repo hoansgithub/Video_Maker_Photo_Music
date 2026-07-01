@@ -166,7 +166,8 @@ fun EditorScreen(
     onNavigateToHome: () -> Unit,
     onNavigateToPreview: (String) -> Unit,
     onNavigateToExport: (String, com.videomaker.aimusic.domain.model.VideoQuality) -> Unit,
-    onNavigateToAddAssets: (projectId: String, assetUris: List<String>, songId: Long, hookStartMs: Long) -> Unit
+    onNavigateToAddAssets: (projectId: String, assetUris: List<String>, songId: Long, hookStartMs: Long) -> Unit,
+    isAiFlow: Boolean = false
 ) {
     val adClickDetector: AdClickDetector = koinInject()
     val adPlacementConfigService: AdPlacementConfigService = koinInject()
@@ -211,6 +212,35 @@ fun EditorScreen(
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
+    // AI flow: the AI video generation "fails" → loop the "Free AI credits used up" popup every 10s.
+    // "Try again" re-arms the 10s timer; "I'll try later" returns to Home/Gallery.
+    // Bottom native ad: NATIVE_AI_SYSTEM_ERROR initially, swapped to NATIVE_AI_SYSTEM_ERROR_ALT
+    // (force-reloaded for a fresh impression) on every "Try again" tap.
+    var aiErrorTryAgainTapped by remember { mutableStateOf(false) }
+    var aiErrorAltReloadKey by remember { androidx.compose.runtime.mutableIntStateOf(0) }
+    if (isAiFlow) {
+        var showAiCreditsDialog by remember { mutableStateOf(false) }
+        var creditsLoopTick by remember { mutableStateOf(0) }
+        LaunchedEffect(creditsLoopTick) {
+            delay(10_000L)
+            showAiCreditsDialog = true
+        }
+        if (showAiCreditsDialog) {
+            AiCreditsErrorDialog(
+                onTryAgain = {
+                    showAiCreditsDialog = false
+                    creditsLoopTick++
+                    aiErrorTryAgainTapped = true
+                    aiErrorAltReloadKey++
+                },
+                onTryLater = {
+                    showAiCreditsDialog = false
+                    onNavigateToHome()
+                }
+            )
         }
     }
 
@@ -260,6 +290,23 @@ fun EditorScreen(
     val activity = context as? android.app.Activity
     val adsLoaderService = koinInject<AdsLoaderService>()
     val snackbarHostState = remember { androidx.compose.material3.SnackbarHostState() }
+
+    // Force a fresh ALT ad each time the user taps "Try again" on the AI credits popup.
+    LaunchedEffect(aiErrorAltReloadKey) {
+        if (aiErrorAltReloadKey > 0) {
+            withContext(Dispatchers.IO) {
+                try {
+                    adsLoaderService.loadNative(
+                        AdPlacement.NATIVE_AI_SYSTEM_ERROR_ALT,
+                        forceReload = true
+                    )
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (_: Exception) {
+                }
+            }
+        }
+    }
 
     // --- Editor banner ad reload on tab interaction ---
     var bannerAdReloadKey by remember { androidx.compose.runtime.mutableIntStateOf(0) }
@@ -484,7 +531,8 @@ fun EditorScreen(
     // Show the "after prepare" interstitial once: editor appears (Loading -> Success),
     // stays for 1s, then the (preloaded) fullscreen-image interstitial is shown.
     var afterPrepareInterShown by remember { mutableStateOf(false) }
-    val isEditorReady = uiState is EditorUiState.Success
+    // AI flow stays in the loading illusion → never trigger the "editor ready" interstitial.
+    val isEditorReady = !isAiFlow && uiState is EditorUiState.Success
     LaunchedEffect(isEditorReady) {
         if (isEditorReady && !afterPrepareInterShown && activity != null) {
             afterPrepareInterShown = true
@@ -535,6 +583,10 @@ fun EditorScreen(
     // - READY when everything is loaded and no processing is in progress.
     // - ERROR on data-load failure or preview build failure.
     val editorScreenState = when {
+        // AI flow: video generation is simulated — never leaves Loading; only the credits
+        // error popup (10s loop) is shown over the placeholder.
+        isAiFlow -> EditorScreenState.LOADING
+
         uiState.contentState == EditorContentState.ERROR ->
             EditorScreenState.ERROR
 
@@ -575,7 +627,8 @@ fun EditorScreen(
             // placeholder (controls become a shimmer skeleton); Success shows the real editor.
             EditorMainContent(
                 currentState = editorScreenState,
-                contentState = uiState.contentState,
+                // AI flow stays in Loading: never expose SUCCESS content to the editor UI.
+                contentState = if (isAiFlow) EditorContentState.LOADING else uiState.contentState,
                 project = successState?.previewProject, // Use previewProject: pendingSettings but actual assets
                 firstImageUri = lastFirstImageUri,
                 previewAspectRatio = previewAspectRatio,
@@ -1291,13 +1344,35 @@ fun EditorScreen(
             Spacer(Modifier.navigationBarsPadding())
             if (editorScreenState == EditorScreenState.LOADING) {
                 // Native ad at bottom (edge-to-edge, no horizontal padding)
-                NativeAdView(
-                    placement = AdPlacement.NATIVE_EDITOR_LOADING,
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    isDebug = BuildConfig.DEBUG,
-                    onAdClicked = { adClickDetector.onAdClick(it) }
-                )
+                if (isAiFlow) {
+                    // AI "system error" screen: primary NA initially, _alt (force-reloaded)
+                    // after each "Try again" tap.
+                    if (aiErrorTryAgainTapped) {
+                        key(aiErrorAltReloadKey) {
+                            NativeAdView(
+                                placement = AdPlacement.NATIVE_AI_SYSTEM_ERROR_ALT,
+                                modifier = Modifier.fillMaxWidth(),
+                                isDebug = BuildConfig.DEBUG,
+                                onAdClicked = { adClickDetector.onAdClick(it) }
+                            )
+                        }
+                    } else {
+                        NativeAdView(
+                            placement = AdPlacement.NATIVE_AI_SYSTEM_ERROR,
+                            modifier = Modifier.fillMaxWidth(),
+                            isDebug = BuildConfig.DEBUG,
+                            onAdClicked = { adClickDetector.onAdClick(it) }
+                        )
+                    }
+                } else {
+                    NativeAdView(
+                        placement = AdPlacement.NATIVE_EDITOR_LOADING,
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        isDebug = BuildConfig.DEBUG,
+                        onAdClicked = { adClickDetector.onAdClick(it) }
+                    )
+                }
             } else {
                 if (adPlacementConfigService.bannerUseNative) {
                     key(bannerAdReloadKey) {

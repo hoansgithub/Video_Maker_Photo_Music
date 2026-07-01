@@ -685,5 +685,9 @@
     <string name="survey_dance_swap_title">Tạo video khiêu vũ AI của bạn</string>
     <string name="survey_before">Trước</string>
     <string name="survey_after">Sau đó</string>
-    <string name="survey_swipe_hint">Gợi ý vuốt</string>
+    <string name="survey_swipe_hint">Gợi ý vuốt</string>    <!-- NON_AI (Non-AI survey screens) -->
+    <string name="survey_non_ai_lyric_title">Tạo video lời bài hát đẹp mắt</string>
+    <string name="survey_non_ai_music_video_title">Sử dụng mẫu video ca nhạc</string>
+    <string name="survey_ai_promote_title">Cùng nhiều tính năng AI khác</string>
+
 </resources>

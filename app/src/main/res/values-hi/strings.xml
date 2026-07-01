@@ -691,4 +691,8 @@
     <string name="survey_before">पहले</string>
     <string name="survey_after">बाद</string>
     <string name="survey_swipe_hint">संकेत स्वाइप करें</string>
+    <!-- NON_AI (Non-AI survey screens) -->
+    <string name="survey_non_ai_lyric_title">लिरिक्स म्यूज़िक वीडियो</string>
+    <string name="survey_non_ai_music_video_title">अपनी अनूठी वीडियो शैली बनाएं</string>
+    <string name="survey_ai_promote_title">साथ ही कई एआई फीचर्स</string>
 </resources>

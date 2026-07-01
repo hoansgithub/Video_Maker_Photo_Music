@@ -780,6 +780,11 @@ private fun TemplatePreviewerReadyContent(
     }
     val templates = state.templates
     val screenSessionId = remember { Analytics.newScreenSessionId() }
+    // Templates opened from the AI flow (source location = ai) are AI-flow templates → style=ai.
+    val templateStyle = remember(eventLocation) {
+        if (eventLocation == AnalyticsEvent.Value.Location.AI) AnalyticsEvent.Value.Style.AI
+        else AnalyticsEvent.Value.Style.MUSIC_SYNC
+    }
     val pagerState = rememberPagerState(
         initialPage = initialVirtualPage(state.initialPage, templates.size),
         pageCount = { VIRTUAL_PAGE_COUNT }
@@ -838,7 +843,8 @@ private fun TemplatePreviewerReadyContent(
                     templateId = template.id,
                     templateName = template.name,
                     location = trackingLocation,
-                    isPremium = template.isPremium
+                    isPremium = template.isPremium,
+                    style = templateStyle
                 )
                 // Impression on first entry is already fired by the source list
                 // (home_template / home_banner / search_result / etc.). Only fire
@@ -849,7 +855,8 @@ private fun TemplatePreviewerReadyContent(
                         templateName = template.name,
                         location = AnalyticsEvent.Value.Location.PREVIEW_SWIPE,
                         screenSessionId = "",
-                        isPremium = template.isPremium
+                        isPremium = template.isPremium,
+                        style = templateStyle
                     )
                 }
                 isFirstSettledEmission = false
@@ -1187,7 +1194,8 @@ private fun TemplatePreviewerReadyContent(
                         templateId = template.id,
                         templateName = template.name,
                         location = templateEventLocation,
-                        isPremium = template.isPremium
+                        isPremium = template.isPremium,
+                        style = templateStyle
                     )
                     val defaultRatio = aspectRatioFromString(template.aspectRatio)
                     Analytics.trackRatioSelect(defaultRatio.shortLabel)
@@ -1195,7 +1203,8 @@ private fun TemplatePreviewerReadyContent(
                         templateId = template.id,
                         templateName = template.name,
                         location = templateEventLocation,
-                        isPremium = template.isPremium
+                        isPremium = template.isPremium,
+                        style = templateStyle
                     )
                     val isLocked = template.isPremium && !unlockedTemplateIds.contains(template.id)
                     if (isLocked) {

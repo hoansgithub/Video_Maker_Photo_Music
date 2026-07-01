@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -53,7 +52,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Density
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
@@ -86,7 +84,6 @@ class RightClipShape(private val fraction: Float) : Shape {
 
 @Composable
 fun FaceSwapScreen(
-    bottomPaddingDp: Dp,
     modifier: Modifier = Modifier
 ) {
     var isUserInteracting by remember { mutableStateOf(false) }
@@ -116,13 +113,12 @@ fun FaceSwapScreen(
         modifier = modifier
             .fillMaxSize()
             .background(OnboardingSurveyBackground)
-            .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = bottomPaddingDp + 12.dp)
+            .padding(start = 16.dp, end = 16.dp, top = 16.dp)
     ) {
         // Rounded card container holding the interactive split image slider
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .clip(RoundedCornerShape(24.dp))
                 .background(Color.Black)
                 .onSizeChanged { widthPx = it.width.toFloat() }
                 .pointerInput(widthPx) {
@@ -227,7 +223,7 @@ fun FaceSwapScreen(
             // 5. Swipe hand guide (visible if not interacted yet)
             if (!isUserInteracting) {
                 Image(
-                    painter = painterResource(R.drawable.ic_hand_swipe),
+                    painter = painterResource(R.drawable.ic_hand),
                     contentDescription = stringResource(R.string.survey_swipe_hint),
                     modifier = Modifier
                         .size(64.dp)
@@ -283,8 +279,6 @@ fun FaceSwapScreen(
 @Composable
 private fun FaceSwapScreenPreview() {
     VideoMakerTheme {
-        FaceSwapScreen(
-            bottomPaddingDp = 100.dp
-        )
+        FaceSwapScreen()
     }
 }

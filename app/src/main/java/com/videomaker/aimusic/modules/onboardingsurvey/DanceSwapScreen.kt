@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -48,11 +47,13 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -64,11 +65,11 @@ import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
-import androidx.compose.ui.res.stringResource
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.ui.theme.OnboardingSurveyBackground
 import com.videomaker.aimusic.ui.theme.SliderChevronColor
+import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
@@ -77,14 +78,21 @@ import kotlin.time.Duration.Companion.milliseconds
 @OptIn(UnstableApi::class)
 @Composable
 fun DanceSwapScreen(
-    bottomPaddingDp: Dp,
     modifier: Modifier = Modifier
 ) {
+    val isPreview = LocalInspectionMode.current
+
+    LaunchedEffect(Unit) {
+        if (!isPreview) {
+            Analytics.track(OnboardingSurveyAnalytics.EVENT_AI_DANCE_RENDER)
+        }
+    }
+
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
     // Initialize ExoPlayer
-    val exoPlayer = remember {
+    val exoPlayer = if (isPreview) null else remember {
         ExoPlayer.Builder(context).build().apply {
             val videoUri =
                 Uri.parse("android.resource://${context.packageName}/${R.raw.video_dance_swap_after}")
@@ -98,6 +106,7 @@ fun DanceSwapScreen(
 
     // Manage ExoPlayer Lifecycle (Pause on ON_PAUSE, Resume on ON_RESUME, Release on Dispose)
     DisposableEffect(lifecycleOwner, exoPlayer) {
+        if (exoPlayer == null) return@DisposableEffect onDispose {}
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
                 Lifecycle.Event.ON_PAUSE -> {
@@ -124,10 +133,6 @@ fun DanceSwapScreen(
     var widthPx by remember { mutableStateOf(1f) }
     var titleTopPx by remember { mutableStateOf(0f) }
 
-    LaunchedEffect(Unit) {
-        Analytics.track(OnboardingSurveyAnalytics.EVENT_AI_DANCE_RENDER)
-    }
-
     // Auto-swipe guide animation (until user interacts)
     LaunchedEffect(isUserInteracting) {
         if (!isUserInteracting) {
@@ -145,13 +150,12 @@ fun DanceSwapScreen(
         modifier = modifier
             .fillMaxSize()
             .background(OnboardingSurveyBackground)
-            .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = bottomPaddingDp + 12.dp)
+            .padding(start = 16.dp, end = 16.dp, top = 16.dp)
     ) {
         // Rounded card container holding the interactive split media slider
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .clip(RoundedCornerShape(24.dp))
                 .background(Color.Black)
                 .onSizeChanged { widthPx = it.width.toFloat() }
                 .pointerInput(widthPx) {
@@ -187,17 +191,29 @@ fun DanceSwapScreen(
             )
 
             // 2. After Video (Overlay, clipped dynamically from sliderPosition to 1f)
-            AndroidView(
-                factory = { ctx ->
-                    val view = LayoutInflater.from(ctx)
-                        .inflate(R.layout.player_view_texture, null) as PlayerView
-                    view.player = exoPlayer
-                    view
-                },
-                modifier = Modifier
-                    .fillMaxSize()
-                    .clip(RightClipShape(sliderPosition))
-            )
+            if (exoPlayer != null) {
+                AndroidView(
+                    factory = { ctx ->
+                        val view = LayoutInflater.from(ctx)
+                            .inflate(R.layout.player_view_texture, null) as PlayerView
+                        view.player = exoPlayer
+                        view
+                    },
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clip(RightClipShape(sliderPosition))
+                )
+            } else {
+                // In Compose preview, render the "before" image as a placeholder for the after state
+                Image(
+                    painter = painterResource(R.drawable.ic_dance_swap_before),
+                    contentDescription = stringResource(R.string.survey_after),
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clip(RightClipShape(sliderPosition))
+                )
+            }
 
             val density = LocalDensity.current
             val lineLengthDp = remember(titleTopPx) {
@@ -259,7 +275,7 @@ fun DanceSwapScreen(
             // 5. Swipe hand guide (visible if not interacted yet)
             if (!isUserInteracting) {
                 Image(
-                    painter = painterResource(R.drawable.ic_hand_swipe),
+                    painter = painterResource(R.drawable.ic_hand),
                     contentDescription = stringResource(R.string.survey_swipe_hint),
                     modifier = Modifier
                         .size(64.dp)
@@ -308,5 +324,13 @@ fun DanceSwapScreen(
                 )
             }
         }
+    }
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFF1E1E1E)
+@Composable
+private fun DanceSwapScreenPreview() {
+    VideoMakerTheme {
+        DanceSwapScreen()
     }
 }

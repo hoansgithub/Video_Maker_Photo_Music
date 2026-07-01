@@ -689,4 +689,8 @@
     <string name="survey_before">Sebelum</string>
     <string name="survey_after">Setelah</string>
     <string name="survey_swipe_hint">Gesek Petunjuk</string>
+    <!-- NON_AI (Non-AI survey screens) -->
+    <string name="survey_non_ai_lyric_title">Video Musik Lirik</string>
+    <string name="survey_non_ai_music_video_title">Buat Gaya Video Unik Anda</string>
+    <string name="survey_ai_promote_title">Ditambah Banyak Fitur AI</string>
 </resources>

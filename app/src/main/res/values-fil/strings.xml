@@ -689,4 +689,7 @@
     <string name="survey_before">dati</string>
     <string name="survey_after">Pagkatapos</string>
     <string name="survey_swipe_hint">Pahiwatig sa Pag-swipe</string>
+    <string name="survey_non_ai_lyric_title">Mga Lyric Music Video</string>
+    <string name="survey_non_ai_music_video_title">Likhain ang iyong natatanging istilo ng video</string>
+    <string name="survey_ai_promote_title">At Marami Pang Mga Tampok ng AI</string>
 </resources>

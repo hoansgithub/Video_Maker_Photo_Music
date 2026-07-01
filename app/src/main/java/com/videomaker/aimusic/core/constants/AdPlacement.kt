@@ -526,6 +526,21 @@ object AdPlacement {
     const val NATIVE_HOME_COLLAPSIBLE = "ad_native_home_collapsible"
 
     /**
+     * Collapsible native ad shown on the "Select Your Image" (asset picker) screen
+     * across all picker flows. Can be closed/collapsed by the user; falls back to the
+     * standard picker banner when not loaded or dismissed.
+     *
+     * Layout: native_big_bait (large size layout)
+     *
+     * Ad units (priority order):
+     * - Primary (Pro_AIMV_NAc_high_select photo): ca-app-pub-7121075950716954/4501084417
+     * - Secondary (Pro_AIMV_NAc_all_select photo): ca-app-pub-7121075950716954/6307587731
+     *
+     * Remote Config key: ad_native_select_photo_collapsible
+     */
+    const val NATIVE_SELECT_PHOTO_COLLAPSIBLE = "ad_native_select_photo_collapsible"
+
+    /**
      * Template previewer bottom banner native ad.
      * Replaces standard banner when ad_banner_use_native is true.
      *
@@ -1070,6 +1085,98 @@ object AdPlacement {
      */
     const val NATIVE_ONBOARDING_AI_DANCE = "ad_native_onboarding_ai_dance"
 
+    /**
+     * Native ad shown at bottom of Non-AI Lyric survey screen.
+     * RC key: ad_native_onboarding_non_ai_lyric
+     */
+    const val NATIVE_ONBOARDING_NON_AI_LYRIC = "ad_native_onboarding_non_ai_lyric"
+
+    /**
+     * Native ad shown at bottom of Non-AI Music Video survey screen.
+     * RC key: ad_native_onboarding_non_ai_music_video
+     */
+    const val NATIVE_ONBOARDING_NON_AI_MUSIC_VIDEO = "ad_native_onboarding_non_ai_music_video"
+
+    /**
+     * Native ad shown at bottom of AI Promote survey screen.
+     * RC key: ad_native_onboarding_ai_promote
+     */
+    const val NATIVE_ONBOARDING_AI_PROMOTE = "ad_native_onboarding_ai_promote"
+
+    /**
+     * "Big bait" native ad shown on the Home → AI tab, placed between the
+     * AI Video Generator and AI Dance sections.
+     *
+     * Layout: native_big_bait (large vertical layout with clickbait CTA)
+     *
+     * Ad units (priority order):
+     * - Primary (Pro_AIMV_NA_high_AI tab): ca-app-pub-7121075950716954/2799587564
+     * - Secondary (Pro_AIMV_NA_all_AI tab): ca-app-pub-7121075950716954/8933751070
+     *
+     * Remote Config key: ad_native_ai_tab
+     */
+    const val NATIVE_AI_TAB = "ad_native_ai_tab"
+
+    /**
+     * Native ad shown at the bottom of the AI generation "system error" screen
+     * ("Free AI credits used up" / "Turning photos into motion…"), AI tab flow only.
+     * Shown on initial entry to the screen.
+     *
+     * Layout: native_big_bait
+     *
+     * Ad units (priority order):
+     * - Primary (Pro_AIMV_NA_high_SystemError): ca-app-pub-7121075950716954/6547260886
+     * - Secondary (Pro_AIMV_NA_all_SystemError): ca-app-pub-7121075950716954/3681424399
+     *
+     * Remote Config key: ad_native_ai_system_error
+     */
+    const val NATIVE_AI_SYSTEM_ERROR = "ad_native_ai_system_error"
+
+    /**
+     * ALT native ad for the AI generation "system error" screen — swapped in (and
+     * force-reloaded) each time the user taps "Try again" on the credits popup.
+     *
+     * Layout: native_big_bait
+     *
+     * Ad units (priority order):
+     * - Primary (Pro_AIMV_NA_high_SystemError_alt): ca-app-pub-7121075950716954/2368342725
+     * - Secondary (Pro_AIMV_NA_all_SystemError_alt): ca-app-pub-7121075950716954/2608015871
+     *
+     * Remote Config key: ad_native_ai_system_error_alt
+     */
+    const val NATIVE_AI_SYSTEM_ERROR_ALT = "ad_native_ai_system_error_alt"
+
+    /**
+     * In-feed native ad shown in the AI template list grid (TemplateAIListScreen),
+     * across all tabs (All / AI Video Generator / AI Dance).
+     * First ad after the X-th template (extras.first_position, default 2), then one ad
+     * every Y templates thereafter (extras.infeed_interval, default 3).
+     *
+     * Layout: native_project_card (blends with template cards, like NATIVE_GALLERY_GRID)
+     *
+     * Ad units (priority order):
+     * - Primary (Pro_AIMV_NA_high_AI tpt): ca-app-pub-7121075950716954/7429097719
+     * - Secondary (Pro_AIMV_NA_all_AI tpt): ca-app-pub-7121075950716954/1360714510
+     *
+     * Remote Config key: ad_native_ai_template_grid
+     */
+    const val NATIVE_AI_TEMPLATE_GRID = "ad_native_ai_template_grid"
+
+    /**
+     * Native "banner" ad pinned at the bottom of the AI Music Video screens:
+     * the AI template list (TemplateAIListScreen) and My Videos library (MyVideosScreen).
+     * Rendered banner-size via the native_small_row layout, above the navigation bar.
+     *
+     * Layout: native_small_row (compact horizontal row)
+     *
+     * Ad units (priority order):
+     * - Primary (Pro_AIMV_NA_high_Bottom BN): ca-app-pub-7121075950716954/1709251222
+     * - Secondary (Pro_AIMV_NA_all_Bottom BN): ca-app-pub-7121075950716954/3435442033
+     *
+     * Remote Config key: ad_native_aimv_bottom
+     */
+    const val NATIVE_AIMV_BOTTOM = "ad_native_aimv_bottom"
+
 
     /**
      * Rewarded ad shown when user wants to download video to gallery.
@@ -1351,6 +1458,11 @@ object AdPlacement {
         NATIVE_MUSIC_FOR_YOU_INFEED,
         NATIVE_HOME_BANNER,
         NATIVE_HOME_COLLAPSIBLE,
+        NATIVE_SELECT_PHOTO_COLLAPSIBLE,
+        NATIVE_AI_SYSTEM_ERROR,
+        NATIVE_AI_SYSTEM_ERROR_ALT,
+        NATIVE_AI_TEMPLATE_GRID,
+        NATIVE_AIMV_BOTTOM,
         NATIVE_TEMPLATE_PREVIEWER_BANNER,
         NATIVE_EDITOR_BANNER,
         NATIVE_EDITOR_LOADING,
@@ -1381,6 +1493,11 @@ object AdPlacement {
         NATIVE_ONBOARDING_MEDIA_PRIVACY,
         NATIVE_ONBOARDING_MEDIA_PRIVACY_ALT,
         NATIVE_ONBOARDING_FACE_SWAP,
+        NATIVE_ONBOARDING_AI_DANCE,
+        NATIVE_ONBOARDING_NON_AI_LYRIC,
+        NATIVE_ONBOARDING_NON_AI_MUSIC_VIDEO,
+        NATIVE_ONBOARDING_AI_PROMOTE,
+        NATIVE_AI_TAB,
         NATIVE_ONBOARDING_SELECT,
         NATIVE_ONBOARDING_SELECT_ALT,
         NATIVE_ONBOARDING_SOCIAL,

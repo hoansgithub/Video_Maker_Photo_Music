@@ -57,9 +57,7 @@ class SurveyDanceSwapActivity : BaseOnboardingActivity() {
             }
 
             Box(Modifier.fillMaxSize().statusBarsPadding()) {
-                DanceSwapScreen(
-                    bottomPaddingDp = bottomPadding,
-                )
+                DanceSwapScreen()
 
                 Box(
                     modifier = Modifier

@@ -125,7 +125,6 @@ class SurveyPlatformActivity : BaseOnboardingActivity() {
                             }
                         }
                     },
-                    bottomPaddingDp = bottomPaddingDp,
                 )
 
                 // CTA button

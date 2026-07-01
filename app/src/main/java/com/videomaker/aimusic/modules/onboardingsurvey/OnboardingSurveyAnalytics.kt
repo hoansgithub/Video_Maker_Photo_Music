@@ -30,6 +30,18 @@ object OnboardingSurveyAnalytics {
     const val EVENT_AI_DANCE_RENDER = "ai_dance_render"
     const val EVENT_AI_DANCE_NEXT = "ai_dance_next"
 
+    // Non-AI Lyric screen events
+    const val EVENT_NON_AI_LYRIC_RENDER = "non_ai_lyric_render"
+    const val EVENT_NON_AI_LYRIC_NEXT = "non_ai_lyric_next"
+
+    // Non-AI Music Video screen events
+    const val EVENT_NON_AI_MUSIC_VIDEO_RENDER = "non_ai_music_video_render"
+    const val EVENT_NON_AI_MUSIC_VIDEO_NEXT = "non_ai_music_video_next"
+
+    // AI Promote screen events
+    const val EVENT_AI_PROMOTE_RENDER = "ai_promote_render"
+    const val EVENT_AI_PROMOTE_NEXT = "ai_promote_next"
+
     /**
      * Expands selected ids into indexed params: `${paramKey}1` → id1, `${paramKey}2` → id2, …
      * Iteration order is preserved; index starts at 1.

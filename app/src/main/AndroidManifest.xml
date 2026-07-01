@@ -118,6 +118,21 @@
             android:exported="false"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.VideoMaker" />
+        <activity
+            android:name=".modules.onboardingsurvey.SurveyNonAiLyricActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.VideoMaker" />
+        <activity
+            android:name=".modules.onboardingsurvey.SurveyNonAiMusicVideoActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.VideoMaker" />
+        <activity
+            android:name=".modules.onboardingsurvey.SurveyAiPromoteActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.VideoMaker" />
 
         <!-- Flattened onboarding steps: Genre/Template -->
         <activity
