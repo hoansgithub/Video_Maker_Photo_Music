@@ -167,7 +167,10 @@ class EditorViewModel(
     private val projectRepository: com.videomaker.aimusic.domain.repository.ProjectRepository,
     private val adsLoaderService: co.alcheclub.lib.acccore.ads.loader.AdsLoaderService,
     private val audioPreprocessingService: com.videomaker.aimusic.media.audio.AudioPreprocessingService,
-    private val adPlacementConfigService: AdPlacementConfigService
+    private val adPlacementConfigService: AdPlacementConfigService,
+    // AI flow: the editor stays in the simulated Loading state and must never play the
+    // project audio. When true, all autoplay is suppressed so the song stays muted.
+    private val isAiFlow: Boolean = false
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<EditorUiState>(EditorUiState.Loading())
@@ -214,6 +217,12 @@ class EditorViewModel(
     }
 
     private fun startDeferredAutoPlayIfReady() {
+        // AI flow never plays the project song — the screen stays in the simulated Loading
+        // state, so keep audio muted by clearing any pending autoplay without starting playback.
+        if (isAiFlow) {
+            pendingAutoPlay = false
+            return
+        }
         if (pendingAutoPlay && _hasPreviewBeenReady.value) {
             pendingAutoPlay = false
             _uiState.update { state ->

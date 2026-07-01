@@ -77,6 +77,7 @@ import com.videomaker.aimusic.modules.gallery.CreateNewVideoButton
 import com.videomaker.aimusic.modules.home.AiTabViewModel
 import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import com.videomaker.aimusic.ui.components.ShimmerPlaceholder
+import com.videomaker.aimusic.ui.components.shadowCustom
 import com.videomaker.aimusic.ui.theme.Black60
 import com.videomaker.aimusic.ui.theme.Gray200
 import com.videomaker.aimusic.ui.theme.Gray600
@@ -238,6 +239,12 @@ fun AiTabContent(
 private fun RemindMeToast() {
     Row(
         modifier = Modifier
+            .shadowCustom(
+                color = Color(0x7A000000),
+                borderRadius = 120.dp,
+                blurRadius = 40.dp,
+                offsetY = 4.dp,
+            )
             .clip(RoundedCornerShape(120.dp))
             .border(1.dp, Color.White.copy(0.12f),RoundedCornerShape(120.dp))
             .background(Neutral_N900)
