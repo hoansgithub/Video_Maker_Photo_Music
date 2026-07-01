@@ -86,6 +86,7 @@ fun TemplateAIListScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val navigationEvent by viewModel.navigationEvent.collectAsStateWithLifecycle()
     val currentTabIndex by viewModel.currentTabIndex.collectAsStateWithLifecycle()
+    val adClickDetector: AdClickDetector = koinInject()
 
     // System rendered the AI all-template screen.
     LaunchedEffect(Unit) { Analytics.trackAiAllTemplateRender() }
@@ -134,6 +135,14 @@ fun TemplateAIListScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
+            )
+        },
+        bottomBar = {
+            NativeAdView(
+                placement = AdPlacement.NATIVE_AIMV_BOTTOM,
+                modifier = Modifier.fillMaxWidth(),
+                isDebug = BuildConfig.DEBUG,
+                onAdClicked = { adClickDetector.onAdClick(it) }
             )
         },
         containerColor = Color(0xFF1A1A1A),

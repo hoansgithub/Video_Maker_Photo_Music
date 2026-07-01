@@ -1162,6 +1162,21 @@ object AdPlacement {
      */
     const val NATIVE_AI_TEMPLATE_GRID = "ad_native_ai_template_grid"
 
+    /**
+     * Native "banner" ad pinned at the bottom of the AI Music Video screens:
+     * the AI template list (TemplateAIListScreen) and My Videos library (MyVideosScreen).
+     * Rendered banner-size via the native_small_row layout, above the navigation bar.
+     *
+     * Layout: native_small_row (compact horizontal row)
+     *
+     * Ad units (priority order):
+     * - Primary (Pro_AIMV_NA_high_Bottom BN): ca-app-pub-7121075950716954/1709251222
+     * - Secondary (Pro_AIMV_NA_all_Bottom BN): ca-app-pub-7121075950716954/3435442033
+     *
+     * Remote Config key: ad_native_aimv_bottom
+     */
+    const val NATIVE_AIMV_BOTTOM = "ad_native_aimv_bottom"
+
 
     /**
      * Rewarded ad shown when user wants to download video to gallery.
@@ -1447,6 +1462,7 @@ object AdPlacement {
         NATIVE_AI_SYSTEM_ERROR,
         NATIVE_AI_SYSTEM_ERROR_ALT,
         NATIVE_AI_TEMPLATE_GRID,
+        NATIVE_AIMV_BOTTOM,
         NATIVE_TEMPLATE_PREVIEWER_BANNER,
         NATIVE_EDITOR_BANNER,
         NATIVE_EDITOR_LOADING,

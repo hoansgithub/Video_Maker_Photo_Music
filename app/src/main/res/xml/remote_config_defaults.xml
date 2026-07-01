@@ -292,6 +292,10 @@
     <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/9046582121","enabled":true},{"id":"ca-app-pub-7121075950716954/1359663791","enabled":true}],"extras":{"layout":"native_big_bait","click_reload_enabled":true,"click_reload_max_count":10}}</value>
   </entry>
   <entry>
+    <key>ad_native_aimv_bottom</key>
+    <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/1709251222","enabled":true},{"id":"ca-app-pub-7121075950716954/3435442033","enabled":true}],"extras":{"layout":"native_small_row","click_reload_enabled":true,"click_reload_max_count":10}}</value>
+  </entry>
+  <entry>
     <key>ad_native_export_preparing</key>
     <value>{"enabled":true,"type":"native","units":[{"id":"ca-app-pub-7121075950716954/1709251222","enabled":true},{"id":"ca-app-pub-7121075950716954/3435442033","enabled":true}],"extras":{"layout":"native_small_row","click_reload_enabled":true,"click_reload_max_count":10}}</value>
   </entry>
