@@ -5,33 +5,29 @@ import android.view.LayoutInflater
 import androidx.annotation.OptIn
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -52,7 +48,8 @@ import org.koin.compose.koinInject
 @OptIn(UnstableApi::class)
 @Composable
 fun NonAiLyricScreen(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    bottomContainerTopPx: Float = 0f
 ) {
     val isPreview = LocalInspectionMode.current
 
@@ -111,17 +108,19 @@ fun NonAiLyricScreen(
         }
     }
 
+    var totalHeightPx by remember { mutableStateOf(0) }
+
     Box(
         modifier = modifier
             .fillMaxSize()
             .background(OnboardingSurveyBackground)
-            .padding(start = 16.dp, end = 16.dp, top = 16.dp)
     ) {
         // Rounded card container holding the looping video
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color.Black)
+                .onSizeChanged { totalHeightPx = it.height }
         ) {
             // 1. Looping video
             if (exoPlayer != null) {
@@ -143,40 +142,25 @@ fun NonAiLyricScreen(
                 )
             }
 
-            // 2. Black gradient overlay at the bottom for readability of the icon/title
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(220.dp)
-                    .align(Alignment.BottomCenter)
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.9f))
-                        )
-                    )
-            )
+            // 2. Overlay icon above the bottom container dynamically
+            if (totalHeightPx > 0) {
+                val density = LocalDensity.current
+                val bottomPaddingDp = remember(totalHeightPx, bottomContainerTopPx) {
+                    if (bottomContainerTopPx > 0f) {
+                        with(density) { (totalHeightPx - bottomContainerTopPx).toDp() }
+                    } else {
+                        80.dp
+                    }
+                }
 
-            // 3. Overlay icon with title text below it
-            Column(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .padding(start = 16.dp, end = 16.dp, bottom = 72.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
                 Image(
                     painter = painterResource(R.drawable.ic_non_ai_lyric),
                     contentDescription = null,
                     contentScale = ContentScale.Fit,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Text(
-                    text = stringResource(R.string.survey_non_ai_lyric_title),
-                    color = Color.White,
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .fillMaxWidth()
+                        .padding(start = 16.dp, end = 16.dp, bottom = bottomPaddingDp + 16.dp)
                 )
             }
         }
