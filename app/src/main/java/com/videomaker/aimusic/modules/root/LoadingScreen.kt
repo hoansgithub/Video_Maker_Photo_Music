@@ -35,10 +35,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.videomaker.aimusic.R
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 
@@ -108,20 +106,21 @@ fun LoadingScreen(
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.weight(0.15f))
 
             // Animated Banner
             AnimatedAppBanner()
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-            // App subtitle
-            Text(
-                text = stringResource(R.string.splash_subtitle),
-                color = Color.White,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.SemiBold,
-                textAlign = TextAlign.Center
+            // App sub banner
+            Image(
+                painter = painterResource(id = R.drawable.app_splash_sub_banner),
+                contentDescription = null,
+                contentScale = ContentScale.FillWidth,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 96.dp)
             )
 
             Spacer(modifier = Modifier.weight(1f))
@@ -193,7 +192,7 @@ private fun AnimatedAppBanner() {
         contentScale = ContentScale.FillWidth,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp)
+            .padding(horizontal = 96.dp)
             .scale(scale)
             .alpha(alpha)
     )
