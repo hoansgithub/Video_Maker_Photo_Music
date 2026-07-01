@@ -698,4 +698,31 @@
     <string name="survey_non_ai_lyric_title">Bidiyon Kiɗa na Waƙoƙi</string>
     <string name="survey_non_ai_music_video_title">Ƙirƙiri Salon Bidiyon Ku Na Musamman</string>
     <string name="survey_ai_promote_title">Tare da Yawancin Siffofin AI</string>
+    <!-- AI Tab / My Videos -->
+    <string name="settings_my_videos">Bidiyoyina</string>
+    <string name="ai_section_video_generator">Injin Bidiyo na AI</string>
+    <string name="ai_section_dance">Rawa na AI</string>
+    <string name="ai_remind_toast">Za mu tunatar da kai daga baya</string>
+    <string name="ai_banner_title">Bidiyon AI mai Yaɗuwa</string>
+    <string name="ai_banner_coming_soon">ZAI ZO NAN BA DA JIMAWA BA</string>
+    <string name="ai_banner_remind_me">Tunatar da ni</string>
+    <string name="ai_templates_empty">Babu samfura tukuna</string>
+    <string name="ai_see_all">Duba duka</string>
+    <!-- AI guide / credits / picker -->
+    <string name="ai_guide_title">Yi amfani da Hotuna masu Kyau</string>
+    <string name="ai_guide_desc">Hotuna masu inganci suna taimaka wa AI ƙirƙirar sakamako mafi kyau.</string>
+    <string name="ai_guide_good_front_facing">Fuskantar gaba</string>
+    <string name="ai_guide_good_one_person">Mutum ɗaya</string>
+    <string name="ai_guide_good_face_visible">Fuska a bayyane sarai</string>
+    <string name="ai_guide_bad_side_profile">Bayanan gefe</string>
+    <string name="ai_guide_bad_blurry">Hotuna marasa haske</string>
+    <string name="ai_guide_bad_group">Hotunan rukuni</string>
+    <string name="ai_guide_cta">Zaɓi hotonka</string>
+    <string name="ai_credits_title">An gama kuɗin AI na kyauta</string>
+    <string name="ai_credits_desc">Kuɗin AI na kyauta ya ƙare yau. Da fatan za a dawo daga baya don ƙirƙirar ƙarin bidiyon AI.</string>
+    <string name="ai_credits_try_again">Sake gwadawa</string>
+    <string name="ai_credits_try_later">Zan gwada daga baya</string>
+    <string name="picker_ai_min_selection">Ƙara aƙalla hoto 1 don ƙirƙirar bidiyo</string>
+    <string name="home_tab_ai">AI</string>
+    <string name="settings_library">Ɗakin karatu</string>
 </resources>

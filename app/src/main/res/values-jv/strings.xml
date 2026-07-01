@@ -698,4 +698,31 @@
     <string name="survey_non_ai_lyric_title">Video Musik Lirik</string>
     <string name="survey_non_ai_music_video_title">Gawe gaya video unik sampeyan</string>
     <string name="survey_ai_promote_title">Ditambah akeh fitur AI</string>
+    <!-- AI Tab / My Videos -->
+    <string name="settings_my_videos">Video Kula</string>
+    <string name="ai_section_video_generator">Generator Video AI</string>
+    <string name="ai_section_dance">Jogèd AI</string>
+    <string name="ai_remind_toast">Kita bakal ngelingake sampeyan mengko</string>
+    <string name="ai_banner_title">Video AI sing Ngetren</string>
+    <string name="ai_banner_coming_soon">SEGERA RAWUH</string>
+    <string name="ai_banner_remind_me">Elingake Aku</string>
+    <string name="ai_templates_empty">Durung ana templat</string>
+    <string name="ai_see_all">Deleng kabeh</string>
+    <!-- AI guide / credits / picker -->
+    <string name="ai_guide_title">Gunakake Foto sing Bener</string>
+    <string name="ai_guide_desc">Foto kualitas dhuwur mbantu AI nggawe asil paling apik.</string>
+    <string name="ai_guide_good_front_facing">Madhep ngarep</string>
+    <string name="ai_guide_good_one_person">Wong siji</string>
+    <string name="ai_guide_good_face_visible">Rai katon kabeh</string>
+    <string name="ai_guide_bad_side_profile">Profil samping</string>
+    <string name="ai_guide_bad_blurry">Foto buram</string>
+    <string name="ai_guide_bad_group">Foto klompok</string>
+    <string name="ai_guide_cta">Pilih foto sampeyan</string>
+    <string name="ai_credits_title">Kredit AI gratis wis entek</string>
+    <string name="ai_credits_desc">Kredit AI gratis sampeyan wis entek dina iki. Mangga bali maneh mengko kanggo nggawe luwih akeh video AI.</string>
+    <string name="ai_credits_try_again">Coba maneh</string>
+    <string name="ai_credits_try_later">Aku bakal nyoba mengko</string>
+    <string name="picker_ai_min_selection">Tambahake paling ora 1 foto kanggo nggawe video</string>
+    <string name="home_tab_ai">AI</string>
+    <string name="settings_library">Perpustakaan</string>
 </resources>

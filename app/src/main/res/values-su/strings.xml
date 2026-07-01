@@ -697,4 +697,31 @@
     <string name="survey_non_ai_lyric_title">Video Musik Lirik</string>
     <string name="survey_non_ai_music_video_title">Jieun gaya video unik anjeun</string>
     <string name="survey_ai_promote_title">Sareng seueur Fitur AI sanésna</string>
+    <!-- AI Tab / My Videos -->
+    <string name="settings_my_videos">Video Abdi</string>
+    <string name="ai_section_video_generator">Generator Video AI</string>
+    <string name="ai_section_dance">Ngibing AI</string>
+    <string name="ai_remind_toast">Kami bakal ngingetan anjeun engké</string>
+    <string name="ai_banner_title">Video AI nu Ngatren</string>
+    <string name="ai_banner_coming_soon">BAKAL SUMPING</string>
+    <string name="ai_banner_remind_me">Ingetan Abdi</string>
+    <string name="ai_templates_empty">Teu acan aya témplat</string>
+    <string name="ai_see_all">Tingali sadaya</string>
+    <!-- AI guide / credits / picker -->
+    <string name="ai_guide_title">Anggo Poto anu Leres</string>
+    <string name="ai_guide_desc">Poto kualitas luhur ngabantosan AI nyieun hasil anu pangsaéna.</string>
+    <string name="ai_guide_good_front_facing">Nyanghareup ka hareup</string>
+    <string name="ai_guide_good_one_person">Hiji jalma</string>
+    <string name="ai_guide_good_face_visible">Beungeut katingali pinuh</string>
+    <string name="ai_guide_bad_side_profile">Profil gigir</string>
+    <string name="ai_guide_bad_blurry">Poto anu buram</string>
+    <string name="ai_guide_bad_group">Poto grup</string>
+    <string name="ai_guide_cta">Pilih poto anjeun</string>
+    <string name="ai_credits_title">Kiridit AI gratis parantos béak</string>
+    <string name="ai_credits_desc">Kiridit AI gratis anjeun parantos béak dinten ieu. Mangga uih deui engké pikeun nyieun langkung seueur video AI.</string>
+    <string name="ai_credits_try_again">Coba deui</string>
+    <string name="ai_credits_try_later">Abdi bakal nyobian engké</string>
+    <string name="picker_ai_min_selection">Tambahkeun sahenteuna 1 poto pikeun nyieun video</string>
+    <string name="home_tab_ai">AI</string>
+    <string name="settings_library">Perpustakaan</string>
 </resources>

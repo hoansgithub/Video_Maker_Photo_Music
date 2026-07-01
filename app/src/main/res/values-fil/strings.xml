@@ -692,4 +692,31 @@
     <string name="survey_non_ai_lyric_title">Mga Lyric Music Video</string>
     <string name="survey_non_ai_music_video_title">Likhain ang iyong natatanging istilo ng video</string>
     <string name="survey_ai_promote_title">At Marami Pang Mga Tampok ng AI</string>
+    <!-- AI Tab / My Videos -->
+    <string name="settings_my_videos">Aking mga Video</string>
+    <string name="ai_section_video_generator">AI Video Generator</string>
+    <string name="ai_section_dance">AI Dance</string>
+    <string name="ai_remind_toast">Paaalalahanan ka namin mamaya</string>
+    <string name="ai_banner_title">Nagte-trending na AI Video</string>
+    <string name="ai_banner_coming_soon">MALAPIT NA</string>
+    <string name="ai_banner_remind_me">Paalalahanan Ako</string>
+    <string name="ai_templates_empty">Wala pang mga template</string>
+    <string name="ai_see_all">Tingnan lahat</string>
+    <!-- AI guide / credits / picker -->
+    <string name="ai_guide_title">Gamitin ang Tamang mga Larawan</string>
+    <string name="ai_guide_desc">Ang mga de-kalidad na larawan ay tumutulong sa AI na gumawa ng pinakamahusay na resulta.</string>
+    <string name="ai_guide_good_front_facing">Nakaharap sa unahan</string>
+    <string name="ai_guide_good_one_person">Isang tao</string>
+    <string name="ai_guide_good_face_visible">Buong nakikita ang mukha</string>
+    <string name="ai_guide_bad_side_profile">Side profile</string>
+    <string name="ai_guide_bad_blurry">Malabong mga larawan</string>
+    <string name="ai_guide_bad_group">Larawang grupo</string>
+    <string name="ai_guide_cta">Piliin ang iyong larawan</string>
+    <string name="ai_credits_title">Naubos na ang libreng AI credits</string>
+    <string name="ai_credits_desc">Naubos na ang iyong libreng AI credits ngayong araw. Mangyaring bumalik mamaya para gumawa ng mas maraming AI video.</string>
+    <string name="ai_credits_try_again">Subukan ulit</string>
+    <string name="ai_credits_try_later">Susubukan ko mamaya</string>
+    <string name="picker_ai_min_selection">Magdagdag ng hindi bababa sa 1 larawan para gumawa ng video</string>
+    <string name="home_tab_ai">AI</string>
+    <string name="settings_library">Library</string>
 </resources>

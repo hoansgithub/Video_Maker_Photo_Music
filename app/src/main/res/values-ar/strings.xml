@@ -693,4 +693,31 @@
     <string name="survey_non_ai_lyric_title">فيديوهات موسيقية مع كلمات الأغاني</string>
     <string name="survey_non_ai_music_video_title">أنشئ أسلوب الفيديو الفريد الخاص بك</string>
     <string name="survey_ai_promote_title">بالإضافة إلى العديد من ميزات الذكاء الاصطناعي</string>
+    <!-- AI Tab / My Videos -->
+    <string name="settings_my_videos">مقاطع الفيديو الخاصة بي</string>
+    <string name="ai_section_video_generator">منشئ فيديو الذكاء الاصطناعي</string>
+    <string name="ai_section_dance">رقص الذكاء الاصطناعي</string>
+    <string name="ai_remind_toast">سنذكّرك لاحقًا</string>
+    <string name="ai_banner_title">فيديو الذكاء الاصطناعي الرائج</string>
+    <string name="ai_banner_coming_soon">قريبًا</string>
+    <string name="ai_banner_remind_me">ذكّرني</string>
+    <string name="ai_templates_empty">لا توجد قوالب بعد</string>
+    <string name="ai_see_all">عرض الكل</string>
+    <!-- AI guide / credits / picker -->
+    <string name="ai_guide_title">استخدم الصور المناسبة</string>
+    <string name="ai_guide_desc">الصور عالية الجودة تساعد الذكاء الاصطناعي على تحقيق أفضل النتائج.</string>
+    <string name="ai_guide_good_front_facing">مواجهة للأمام</string>
+    <string name="ai_guide_good_one_person">شخص واحد</string>
+    <string name="ai_guide_good_face_visible">الوجه ظاهر بالكامل</string>
+    <string name="ai_guide_bad_side_profile">الوجه الجانبي</string>
+    <string name="ai_guide_bad_blurry">صور ضبابية</string>
+    <string name="ai_guide_bad_group">صور جماعية</string>
+    <string name="ai_guide_cta">اختر صورتك</string>
+    <string name="ai_credits_title">انتهت أرصدة الذكاء الاصطناعي المجانية</string>
+    <string name="ai_credits_desc">لقد نفدت أرصدة الذكاء الاصطناعي المجانية اليوم. يرجى العودة لاحقًا لإنشاء المزيد من مقاطع فيديو الذكاء الاصطناعي.</string>
+    <string name="ai_credits_try_again">حاول مرة أخرى</string>
+    <string name="ai_credits_try_later">سأحاول لاحقًا</string>
+    <string name="picker_ai_min_selection">أضف صورة واحدة على الأقل لإنشاء فيديو</string>
+    <string name="home_tab_ai">الذكاء الاصطناعي</string>
+    <string name="settings_library">المكتبة</string>
 </resources>

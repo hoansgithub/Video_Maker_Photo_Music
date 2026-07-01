@@ -690,4 +690,31 @@
     <string name="survey_non_ai_music_video_title">Sử dụng mẫu video ca nhạc</string>
     <string name="survey_ai_promote_title">Cùng nhiều tính năng AI khác</string>
 
+    <!-- AI Tab / My Videos -->
+    <string name="settings_my_videos">Video Của Tôi</string>
+    <string name="ai_section_video_generator">Trình Tạo Video AI</string>
+    <string name="ai_section_dance">Nhảy AI</string>
+    <string name="ai_remind_toast">Chúng tôi sẽ nhắc bạn sau</string>
+    <string name="ai_banner_title">Video AI Thịnh Hành</string>
+    <string name="ai_banner_coming_soon">SẮP RA MẮT</string>
+    <string name="ai_banner_remind_me">Nhắc Tôi</string>
+    <string name="ai_templates_empty">Chưa có mẫu nào</string>
+    <string name="ai_see_all">Xem tất cả</string>
+    <!-- AI guide / credits / picker -->
+    <string name="ai_guide_title">Sử Dụng Ảnh Phù Hợp</string>
+    <string name="ai_guide_desc">Ảnh chất lượng cao giúp AI tạo ra kết quả tốt nhất.</string>
+    <string name="ai_guide_good_front_facing">Nhìn thẳng</string>
+    <string name="ai_guide_good_one_person">Một người</string>
+    <string name="ai_guide_good_face_visible">Khuôn mặt hiện rõ hoàn toàn</string>
+    <string name="ai_guide_bad_side_profile">Ảnh nghiêng</string>
+    <string name="ai_guide_bad_blurry">Ảnh bị mờ</string>
+    <string name="ai_guide_bad_group">Ảnh nhóm</string>
+    <string name="ai_guide_cta">Chọn ảnh của bạn</string>
+    <string name="ai_credits_title">Đã hết lượt AI miễn phí</string>
+    <string name="ai_credits_desc">Lượt AI miễn phí của bạn đã hết hôm nay. Vui lòng quay lại sau để tạo thêm video AI.</string>
+    <string name="ai_credits_try_again">Thử lại</string>
+    <string name="ai_credits_try_later">Để sau</string>
+    <string name="picker_ai_min_selection">Thêm ít nhất 1 ảnh để tạo video</string>
+    <string name="home_tab_ai">AI</string>
+    <string name="settings_library">Thư Viện</string>
 </resources>

@@ -400,7 +400,7 @@ private fun AiTemplateSection(
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                    contentDescription = "See all",
+                    contentDescription = stringResource(R.string.ai_see_all),
                     tint = TextPrimary,
                     modifier = Modifier.size(32.dp)
                 )

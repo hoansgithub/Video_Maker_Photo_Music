@@ -699,4 +699,31 @@
     <string name="survey_non_ai_lyric_title">Vidiyo egwu egwu</string>
     <string name="survey_non_ai_music_video_title">Mepụta ụdị vidiyo pụrụ iche gị</string>
     <string name="survey_ai_promote_title">Gbakwunyere ọtụtụ atụmatụ AI</string>
+    <!-- AI Tab / My Videos -->
+    <string name="settings_my_videos">Vidiyo m</string>
+    <string name="ai_section_video_generator">Ihe Mmepụta Vidiyo AI</string>
+    <string name="ai_section_dance">Ịgba Egwu AI</string>
+    <string name="ai_remind_toast">Anyị ga-echetara gị ma emesịa</string>
+    <string name="ai_banner_title">Vidiyo AI na-ewu ewu</string>
+    <string name="ai_banner_coming_soon">NA-ABỊA N\'OGE NA-ADỊGHỊ ANYA</string>
+    <string name="ai_banner_remind_me">Chetara m</string>
+    <string name="ai_templates_empty">Enweghị teemplet ọ bụla</string>
+    <string name="ai_see_all">Hụ ihe niile</string>
+    <!-- AI guide / credits / picker -->
+    <string name="ai_guide_title">Jiri Foto Ziri Ezi</string>
+    <string name="ai_guide_desc">Foto dị elu na-enyere AI aka ịmepụta nsonaazụ kacha mma.</string>
+    <string name="ai_guide_good_front_facing">Iche ihu n\'ihu</string>
+    <string name="ai_guide_good_one_person">Otu onye</string>
+    <string name="ai_guide_good_face_visible">Ihu na-egosipụta nke ọma</string>
+    <string name="ai_guide_bad_side_profile">Profaịlụ akụkụ</string>
+    <string name="ai_guide_bad_blurry">Foto na-adịghị doro anya</string>
+    <string name="ai_guide_bad_group">Foto otu</string>
+    <string name="ai_guide_cta">Họrọ foto gị</string>
+    <string name="ai_credits_title">Kredit AI efu agwụla</string>
+    <string name="ai_credits_desc">Kredit AI efu gị agwụla taa. Biko lọghachi ma emesịa iji mepụta vidiyo AI ndị ọzọ.</string>
+    <string name="ai_credits_try_again">Nwaa ọzọ</string>
+    <string name="ai_credits_try_later">Aga m anwa ma emesịa</string>
+    <string name="picker_ai_min_selection">Tinye opekata mpe foto 1 iji mepụta vidiyo</string>
+    <string name="home_tab_ai">AI</string>
+    <string name="settings_library">Ọbá akwụkwọ</string>
 </resources>

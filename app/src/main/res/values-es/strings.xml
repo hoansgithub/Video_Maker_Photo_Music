@@ -693,4 +693,31 @@
     <string name="survey_non_ai_lyric_title">Vídeos musicales con letra</string>
     <string name="survey_non_ai_music_video_title">Crea tu estilo de vídeo único</string>
     <string name="survey_ai_promote_title">Además de muchas funciones de IA</string>
+    <!-- AI Tab / My Videos -->
+    <string name="settings_my_videos">Mis videos</string>
+    <string name="ai_section_video_generator">Generador de video con IA</string>
+    <string name="ai_section_dance">Baile con IA</string>
+    <string name="ai_remind_toast">Te lo recordaremos más tarde</string>
+    <string name="ai_banner_title">Video de IA en tendencia</string>
+    <string name="ai_banner_coming_soon">PRÓXIMAMENTE</string>
+    <string name="ai_banner_remind_me">Recuérdamelo</string>
+    <string name="ai_templates_empty">Aún no hay plantillas</string>
+    <string name="ai_see_all">Ver todo</string>
+    <!-- AI guide / credits / picker -->
+    <string name="ai_guide_title">Usa las fotos adecuadas</string>
+    <string name="ai_guide_desc">Las fotos de alta calidad ayudan a la IA a crear los mejores resultados.</string>
+    <string name="ai_guide_good_front_facing">De frente</string>
+    <string name="ai_guide_good_one_person">Una persona</string>
+    <string name="ai_guide_good_face_visible">Cara completamente visible</string>
+    <string name="ai_guide_bad_side_profile">Perfil lateral</string>
+    <string name="ai_guide_bad_blurry">Fotos borrosas</string>
+    <string name="ai_guide_bad_group">Fotos de grupo</string>
+    <string name="ai_guide_cta">Selecciona tu foto</string>
+    <string name="ai_credits_title">Créditos de IA gratuitos agotados</string>
+    <string name="ai_credits_desc">Tus créditos de IA gratuitos se han agotado hoy. Vuelve más tarde para crear más videos con IA.</string>
+    <string name="ai_credits_try_again">Intentar de nuevo</string>
+    <string name="ai_credits_try_later">Lo intentaré más tarde</string>
+    <string name="picker_ai_min_selection">Añade al menos 1 foto para crear el video</string>
+    <string name="home_tab_ai">IA</string>
+    <string name="settings_library">Biblioteca</string>
 </resources>

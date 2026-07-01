@@ -693,4 +693,31 @@
     <string name="survey_non_ai_lyric_title">Video Musik Lirik</string>
     <string name="survey_non_ai_music_video_title">Buat Gaya Video Unik Anda</string>
     <string name="survey_ai_promote_title">Ditambah Banyak Fitur AI</string>
+    <!-- AI Tab / My Videos -->
+    <string name="settings_my_videos">Video Saya</string>
+    <string name="ai_section_video_generator">Generator Video AI</string>
+    <string name="ai_section_dance">Tarian AI</string>
+    <string name="ai_remind_toast">Kami akan mengingatkan Anda nanti</string>
+    <string name="ai_banner_title">Video AI yang Sedang Tren</string>
+    <string name="ai_banner_coming_soon">SEGERA HADIR</string>
+    <string name="ai_banner_remind_me">Ingatkan Saya</string>
+    <string name="ai_templates_empty">Belum ada templat</string>
+    <string name="ai_see_all">Lihat semua</string>
+    <!-- AI guide / credits / picker -->
+    <string name="ai_guide_title">Gunakan Foto yang Tepat</string>
+    <string name="ai_guide_desc">Foto berkualitas tinggi membantu AI menghasilkan hasil terbaik.</string>
+    <string name="ai_guide_good_front_facing">Menghadap ke depan</string>
+    <string name="ai_guide_good_one_person">Satu orang</string>
+    <string name="ai_guide_good_face_visible">Wajah terlihat sepenuhnya</string>
+    <string name="ai_guide_bad_side_profile">Profil samping</string>
+    <string name="ai_guide_bad_blurry">Foto buram</string>
+    <string name="ai_guide_bad_group">Foto grup</string>
+    <string name="ai_guide_cta">Pilih foto Anda</string>
+    <string name="ai_credits_title">Kredit AI gratis habis</string>
+    <string name="ai_credits_desc">Kredit AI gratis Anda telah habis hari ini. Silakan kembali lagi nanti untuk membuat lebih banyak video AI.</string>
+    <string name="ai_credits_try_again">Coba lagi</string>
+    <string name="ai_credits_try_later">Saya akan coba nanti</string>
+    <string name="picker_ai_min_selection">Tambahkan setidaknya 1 foto untuk membuat video</string>
+    <string name="home_tab_ai">AI</string>
+    <string name="settings_library">Perpustakaan</string>
 </resources>

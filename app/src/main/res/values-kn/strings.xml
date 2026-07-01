@@ -697,4 +697,31 @@
     <string name="survey_non_ai_lyric_title">ಲಿರಿಕ್ ಮ್ಯೂಸಿಕ್ ವೀಡಿಯೊಗಳು</string>
     <string name="survey_non_ai_music_video_title">ನಿಮ್ಮ ವಿಶಿಷ್ಟ ವೀಡಿಯೊ ಶೈಲಿಯನ್ನು ರಚಿಸಿ</string>
     <string name="survey_ai_promote_title">ಜೊತೆಗೆ ಅನೇಕ AI ವೈಶಿಷ್ಟ್ಯಗಳು</string>
+    <!-- AI Tab / My Videos -->
+    <string name="settings_my_videos">ನನ್ನ ವೀಡಿಯೊಗಳು</string>
+    <string name="ai_section_video_generator">AI ವೀಡಿಯೊ ಜನರೇಟರ್</string>
+    <string name="ai_section_dance">AI ನೃತ್ಯ</string>
+    <string name="ai_remind_toast">ನಾವು ನಿಮಗೆ ನಂತರ ನೆನಪಿಸುತ್ತೇವೆ</string>
+    <string name="ai_banner_title">ಟ್ರೆಂಡಿಂಗ್ AI ವೀಡಿಯೊ</string>
+    <string name="ai_banner_coming_soon">ಶೀಘ್ರದಲ್ಲೇ ಬರಲಿದೆ</string>
+    <string name="ai_banner_remind_me">ನನಗೆ ನೆನಪಿಸಿ</string>
+    <string name="ai_templates_empty">ಇನ್ನೂ ಯಾವುದೇ ಟೆಂಪ್ಲೇಟ್‌ಗಳಿಲ್ಲ</string>
+    <string name="ai_see_all">ಎಲ್ಲವನ್ನೂ ನೋಡಿ</string>
+    <!-- AI guide / credits / picker -->
+    <string name="ai_guide_title">ಸರಿಯಾದ ಫೋಟೋಗಳನ್ನು ಬಳಸಿ</string>
+    <string name="ai_guide_desc">ಉತ್ತಮ ಗುಣಮಟ್ಟದ ಫೋಟೋಗಳು AI ಅತ್ಯುತ್ತಮ ಫಲಿತಾಂಶಗಳನ್ನು ರಚಿಸಲು ಸಹಾಯ ಮಾಡುತ್ತವೆ.</string>
+    <string name="ai_guide_good_front_facing">ಮುಂಭಾಗದ ಮುಖ</string>
+    <string name="ai_guide_good_one_person">ಒಬ್ಬ ವ್ಯಕ್ತಿ</string>
+    <string name="ai_guide_good_face_visible">ಮುಖ ಸಂಪೂರ್ಣವಾಗಿ ಗೋಚರ</string>
+    <string name="ai_guide_bad_side_profile">ಪಾರ್ಶ್ವ ಪ್ರೊಫೈಲ್</string>
+    <string name="ai_guide_bad_blurry">ಮಸುಕಾದ ಫೋಟೋಗಳು</string>
+    <string name="ai_guide_bad_group">ಗುಂಪು ಫೋಟೋಗಳು</string>
+    <string name="ai_guide_cta">ನಿಮ್ಮ ಫೋಟೋ ಆಯ್ಕೆಮಾಡಿ</string>
+    <string name="ai_credits_title">ಉಚಿತ AI ಕ್ರೆಡಿಟ್‌ಗಳು ಮುಗಿದಿವೆ</string>
+    <string name="ai_credits_desc">ನಿಮ್ಮ ಉಚಿತ AI ಕ್ರೆಡಿಟ್‌ಗಳು ಇಂದು ಮುಗಿದಿವೆ. ಹೆಚ್ಚಿನ AI ವೀಡಿಯೊಗಳನ್ನು ರಚಿಸಲು ದಯವಿಟ್ಟು ನಂತರ ಮತ್ತೆ ಬನ್ನಿ.</string>
+    <string name="ai_credits_try_again">ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ</string>
+    <string name="ai_credits_try_later">ನಾನು ನಂತರ ಪ್ರಯತ್ನಿಸುತ್ತೇನೆ</string>
+    <string name="picker_ai_min_selection">ವೀಡಿಯೊ ರಚಿಸಲು ಕನಿಷ್ಠ 1 ಫೋಟೋ ಸೇರಿಸಿ</string>
+    <string name="home_tab_ai">AI</string>
+    <string name="settings_library">ಲೈಬ್ರರಿ</string>
 </resources>

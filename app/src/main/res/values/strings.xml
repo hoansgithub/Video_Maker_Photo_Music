@@ -85,6 +85,7 @@
     <string name="ai_section_video_generator">AI Video Generator</string>
     <string name="ai_section_dance">AI Dance</string>
     <string name="ai_templates_empty">No templates yet</string>
+    <string name="ai_see_all">See all</string>
     <!-- AI photo guide popup -->
     <string name="ai_guide_title">Use the Right Photos</string>
     <string name="ai_guide_desc">High-quality photos help AI create the best results.</string>
