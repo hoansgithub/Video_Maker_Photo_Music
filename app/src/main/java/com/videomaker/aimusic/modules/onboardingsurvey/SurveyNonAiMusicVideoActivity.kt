@@ -68,7 +68,7 @@ class SurveyNonAiMusicVideoActivity : BaseOnboardingActivity() {
                 delayedEnabled = true
             }
 
-            Box(Modifier.fillMaxSize().statusBarsPadding()) {
+            Box(Modifier.fillMaxSize()) {
                 NonAiMusicVideoScreen(bottomContainerTopPx = bottomContainerTopPx)
 
                 Box(

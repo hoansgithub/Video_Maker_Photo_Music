@@ -68,7 +68,7 @@ class SurveyFaceSwapActivity : BaseOnboardingActivity() {
                 delayedEnabled = true
             }
 
-            Box(Modifier.fillMaxSize().statusBarsPadding()) {
+            Box(Modifier.fillMaxSize()) {
                 FaceSwapScreen(bottomContainerTopPx = bottomContainerTopPx)
 
                 Box(

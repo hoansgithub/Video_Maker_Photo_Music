@@ -68,7 +68,7 @@ class SurveyAiPromoteActivity : BaseOnboardingActivity() {
                 delayedEnabled = true
             }
 
-            Box(Modifier.fillMaxSize().statusBarsPadding()) {
+            Box(Modifier.fillMaxSize()) {
                 AiPromoteScreen(bottomContainerTopPx = bottomContainerTopPx)
 
                 Box(
