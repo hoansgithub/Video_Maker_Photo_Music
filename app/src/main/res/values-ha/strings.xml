@@ -432,8 +432,13 @@
     <!-- Onboarding Page 4 -->
     <string name="onboarding_page4_title">Yaya kuke son fara?</string>
     <string name="onboarding_page4_subtitle">Wannan yana taimaka mana ba da shawarar abubuwa mafi dacewa dominka.</string>
-    <string name="feature_music_video_instant">Binciki Templates na Bidiyo</string>
-    <string name="feature_photos_to_video">Fara da Waƙa</string>
+    <string name="feature_music_video_instant">Templates masu shahara</string>
+    <string name="feature_music_video_instant_subtitle">Zaɓi template kuma ƙara hotunanku</string>
+    <string name="feature_photos_to_video">Zaɓi waƙa</string>
+    <string name="feature_photos_to_video_subtitle">Saurara da farko, sannan ƙirƙiri bidiyo bisa bugun</string>
+    <string name="feature_create_ai">Ƙirƙira da AI</string>
+    <string name="feature_create_ai_subtitle">Bari AI ya ba da shawarar salon, tasiri, da ra\'ayin bidiyo</string>
+    <string name="feature_new_badge">NEW !!</string>
     <string name="feature_trending_templates">Yi amfani da templates masu trending</string>
     <string name="feature_trending_music">Ƙara kiɗan trending</string>
 

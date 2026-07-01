@@ -432,8 +432,13 @@
     <!-- Onboarding Page 4 -->
     <string name="onboarding_page4_title">আপনি কিভাবে শুরু করতে চান?</string>
     <string name="onboarding_page4_subtitle">এটি আমাদের আপনার জন্য সবচেয়ে প্রাসঙ্গিক কন্টেন্ট সুপারিশ করতে সাহায্য করে।</string>
-    <string name="feature_music_video_instant">ভিডিও টেমপ্লেট ব্রাউজ করুন</string>
-    <string name="feature_photos_to_video">গান দিয়ে শুরু করুন</string>
+    <string name="feature_music_video_instant">ট্রেন্ডিং টেমপ্লেট</string>
+    <string name="feature_music_video_instant_subtitle">একটি টেমপ্লেট বাছুন এবং আপনার ফটো যোগ করুন</string>
+    <string name="feature_photos_to_video">একটি গান বাছুন</string>
+    <string name="feature_photos_to_video_subtitle">প্রথমে শুনুন, তারপর বিটে ভিডিও তৈরি করুন</string>
+    <string name="feature_create_ai">AI দিয়ে তৈরি করুন</string>
+    <string name="feature_create_ai_subtitle">AI কে স্টাইল, ইফেক্ট এবং ভিডিও আইডিয়া সাজেস্ট করতে দিন</string>
+    <string name="feature_new_badge">NEW !!</string>
     <string name="feature_trending_templates">ট্রেন্ডিং টেমপ্লেট ব্যবহার করুন</string>
     <string name="feature_trending_music">ট্রেন্ডিং সঙ্গীত যোগ করুন</string>
 

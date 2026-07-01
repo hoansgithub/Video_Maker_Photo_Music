@@ -426,8 +426,13 @@
     <!-- Onboarding Page 4 — Feature Survey -->
     <string name="onboarding_page4_title">Comienza Tu Viaje</string>
     <string name="onboarding_page4_subtitle">Esto nos ayuda a recomendarte el contenido más relevante para ti.</string>
-    <string name="feature_music_video_instant">Explora plantillas de video</string>
-    <string name="feature_photos_to_video">Empieza con una canción</string>
+    <string name="feature_music_video_instant">Plantillas populares</string>
+    <string name="feature_music_video_instant_subtitle">Elige una plantilla y añade tus fotos</string>
+    <string name="feature_photos_to_video">Elige una canción</string>
+    <string name="feature_photos_to_video_subtitle">Escucha primero y crea un video al ritmo</string>
+    <string name="feature_create_ai">Crea con IA</string>
+    <string name="feature_create_ai_subtitle">Deja que la IA sugiera estilos, efectos e ideas de video</string>
+    <string name="feature_new_badge">NEW !!</string>
     <string name="feature_trending_templates">Usa plantillas en tendencia</string>
     <string name="feature_trending_music">Añade música en tendencia</string>
 

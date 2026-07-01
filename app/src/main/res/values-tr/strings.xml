@@ -426,8 +426,13 @@
     <!-- Onboarding Page 4 — Feature Survey -->
     <string name="onboarding_page4_title">Yolculuğunuza Başlayın</string>
     <string name="onboarding_page4_subtitle">Bu, sizin için en uygun içeriği önermemize yardımcı olur.</string>
-    <string name="feature_music_video_instant">Video Şablonlarına Göz Atın</string>
-    <string name="feature_photos_to_video">Bir Şarkıyla Başlayın</string>
+    <string name="feature_music_video_instant">Trend şablonlar</string>
+    <string name="feature_music_video_instant_subtitle">Bir şablon seç ve fotoğraflarını ekle</string>
+    <string name="feature_photos_to_video">Bir şarkı seç</string>
+    <string name="feature_photos_to_video_subtitle">Önce dinle, sonra ritme uygun video oluştur</string>
+    <string name="feature_create_ai">AI ile oluştur</string>
+    <string name="feature_create_ai_subtitle">AI\'nın stiller, efektler ve video fikirleri önermesine izin ver</string>
+    <string name="feature_new_badge">NEW !!</string>
     <string name="feature_trending_templates">Trend şablonları kullanın</string>
     <string name="feature_trending_music">Trend müzik ekleyin</string>
 

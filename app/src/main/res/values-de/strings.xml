@@ -432,8 +432,13 @@
     <!-- Onboarding Page 4 -->
     <string name="onboarding_page4_title">Wie möchtest du starten?</string>
     <string name="onboarding_page4_subtitle">Dies hilft uns, die relevantesten Inhalte für dich zu empfehlen.</string>
-    <string name="feature_music_video_instant">Video-Vorlagen durchsuchen</string>
-    <string name="feature_photos_to_video">Mit einem Song starten</string>
+    <string name="feature_music_video_instant">Trendige Vorlagen</string>
+    <string name="feature_music_video_instant_subtitle">Wähle eine Vorlage und füge deine Fotos hinzu</string>
+    <string name="feature_photos_to_video">Wähle einen Song</string>
+    <string name="feature_photos_to_video_subtitle">Höre zuerst zu, dann erstelle ein Video zum Beat</string>
+    <string name="feature_create_ai">Mit KI erstellen</string>
+    <string name="feature_create_ai_subtitle">Lass KI Stile, Effekte und Videoideen vorschlagen</string>
+    <string name="feature_new_badge">NEW !!</string>
     <string name="feature_trending_templates">Trendige Vorlagen verwenden</string>
     <string name="feature_trending_music">Trendige Musik hinzufügen</string>
 

@@ -432,8 +432,13 @@
     <!-- Onboarding Page 4 -->
     <string name="onboarding_page4_title">Báwo ni o fẹ́ bẹ̀rẹ̀?</string>
     <string name="onboarding_page4_subtitle">Èyí ràn wá lọ́wọ́ láti dámọ̀ràn àkóónú tó yẹ jù fún ẹ.</string>
-    <string name="feature_music_video_instant">Ṣàwárí Àwọn Àpẹẹrẹ Fídíò</string>
-    <string name="feature_photos_to_video">Bẹ̀rẹ̀ pẹ̀lú Orin</string>
+    <string name="feature_music_video_instant">Àwọn àpẹẹrẹ tó ń trend</string>
+    <string name="feature_music_video_instant_subtitle">Yan àpẹẹrẹ kí o sì fi àwọn àwòrán rẹ kún</string>
+    <string name="feature_photos_to_video">Yan orin</string>
+    <string name="feature_photos_to_video_subtitle">Gbọ́ ni àkọ́kọ́, lẹ́yìn náà ṣe fídíò sí ìlù</string>
+    <string name="feature_create_ai">Ṣẹ̀dá pẹ̀lú AI</string>
+    <string name="feature_create_ai_subtitle">Jẹ́ kí AI dábàá àwọn àṣà, ipa, àti àwọn èrò fídíò</string>
+    <string name="feature_new_badge">NEW !!</string>
     <string name="feature_trending_templates">Lò àwọn àpẹẹrẹ trending</string>
     <string name="feature_trending_music">Fi orin trending kún</string>
 

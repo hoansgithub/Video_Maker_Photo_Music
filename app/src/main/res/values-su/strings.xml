@@ -432,8 +432,13 @@
     <!-- Onboarding Page 4 -->
     <string name="onboarding_page4_title">Kumaha anjeun hoyong mimiti?</string>
     <string name="onboarding_page4_subtitle">Ieu ngabantosan kami nyarankeun konten nu paling relevan pikeun anjeun.</string>
-    <string name="feature_music_video_instant">Telusuri Citakan Video</string>
-    <string name="feature_photos_to_video">Mimitian ku Lagu</string>
+    <string name="feature_music_video_instant">Citakan trending</string>
+    <string name="feature_music_video_instant_subtitle">Pilih citakan sareng tambahkeun poto anjeun</string>
+    <string name="feature_photos_to_video">Pilih lagu</string>
+    <string name="feature_photos_to_video_subtitle">Dengekeun heula, teras jieun video nuturkeun irama</string>
+    <string name="feature_create_ai">Jieun ku AI</string>
+    <string name="feature_create_ai_subtitle">Antep AI nyarankeun gaya, éfék, sareng ideu video</string>
+    <string name="feature_new_badge">NEW !!</string>
     <string name="feature_trending_templates">Gunakeun citakan trending</string>
     <string name="feature_trending_music">Tambah musik trending</string>
 

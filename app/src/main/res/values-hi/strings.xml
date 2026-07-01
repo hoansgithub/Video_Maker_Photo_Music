@@ -428,8 +428,13 @@
     <!-- Onboarding Page 4 — Feature Survey -->
     <string name="onboarding_page4_title">अपनी यात्रा शुरू करें</string>
     <string name="onboarding_page4_subtitle">इससे हमें आपके लिए सबसे प्रासंगिक कंटेंट सुझाने में मदद मिलती है।</string>
-    <string name="feature_music_video_instant">वीडियो टेम्पलेट्स ब्राउज़ करें</string>
-    <string name="feature_photos_to_video">किसी गाने से शुरू करें</string>
+    <string name="feature_music_video_instant">ट्रेंडिंग टेम्पलेट</string>
+    <string name="feature_music_video_instant_subtitle">एक टेम्पलेट चुनें और अपनी फ़ोटो जोड़ें</string>
+    <string name="feature_photos_to_video">एक गाना चुनें</string>
+    <string name="feature_photos_to_video_subtitle">पहले सुनें, फिर बीट पर वीडियो बनाएं</string>
+    <string name="feature_create_ai">AI से बनाएं</string>
+    <string name="feature_create_ai_subtitle">AI को स्टाइल, इफ़ेक्ट और वीडियो आइडिया सुझाने दें</string>
+    <string name="feature_new_badge">NEW !!</string>
     <string name="feature_trending_templates">ट्रेंडिंग टेम्पलेट्स उपयोग करें</string>
     <string name="feature_trending_music">ट्रेंडिंग म्यूज़िक जोड़ें</string>
 

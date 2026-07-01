@@ -426,8 +426,13 @@
     <!-- Onboarding Page 4 — Feature Survey -->
     <string name="onboarding_page4_title">Comece Sua Jornada</string>
     <string name="onboarding_page4_subtitle">Isso nos ajuda a recomendar o conteúdo mais relevante para você.</string>
-    <string name="feature_music_video_instant">Explore modelos de vídeo</string>
-    <string name="feature_photos_to_video">Comece com uma música</string>
+    <string name="feature_music_video_instant">Modelos em alta</string>
+    <string name="feature_music_video_instant_subtitle">Escolha um modelo e adicione suas fotos</string>
+    <string name="feature_photos_to_video">Escolha uma música</string>
+    <string name="feature_photos_to_video_subtitle">Ouça primeiro e crie um vídeo no ritmo</string>
+    <string name="feature_create_ai">Crie com IA</string>
+    <string name="feature_create_ai_subtitle">Deixe a IA sugerir estilos, efeitos e ideias de vídeo</string>
+    <string name="feature_new_badge">NEW !!</string>
     <string name="feature_trending_templates">Use modelos em alta</string>
     <string name="feature_trending_music">Adicione música em alta</string>
 

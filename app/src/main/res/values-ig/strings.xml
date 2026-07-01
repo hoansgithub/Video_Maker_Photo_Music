@@ -433,8 +433,13 @@
     <!-- Onboarding Page 4 — Feature Survey -->
     <string name="onboarding_page4_title">Kedụ ka ị chọọ ị bido?</string>
     <string name="onboarding_page4_subtitle">Nke a nyeere anyị aka n\'atụmatụ ọdịnaya kachasị mma maka gị.</string>
-    <string name="feature_music_video_instant">Gwa-gwa Ụkpụrụ Video</string>
-    <string name="feature_photos_to_video">Bido na Abụ</string>
+    <string name="feature_music_video_instant">Ụkpụrụ ndị na-ewu ewu</string>
+    <string name="feature_music_video_instant_subtitle">Họrọ ụkpụrụ wee tinye foto gị</string>
+    <string name="feature_photos_to_video">Họrọ abụ</string>
+    <string name="feature_photos_to_video_subtitle">Gee ntị mbụ, wee mepụta vidiyo na ụda</string>
+    <string name="feature_create_ai">Mepụta na AI</string>
+    <string name="feature_create_ai_subtitle">Hapụ AI tụọ aro ụdị, mmetụta, na echiche vidiyo</string>
+    <string name="feature_new_badge">NEW !!</string>
     <string name="feature_trending_templates">Jiri ụkpụrụ ndị na-asọmpi</string>
     <string name="feature_trending_music">Tinye egwu ndị na-asọmpi</string>
 
