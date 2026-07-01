@@ -69,6 +69,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -117,6 +118,14 @@ fun LanguageSelectionScreen(
     onContinue: () -> Unit,
     showBackButton: Boolean = false,
     onBackClick: () -> Unit = {},
+    // Dual screen mode: when non-null, the caller handles ads
+    onUserInteraction: (() -> Unit)? = null,
+    bottomPaddingDp: Dp = 0.dp,
+    externalButtonEnabled: Boolean = true,
+    // Lifted selection state for dual screen swap preservation.
+    // When non-null, the screen uses this instead of internal remember state.
+    externalSelectedLanguage: String? = null,
+    onSelectedLanguageChanged: ((String?) -> Unit)? = null,
     languageConfigService: LanguageConfigService = koinInject(),
     languageManager: LanguageManager = koinInject()
 ) {
@@ -126,7 +135,11 @@ fun LanguageSelectionScreen(
         Analytics.track(name = AnalyticsEvent.LANGUAGE_SHOW)
     }
     val density = LocalDensity.current
-    var selectedLanguage by remember {
+
+    // Selection state: dual screen mode uses externally-lifted state (survives swap),
+    // standalone mode (settings) uses internal remember state.
+    val isDualScreenMode = onUserInteraction != null
+    var internalSelectedLanguage by remember {
         mutableStateOf(
             if (showBackButton && languageManager.isLanguageSelectionComplete()) {
                 languageManager.getSelectedLanguagePreference()
@@ -134,6 +147,11 @@ fun LanguageSelectionScreen(
                 null
             }
         )
+    }
+    val selectedLanguage = if (isDualScreenMode) externalSelectedLanguage else internalSelectedLanguage
+    val setSelectedLanguage = { code: String? ->
+        if (isDualScreenMode) onSelectedLanguageChanged?.invoke(code)
+        else internalSelectedLanguage = code
     }
 
     var showLanguageSetupDialog by remember { mutableStateOf(false) }
@@ -143,7 +161,7 @@ fun LanguageSelectionScreen(
     val handleContinueClick = {
         if (selectedLanguage == null) {
             val defaultCode = LanguageManager.LANGUAGE_SYSTEM
-            selectedLanguage = defaultCode
+            setSelectedLanguage(defaultCode)
             pendingLanguageCode = defaultCode
             continueAfterDialog = true
             showLanguageSetupDialog = true
@@ -182,19 +200,27 @@ fun LanguageSelectionScreen(
         languages = listOf(systemDefaultLanguage) + sorted
     }
 
-    // Track bottom section height dynamically (button + ad)
+    // Track bottom section height dynamically (button + ad) — only in standalone mode
     var bottomSectionHeight by remember { mutableStateOf(0) }
-    val bottomPaddingDp = with(density) { bottomSectionHeight.toDp() }
 
-    // Delayed states for ad viewability compliance (0.5-second per ad)
-    // Sequential delays ensuring EACH ad gets at least 0.5 second of display time
-    // Pipeline: FIRST user interaction → PRIMARY shows 0.5s → ALT shows 0.5s → Button enables
-    // Total 1s delay for faster UX while maintaining ad viewability
+    // Scroll content padding: uses internal ad section height only.
+    // In dual screen mode, the wrapper's ad is OUTSIDE the content area (Box weight=1f),
+    // so scroll content doesn't need padding for it — only CTA clearance.
+    val scrollBottomPadding = with(density) { bottomSectionHeight.toDp() }
+
+    // CTA nav bar padding: checks if there's any ad below (internal or external).
+    // Matches FeatureSelectionActivity: if (bottomPadding == 0.dp) navigationBarsPadding()
+    val hasAdBelow = if (isDualScreenMode) bottomPaddingDp > 0.dp else bottomSectionHeight > 0
+
+    // Internal ad delay states — only used in standalone mode (settings)
     var delayedHasSelection by remember { mutableStateOf(false) }
     var delayedButtonEnabled by remember { mutableStateOf(false) }
     var hasStartedDelay by remember { mutableStateOf(false) }
 
-    // --- ALT last-only reload state ---
+    // Effective button enabled: dual screen mode uses external, standalone uses internal delay
+    val effectiveButtonEnabled = if (isDualScreenMode) externalButtonEnabled else delayedButtonEnabled
+
+    // --- ALT last-only reload state (standalone mode only) ---
     val adsLoaderService: AdsLoaderService = koinInject()
     val coroutineScope = rememberCoroutineScope()
     val lastOnlyPlacement = remember {
@@ -223,7 +249,7 @@ fun LanguageSelectionScreen(
     LaunchedEffect(interactionKey, selectedLanguage, scrollState.isScrollInProgress) {
         if (selectedLanguage == null && !scrollState.isScrollInProgress) {
             delay(7_000.milliseconds)
-            selectedLanguage = LanguageManager.LANGUAGE_SYSTEM
+            setSelectedLanguage(LanguageManager.LANGUAGE_SYSTEM)
             pendingLanguageCode = LanguageManager.LANGUAGE_SYSTEM
             continueAfterDialog = false
             showLanguageSetupDialog = true
@@ -238,34 +264,37 @@ fun LanguageSelectionScreen(
         }
     }
 
-    // Sequential delays ensuring EACH ad gets at least 0.5 second of display time
-    // Timer starts on FIRST selection and does NOT reset on subsequent selections
-    LaunchedEffect(hasStartedDelay) {
-        if (hasStartedDelay) {
-            // Step 1: Wait 0.5s from FIRST interaction before switching to ALT ad
-            // NATIVE_ONBOARDING_LANGUAGE (PRIMARY) gets guaranteed 0.5s visibility
-            delay(500)
-            delayedHasSelection = true
+    // Internal ad delay logic — only in standalone mode (settings)
+    if (!isDualScreenMode) {
+        // Sequential delays ensuring EACH ad gets at least 0.5 second of display time
+        // Timer starts on FIRST selection and does NOT reset on subsequent selections
+        LaunchedEffect(hasStartedDelay) {
+            if (hasStartedDelay) {
+                // Step 1: Wait 0.5s from FIRST interaction before switching to ALT ad
+                // NATIVE_ONBOARDING_LANGUAGE (PRIMARY) gets guaranteed 0.5s visibility
+                delay(500)
+                delayedHasSelection = true
 
-            // Step 2: Wait another 0.5s before enabling button
-            // NATIVE_ONBOARDING_LANGUAGE_ALT gets guaranteed 0.5s visibility
-            delay(500)
-            delayedButtonEnabled = true
+                // Step 2: Wait another 0.5s before enabling button
+                // NATIVE_ONBOARDING_LANGUAGE_ALT gets guaranteed 0.5s visibility
+                delay(500)
+                delayedButtonEnabled = true
+            }
         }
-    }
 
-    // Watch for first interaction and reset when deselected
-    LaunchedEffect(selectedLanguage) {
-        if (selectedLanguage != null && !hasStartedDelay) {
-            // First interaction - start the timer (only happens once)
-            hasStartedDelay = true
-            android.util.Log.d("LanguageSelection", "🎬 Started IAB viewability timer")
-        } else if (selectedLanguage == null && hasStartedDelay) {
-            // User deselected - reset everything
-            hasStartedDelay = false
-            delayedHasSelection = false
-            delayedButtonEnabled = false
-            android.util.Log.d("LanguageSelection", "🔄 Reset IAB viewability timer")
+        // Watch for first interaction and reset when deselected
+        LaunchedEffect(selectedLanguage) {
+            if (selectedLanguage != null && !hasStartedDelay) {
+                // First interaction - start the timer (only happens once)
+                hasStartedDelay = true
+                android.util.Log.d("LanguageSelection", "🎬 Started IAB viewability timer")
+            } else if (selectedLanguage == null && hasStartedDelay) {
+                // User deselected - reset everything
+                hasStartedDelay = false
+                delayedHasSelection = false
+                delayedButtonEnabled = false
+                android.util.Log.d("LanguageSelection", "🔄 Reset IAB viewability timer")
+            }
         }
     }
 
@@ -310,7 +339,7 @@ fun LanguageSelectionScreen(
                         .padding(horizontal = 24.dp)
                         .padding(
                             top = 16.dp,
-                            bottom = bottomPaddingDp + 24.dp  // Dynamic padding based on measured bottom section height
+                            bottom = scrollBottomPadding + 24.dp  // Padding for CTA overlay clearance
                         ),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
@@ -355,7 +384,7 @@ fun LanguageSelectionScreen(
                                         }
                                     },
                                     color = Primary,
-                                    enabled = selectedLanguage != null && delayedButtonEnabled
+                                    enabled = selectedLanguage != null && effectiveButtonEnabled
                                 )
                             }
                         }
@@ -397,13 +426,15 @@ fun LanguageSelectionScreen(
                                         topLeft + Offset(coords.size.width / 2f, 0f)
                                 },
                                 onClick = {
-                                    selectedLanguage = language.code
+                                    setSelectedLanguage(language.code)
                                     pendingLanguageCode = language.code
                                     showLanguageSetupDialog = true
-                                    // Apply language + reload ad in parallel with dialog
+                                    // Apply language
                                     onLanguageSelected(language.code)
-                                    // Reload ALT ad with last-only after swap (2s gap)
-                                    if (delayedHasSelection) {
+                                    // Dual screen mode: notify caller of user interaction
+                                    onUserInteraction?.invoke()
+                                    // Standalone mode: reload ALT ad with last-only after swap (2s gap)
+                                    if (!isDualScreenMode && delayedHasSelection) {
                                         val lop = lastOnlyPlacement
                                         val now = System.currentTimeMillis()
                                         if (lop != null && now - lastImpressionTime >= 2000L && !isReloading) {
@@ -445,7 +476,7 @@ fun LanguageSelectionScreen(
                             .fillMaxWidth()
                             .align(Alignment.BottomEnd)
                             .then(
-                                if (bottomSectionHeight == 0) Modifier.navigationBarsPadding()
+                                if (!hasAdBelow) Modifier.navigationBarsPadding()
                                 else Modifier
                             )
                             .clickableSingle{}
@@ -470,41 +501,44 @@ fun LanguageSelectionScreen(
                                 icon = R.drawable.ic_right_arrow,
                                 color = Primary,
                                 onClick = handleContinueClick,
-                                enabled = selectedLanguage == null || delayedButtonEnabled
+                                enabled = selectedLanguage == null || effectiveButtonEnabled
                             )
                         }
                     }
                 }
             }
 
-            // Bottom section: Native ad only (button moved to top right for showBackButton=true)
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .onSizeChanged { size ->
-                        bottomSectionHeight = size.height  // Measure actual height dynamically!
-                    }
-                    .then(if (adPlacementConfigService.adBottomNavPaddingEnabled) Modifier.navigationBarsPadding() else Modifier)
-            ) {
-                if (delayedHasSelection) {
-                    // ALT ad - shown after user selects a language
-                    // key(reloadKey) recreates NativeAdView with fresh ad on reload
-                    key(reloadKey) {
+            // Bottom section: Native ad only — standalone mode (settings)
+            // In dual screen mode, the caller (OnboardingNormalScreen/OnboardingAltScreen) handles ads
+            if (!isDualScreenMode) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .onSizeChanged { size ->
+                            bottomSectionHeight = size.height  // Measure actual height dynamically!
+                        }
+                        .then(if (adPlacementConfigService.adBottomNavPaddingEnabled) Modifier.navigationBarsPadding() else Modifier)
+                ) {
+                    if (delayedHasSelection) {
+                        // ALT ad - shown after user selects a language
+                        // key(reloadKey) recreates NativeAdView with fresh ad on reload
+                        key(reloadKey) {
+                            NativeAdView(
+                                placement = altPlacement,
+                                modifier = Modifier.fillMaxWidth(),
+                                isDebug = BuildConfig.DEBUG,
+                                onAdClicked = { adClickDetector.onAdClick(it) }
+                            )
+                        }
+                    } else {
+                        // PRIMARY ad - shown before user selects
                         NativeAdView(
-                            placement = altPlacement,
+                            placement = AdPlacement.NATIVE_ONBOARDING_LANGUAGE,
                             modifier = Modifier.fillMaxWidth(),
                             isDebug = BuildConfig.DEBUG,
                             onAdClicked = { adClickDetector.onAdClick(it) }
                         )
                     }
-                } else {
-                    // PRIMARY ad - shown before user selects
-                    NativeAdView(
-                        placement = AdPlacement.NATIVE_ONBOARDING_LANGUAGE,
-                        modifier = Modifier.fillMaxWidth(),
-                        isDebug = BuildConfig.DEBUG,
-                        onAdClicked = { adClickDetector.onAdClick(it) }
-                    )
                 }
             }
         }
@@ -515,7 +549,7 @@ fun LanguageSelectionScreen(
             languageCardOffsets = languageCardOffsets,
             ctaButtonOffset = ctaButtonOffset,
             onSelectLanguage = { code ->
-                selectedLanguage = code
+                setSelectedLanguage(code)
                 pendingLanguageCode = code
                 showLanguageSetupDialog = true
                 onLanguageSelected(code)
