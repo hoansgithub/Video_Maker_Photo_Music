@@ -16,6 +16,11 @@ class FeatureSelectionMapperTest {
     }
 
     @Test
+    fun `create with ai maps to ai tab`() {
+        assertEquals(2, mapFeatureToInitialTab("create_with_ai"))
+    }
+
+    @Test
     fun `unknown feature falls back to gallery tab`() {
         assertEquals(0, mapFeatureToInitialTab("unknown"))
     }
