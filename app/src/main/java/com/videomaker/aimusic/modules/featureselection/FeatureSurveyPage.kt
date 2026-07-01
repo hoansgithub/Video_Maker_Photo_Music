@@ -1,20 +1,17 @@
-package com.videomaker.aimusic.modules.onboarding.pages
+package com.videomaker.aimusic.modules.featureselection
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -22,13 +19,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.MusicNote
-import androidx.compose.material.icons.filled.PhotoLibrary
-import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material3.Icon
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -39,8 +31,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -66,8 +56,6 @@ internal data class FeatureItem(val id: String, val icon: Int, val nameResId: In
 internal val featureItems = listOf(
     FeatureItem("music_video_instant", R.drawable.ic_lead_search,     R.string.feature_music_video_instant),
     FeatureItem("photos_to_video",     R.drawable.ic_music_note, R.string.feature_photos_to_video),
-//    FeatureItem("trending_templates",  Icons.Default.AutoAwesome,  R.string.feature_trending_templates),
-//    FeatureItem("trending_music",      Icons.Default.MusicNote,    R.string.feature_trending_music),
 )
 
 // ============================================
@@ -79,7 +67,7 @@ fun FeatureSurveyPage(
     selectedFeatures: List<String>,
     onFeatureToggle: (String) -> Unit,
     modifier: Modifier = Modifier,
-    bottomPaddingDp: androidx.compose.ui.unit.Dp = 0.dp  // Dynamic bottom padding from parent
+    bottomPaddingDp: androidx.compose.ui.unit.Dp = 0.dp
 ) {
     val cardAnimations = remember {
         featureItems.map { Pair(Animatable(0f), Animatable(32f)) }
@@ -103,7 +91,7 @@ fun FeatureSurveyPage(
             .padding(horizontal = 24.dp)
             .padding(
                 top = 26.dp,
-                bottom = bottomPaddingDp + 24.dp  // Dynamic padding based on measured bottom section height
+                bottom = bottomPaddingDp + 24.dp
             ),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -124,7 +112,7 @@ fun FeatureSurveyPage(
             modifier = Modifier.fillMaxWidth()
         )
 
-        Spacer(Modifier.height(32.dp))  // Reduced from 36dp to 32dp
+        Spacer(Modifier.height(32.dp))
 
         featureItems.forEachIndexed { index, item ->
             val (alpha, translateY) = cardAnimations[index]
@@ -139,7 +127,7 @@ fun FeatureSurveyPage(
                     .graphicsLayer { translationY = translateY.value }
             )
 
-            if (index < featureItems.lastIndex) Spacer(Modifier.height(16.dp))  // Consistent 16dp spacing
+            if (index < featureItems.lastIndex) Spacer(Modifier.height(16.dp))
         }
     }
 }
@@ -149,7 +137,7 @@ fun FeatureSurveyPage(
 // ============================================
 
 @Composable
-private fun FeatureCard(
+internal fun FeatureCard(
     item: FeatureItem,
     isSelected: Boolean, onFeatureToggle: (String) -> Unit,
     modifier: Modifier = Modifier
@@ -168,13 +156,13 @@ private fun FeatureCard(
                 shape = cardShape
             )
             .clickableSingle { onFeatureToggle(item.id) }
-            .padding(vertical = 20.dp, horizontal = 16.dp)  // Reduced from 24dp to 20dp
+            .padding(vertical = 20.dp, horizontal = 16.dp)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.Center),
-            verticalArrangement = Arrangement.spacedBy(16.dp),  // Reduced from 24dp to 16dp
+            verticalArrangement = Arrangement.spacedBy(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Icon(
@@ -182,17 +170,17 @@ private fun FeatureCard(
                 contentDescription = null,
                 tint = if (isSelected) Primary else MaterialTheme.colorScheme.onBackground,
                 modifier = Modifier
-                    .size(32.dp)  // Reduced from 36dp to 32dp for more compact layout
+                    .size(32.dp)
             )
 
             Text(
                 text = stringResource(item.nameResId),
-                fontSize = 17.sp,  // Reduced from 18sp to 17sp
+                fontSize = 17.sp,
                 fontWeight = FontWeight.W500,
                 color = MaterialTheme.colorScheme.onBackground,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 40.dp),  // Reduced from 50dp to 40dp
+                    .padding(horizontal = 40.dp),
                 textAlign = TextAlign.Center
             )
         }
