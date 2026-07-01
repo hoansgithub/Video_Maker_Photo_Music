@@ -439,8 +439,13 @@
     <!-- Onboarding Page 4 — Feature Survey -->
     <string name="onboarding_page4_title">Bắt Đầu Hành Trình Của Bạn</string>
     <string name="onboarding_page4_subtitle">Điều này giúp chúng tôi đề xuất nội dung phù hợp nhất cho bạn.</string>
-    <string name="feature_music_video_instant">Khám Phá Mẫu Video</string>
-    <string name="feature_photos_to_video">Bắt Đầu Với Bài Hát</string>
+    <string name="feature_music_video_instant">Mẫu thịnh hành</string>
+    <string name="feature_music_video_instant_subtitle">Chọn mẫu và thêm ảnh của bạn</string>
+    <string name="feature_photos_to_video">Chọn bài hát</string>
+    <string name="feature_photos_to_video_subtitle">Nghe trước, rồi tạo video theo nhịp</string>
+    <string name="feature_create_ai">Tạo với AI</string>
+    <string name="feature_create_ai_subtitle">Để AI gợi ý phong cách, hiệu ứng và ý tưởng video</string>
+    <string name="feature_new_badge">NEW !!</string>
     <string name="feature_trending_templates">Dùng mẫu xu hướng</string>
     <string name="feature_trending_music">Thêm nhạc xu hướng</string>
 

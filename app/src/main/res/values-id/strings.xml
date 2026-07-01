@@ -426,8 +426,13 @@
     <!-- Onboarding Page 4 — Feature Survey -->
     <string name="onboarding_page4_title">Mulai Perjalanan Anda</string>
     <string name="onboarding_page4_subtitle">Ini membantu kami merekomendasikan konten yang paling relevan untuk Anda.</string>
-    <string name="feature_music_video_instant">Jelajahi Templat Video</string>
-    <string name="feature_photos_to_video">Mulai dengan Lagu</string>
+    <string name="feature_music_video_instant">Template trending</string>
+    <string name="feature_music_video_instant_subtitle">Pilih template dan tambahkan foto Anda</string>
+    <string name="feature_photos_to_video">Pilih lagu</string>
+    <string name="feature_photos_to_video_subtitle">Dengarkan dulu, lalu buat video sesuai irama</string>
+    <string name="feature_create_ai">Buat dengan AI</string>
+    <string name="feature_create_ai_subtitle">Biarkan AI menyarankan gaya, efek, dan ide video</string>
+    <string name="feature_new_badge">NEW !!</string>
     <string name="feature_trending_templates">Gunakan template trending</string>
     <string name="feature_trending_music">Tambahkan musik trending</string>
 

@@ -432,8 +432,13 @@
     <!-- Onboarding Page 4 -->
     <string name="onboarding_page4_title">ನೀವು ಹೇಗೆ ಪ್ರಾರಂಭಿಸಲು ಬಯಸುವಿರಿ?</string>
     <string name="onboarding_page4_subtitle">ಇದು ನಿಮಗೆ ಅತ್ಯಂತ ಸೂಕ್ತ ವಿಷಯಗಳನ್ನು ಶಿಫಾರಸು ಮಾಡಲು ನಮಗೆ ಸಹಾಯ ಮಾಡುತ್ತದೆ.</string>
-    <string name="feature_music_video_instant">ವೀಡಿಯೋ ಟೆಂಪ್ಲೇಟ್‌ಗಳು ಬ್ರೌಸ್ ಮಾಡಿ</string>
-    <string name="feature_photos_to_video">ಹಾಡಿನೊಂದಿಗೆ ಪ್ರಾರಂಭಿಸಿ</string>
+    <string name="feature_music_video_instant">ಟ್ರೆಂಡಿಂಗ್ ಟೆಂಪ್ಲೇಟ್‌ಗಳು</string>
+    <string name="feature_music_video_instant_subtitle">ಟೆಂಪ್ಲೇಟ್ ಆರಿಸಿ ಮತ್ತು ನಿಮ್ಮ ಫೋಟೋಗಳನ್ನು ಸೇರಿಸಿ</string>
+    <string name="feature_photos_to_video">ಹಾಡು ಆರಿಸಿ</string>
+    <string name="feature_photos_to_video_subtitle">ಮೊದಲು ಕೇಳಿ, ನಂತರ ಬೀಟ್‌ಗೆ ವೀಡಿಯೋ ರಚಿಸಿ</string>
+    <string name="feature_create_ai">AI ಯೊಂದಿಗೆ ರಚಿಸಿ</string>
+    <string name="feature_create_ai_subtitle">AI ಶೈಲಿಗಳು, ಎಫೆಕ್ಟ್‌ಗಳು ಮತ್ತು ವೀಡಿಯೋ ಐಡಿಯಾಗಳನ್ನು ಸೂಚಿಸಲಿ</string>
+    <string name="feature_new_badge">NEW !!</string>
     <string name="feature_trending_templates">ಟ್ರೆಂಡಿಂಗ್ ಟೆಂಪ್ಲೇಟ್‌ಗಳು ಬಳಸಿ</string>
     <string name="feature_trending_music">ಟ್ರೆಂಡಿಂಗ್ ಸಂಗೀತ ಸೇರಿಸಿ</string>
 

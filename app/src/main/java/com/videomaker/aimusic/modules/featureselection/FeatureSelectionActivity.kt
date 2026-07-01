@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.videomaker.aimusic.R
@@ -30,10 +31,10 @@ import com.videomaker.aimusic.modules.onboarding.OnboardingAltScreen
 import com.videomaker.aimusic.modules.onboarding.OnboardingNormalScreen
 import com.videomaker.aimusic.modules.onboarding.OnboardingStep
 import com.videomaker.aimusic.modules.onboarding.OnboardingViewModel
-import com.videomaker.aimusic.modules.onboarding.pages.FeatureSurveyPage
 import com.videomaker.aimusic.ui.components.LocalAsyncImage
 import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import com.videomaker.aimusic.ui.theme.Primary
+import com.videomaker.aimusic.ui.theme.VideoMakerTheme
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
@@ -164,5 +165,33 @@ class FeatureSelectionActivity : BaseOnboardingActivity() {
                 )
             }
         }
+    }
+}
+
+// ============================================
+// PREVIEW
+// ============================================
+
+@Preview(name = "Template Selected", showBackground = true, widthDp = 375, heightDp = 812, backgroundColor = 0xFF1A1A1A)
+@Composable
+private fun FeatureSelectionPreviewTemplate() {
+    VideoMakerTheme {
+        FeatureSurveyPage(selectedFeatures = listOf("music_video_instant"), onFeatureToggle = {})
+    }
+}
+
+@Preview(name = "Song Selected", showBackground = true, widthDp = 375, heightDp = 812, backgroundColor = 0xFF1A1A1A)
+@Composable
+private fun FeatureSelectionPreviewSong() {
+    VideoMakerTheme {
+        FeatureSurveyPage(selectedFeatures = listOf("photos_to_video"), onFeatureToggle = {})
+    }
+}
+
+@Preview(name = "AI Selected", showBackground = true, widthDp = 375, heightDp = 812, backgroundColor = 0xFF1A1A1A)
+@Composable
+private fun FeatureSelectionPreviewAI() {
+    VideoMakerTheme {
+        FeatureSurveyPage(selectedFeatures = listOf("create_with_ai"), onFeatureToggle = {})
     }
 }

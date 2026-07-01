@@ -426,8 +426,13 @@
     <!-- Onboarding Page 4 — Feature Survey -->
     <string name="onboarding_page4_title">Simulan ang Iyong Paglalakbay</string>
     <string name="onboarding_page4_subtitle">Nakakatulong ito sa amin para mairekomenda ang pinaka-angkop na nilalaman para sa iyo.</string>
-    <string name="feature_music_video_instant">Mag-browse ng mga template ng video</string>
-    <string name="feature_photos_to_video">Magsimula sa isang kanta</string>
+    <string name="feature_music_video_instant">Mga trending na template</string>
+    <string name="feature_music_video_instant_subtitle">Pumili ng template at idagdag ang iyong mga larawan</string>
+    <string name="feature_photos_to_video">Pumili ng kanta</string>
+    <string name="feature_photos_to_video_subtitle">Makinig muna, pagkatapos gumawa ng video sa beat</string>
+    <string name="feature_create_ai">Gumawa gamit ang AI</string>
+    <string name="feature_create_ai_subtitle">Hayaan ang AI na magmungkahi ng mga estilo, epekto, at ideya sa video</string>
+    <string name="feature_new_badge">NEW !!</string>
     <string name="feature_trending_templates">Gamitin ang mga trending na template</string>
     <string name="feature_trending_music">Magdagdag ng trending na musika</string>
 

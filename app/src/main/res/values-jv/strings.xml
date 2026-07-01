@@ -432,8 +432,13 @@
     <!-- Onboarding Page 4 -->
     <string name="onboarding_page4_title">Kepiye sampeyan arep miwiti?</string>
     <string name="onboarding_page4_subtitle">Iki mbantu kita menehi rekomendasi konten sing paling relevan kanggo sampeyan.</string>
-    <string name="feature_music_video_instant">Telusuri Template Video</string>
-    <string name="feature_photos_to_video">Wiwiti karo Lagu</string>
+    <string name="feature_music_video_instant">Template trending</string>
+    <string name="feature_music_video_instant_subtitle">Pilih template lan tambahake foto sampeyan</string>
+    <string name="feature_photos_to_video">Pilih lagu</string>
+    <string name="feature_photos_to_video_subtitle">Rungokno dhisik, banjur gawe video miturut irama</string>
+    <string name="feature_create_ai">Gawe nganggo AI</string>
+    <string name="feature_create_ai_subtitle">Ayo AI menehi saran gaya, efek, lan ide video</string>
+    <string name="feature_new_badge">NEW !!</string>
     <string name="feature_trending_templates">Gunakake template trending</string>
     <string name="feature_trending_music">Tambah musik trending</string>
 

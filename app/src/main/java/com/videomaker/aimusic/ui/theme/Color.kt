@@ -335,4 +335,6 @@ val EffectUnselectedBg = Color(0x0FDAD9D9)
 val OnboardingSurveyBackground = Color(0xFF161616)
 val OnboardingActivityBackground = Color(0xFF1A1A1A)
 val SliderChevronColor = Color(0xFF1E1E1E)
+val NewBadgeGradientStart = Color(0xFFFFA515)       // Orange (NEW badge gradient start)
+val NewBadgeGradientEnd = Color(0xFFFC1FF1)          // Pink (NEW badge gradient end)
 
