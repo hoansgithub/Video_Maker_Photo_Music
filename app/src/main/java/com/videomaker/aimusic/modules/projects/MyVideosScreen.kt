@@ -4,6 +4,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -27,8 +29,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import co.alcheclub.lib.acccore.ads.compose.NativeAdView
+import com.videomaker.aimusic.BuildConfig
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.core.ads.AdClickDetector
 import com.videomaker.aimusic.core.analytics.AnalyticsEvent
+import com.videomaker.aimusic.core.constants.AdPlacement
 import com.videomaker.aimusic.media.audio.AudioPreviewCache
 import com.videomaker.aimusic.modules.home.components.ProjectsTabContent
 import com.videomaker.aimusic.modules.songs.MusicPlayerBottomSheet
@@ -60,6 +66,7 @@ fun MyVideosScreen(
     onNavigateToAssetPicker: (songId: Long) -> Unit = {},
 ) {
     val audioPreviewCache: AudioPreviewCache = koinInject()
+    val adClickDetector: AdClickDetector = koinInject()
     val selectedSong by viewModel.selectedSong.collectAsStateWithLifecycle()
 
     // CTA "Try it" hides while the user scrolls the list during preview; reappears on player
@@ -99,6 +106,16 @@ fun MyVideosScreen(
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = FoundationBlack
                     )
+                )
+            },
+            bottomBar = {
+                NativeAdView(
+                    placement = AdPlacement.NATIVE_AIMV_BOTTOM,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .navigationBarsPadding(),
+                    isDebug = BuildConfig.DEBUG,
+                    onAdClicked = { adClickDetector.onAdClick(it) }
                 )
             },
             containerColor = FoundationBlack,

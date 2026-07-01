@@ -1265,6 +1265,19 @@ class AdPlacementConfigService(
             enabled = true
         )
 
+        // AI Music Video bottom "banner" native ad (AI template list + My Videos screens)
+        // Rendered banner-size via native_small_row (compact horizontal row)
+        // Waterfall: Primary unit → Secondary unit
+        registerNativePlacement(
+            placementId = AdPlacement.NATIVE_AIMV_BOTTOM,
+            layoutName = "native_small_row",
+            adUnitIds = listOf(
+                "ca-app-pub-7121075950716954/1709251222",  // Primary (Pro_AIMV_NA_high_Bottom BN)
+                "ca-app-pub-7121075950716954/3435442033"   // Secondary (Pro_AIMV_NA_all_Bottom BN)
+            ),
+            enabled = true
+        )
+
         // Export preparing native "banner" ad (replaces bottom banner on Preparing screen)
         // Rendered banner-size via native_small_row (compact horizontal row)
         // Waterfall: Primary unit → Secondary unit
