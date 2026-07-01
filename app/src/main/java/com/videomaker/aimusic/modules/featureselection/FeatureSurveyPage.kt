@@ -187,7 +187,7 @@ internal fun FeatureCard(
         modifier = modifier
             .fillMaxWidth()
             .clip(cardShape)
-            .background(if (isSelected) selectedColor.copy(alpha = 0.10f) else Black20)
+            .background(Black20)
             .border(
                 width = if (isSelected) 1.5.dp else 1.dp,
                 color = if (isSelected) selectedColor else Gray700,
@@ -214,7 +214,7 @@ internal fun FeatureCard(
                     text = stringResource(item.nameResId),
                     fontSize = 17.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Primary,
+                    color = if (isSelected) Primary else Color.White,
                 )
 
                 Spacer(Modifier.height(4.dp))
