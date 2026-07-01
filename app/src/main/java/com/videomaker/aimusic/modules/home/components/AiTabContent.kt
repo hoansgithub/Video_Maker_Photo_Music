@@ -37,8 +37,10 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -77,14 +79,17 @@ import com.videomaker.aimusic.ui.components.ModifierExtension.clickableSingle
 import com.videomaker.aimusic.ui.components.ShimmerPlaceholder
 import com.videomaker.aimusic.ui.theme.Black60
 import com.videomaker.aimusic.ui.theme.Gray200
+import com.videomaker.aimusic.ui.theme.Gray600
 import com.videomaker.aimusic.ui.theme.Neutral_N100
 import com.videomaker.aimusic.ui.theme.Neutral_N900
 import com.videomaker.aimusic.ui.theme.Primary
+import com.videomaker.aimusic.ui.theme.SurfaceDark
 import com.videomaker.aimusic.ui.theme.TemplateBadgeBackground
 import com.videomaker.aimusic.ui.theme.TextPrimary
 import com.videomaker.aimusic.ui.theme.White12
 import com.videomaker.aimusic.core.constants.AdPlacement
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 
 /** Card geometry shared by every AI template row item (W:H = 120:180, 12dp radius). */
@@ -461,17 +466,45 @@ private fun AiTemplateCard(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
-    val imageRequest = remember(template.thumbnailPath) {
+    val thumbnailPath = template.thumbnailPath
+    val coroutineScope = rememberCoroutineScope()
+
+    // Silent retry (3 attempts max) — same behavior as the shared TemplateCard.
+    var retryCount by remember(thumbnailPath) { mutableIntStateOf(0) }
+    var retryTrigger by remember(thumbnailPath) { mutableIntStateOf(0) }
+
+    // Stable request keyed with the shared "grid_" cache key so the AI row and the
+    // template grid reuse the same cached bitmap (no reload / no duplicate cache entry).
+    val imageRequest = remember(thumbnailPath, retryTrigger) {
         ImageRequest.Builder(context)
-            .data(template.thumbnailPath)
-            .size(Size(240, 360))
+            .data(thumbnailPath)
+            .size(Size(200, 350))
             .precision(Precision.INEXACT)
             .memoryCachePolicy(CachePolicy.ENABLED)
             .diskCachePolicy(CachePolicy.ENABLED)
-            .memoryCacheKey("ai_row_${template.thumbnailPath}")
-            .diskCacheKey("ai_row_${template.thumbnailPath}")
+            .memoryCacheKey("grid_$thumbnailPath")
+            .diskCacheKey("grid_$thumbnailPath")
             .crossfade(true)
             .crossfade(200)
+            .listener(
+                onError = { _, result ->
+                    android.util.Log.e(
+                        "AiTemplateCard",
+                        "Failed to load thumbnail (attempt ${retryCount + 1}/3): $thumbnailPath, error: ${result.throwable.message}"
+                    )
+                    // Auto-retry silently (no user message)
+                    if (retryCount < 2) {  // 0, 1 = retry; 2 = give up
+                        retryCount++
+                        coroutineScope.launch {
+                            delay(1000L * retryCount)  // 1s, 2s delay
+                            retryTrigger++  // Trigger reload
+                        }
+                    }
+                },
+                onSuccess = { _, _ ->
+                    retryCount = 0  // Reset on success
+                }
+            )
             .build()
     }
 
@@ -482,21 +515,48 @@ private fun AiTemplateCard(
             .background(MaterialTheme.colorScheme.surfaceVariant)
             .clickableSingle { onClick() }
     ) {
-        val painter = rememberAsyncImagePainter(model = imageRequest)
-        if (painter.state is AsyncImagePainter.State.Loading ||
-            painter.state is AsyncImagePainter.State.Empty
-        ) {
+        if (thumbnailPath.isNotEmpty()) {
+            val painter = rememberAsyncImagePainter(model = imageRequest)
+
+            // Shimmer / error behind the image — mirrors TemplateCard.
+            when (painter.state) {
+                is AsyncImagePainter.State.Loading,
+                is AsyncImagePainter.State.Empty -> {
+                    ShimmerPlaceholder(
+                        modifier = Modifier.fillMaxSize(),
+                        cornerRadius = 0.dp
+                    )
+                }
+                is AsyncImagePainter.State.Error -> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(SurfaceDark),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_choose_img),
+                            contentDescription = null,
+                            modifier = Modifier.size(48.dp),
+                            tint = Gray600
+                        )
+                    }
+                }
+                is AsyncImagePainter.State.Success -> { /* image renders below */ }
+            }
+
+            Image(
+                painter = painter,
+                contentDescription = template.name,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+        } else {
             ShimmerPlaceholder(
                 modifier = Modifier.fillMaxSize(),
                 cornerRadius = 0.dp
             )
         }
-        Image(
-            painter = painter,
-            contentDescription = template.name,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxSize()
-        )
 
         // Bottom gradient scrim — keeps the badge legible over any artwork.
         Box(
