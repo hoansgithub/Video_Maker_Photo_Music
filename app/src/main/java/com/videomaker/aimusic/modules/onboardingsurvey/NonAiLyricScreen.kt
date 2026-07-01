@@ -12,16 +12,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
-import com.videomaker.aimusic.core.analytics.Analytics
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -32,10 +29,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -47,6 +43,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import com.videomaker.aimusic.R
+import com.videomaker.aimusic.core.analytics.Analytics
 import com.videomaker.aimusic.core.playback.OnboardingMusicPlayer
 import com.videomaker.aimusic.ui.theme.OnboardingSurveyBackground
 import com.videomaker.aimusic.ui.theme.VideoMakerTheme
@@ -57,13 +54,16 @@ import org.koin.compose.koinInject
 fun NonAiLyricScreen(
     modifier: Modifier = Modifier
 ) {
+    val isPreview = LocalInspectionMode.current
+
     LaunchedEffect(Unit) {
-        Analytics.track(OnboardingSurveyAnalytics.EVENT_NON_AI_LYRIC_RENDER)
+        if (!isPreview) {
+            Analytics.track(OnboardingSurveyAnalytics.EVENT_NON_AI_LYRIC_RENDER)
+        }
     }
 
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
-    val isPreview = LocalInspectionMode.current
 
     // Silence the looping onboarding background song while this screen is visible so the
     // video's own audio is heard, then resume it when leaving. (Skipped in @Preview: no Koin.)
@@ -76,7 +76,7 @@ fun NonAiLyricScreen(
     }
 
     // Initialize ExoPlayer with the bundled lyric video (looping, with sound, auto-play)
-    val exoPlayer = remember {
+    val exoPlayer = if (isPreview) null else remember {
         ExoPlayer.Builder(context).build().apply {
             setAudioAttributes(
                 AudioAttributes.Builder()
@@ -96,6 +96,7 @@ fun NonAiLyricScreen(
 
     // Manage ExoPlayer lifecycle (pause on ON_PAUSE, resume on ON_RESUME, release on dispose)
     DisposableEffect(lifecycleOwner, exoPlayer) {
+        if (exoPlayer == null) return@DisposableEffect onDispose {}
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
                 Lifecycle.Event.ON_PAUSE -> exoPlayer.pause()
@@ -120,19 +121,27 @@ fun NonAiLyricScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .clip(RoundedCornerShape(24.dp))
                 .background(Color.Black)
         ) {
             // 1. Looping video
-            AndroidView(
-                factory = { ctx ->
-                    val view = LayoutInflater.from(ctx)
-                        .inflate(R.layout.player_view_texture, null) as PlayerView
-                    view.player = exoPlayer
-                    view
-                },
-                modifier = Modifier.fillMaxSize()
-            )
+            if (exoPlayer != null) {
+                AndroidView(
+                    factory = { ctx ->
+                        val view = LayoutInflater.from(ctx)
+                            .inflate(R.layout.player_view_texture, null) as PlayerView
+                        view.player = exoPlayer
+                        view
+                    },
+                    modifier = Modifier.fillMaxSize()
+                )
+            } else {
+                // In Compose preview, render a fallback background placeholder
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.DarkGray)
+                )
+            }
 
             // 2. Black gradient overlay at the bottom for readability of the icon/title
             Box(
