@@ -698,4 +698,31 @@
     <string name="survey_non_ai_lyric_title">Musikvideos mit Songtexten</string>
     <string name="survey_non_ai_music_video_title">Erstellen Sie Ihren einzigartigen Videostil</string>
     <string name="survey_ai_promote_title">Plus viele KI-Funktionen</string>
+    <!-- AI Tab / My Videos -->
+    <string name="settings_my_videos">Meine Videos</string>
+    <string name="ai_section_video_generator">KI-Videogenerator</string>
+    <string name="ai_section_dance">KI-Tanz</string>
+    <string name="ai_remind_toast">Wir erinnern dich später</string>
+    <string name="ai_banner_title">Angesagtes KI-Video</string>
+    <string name="ai_banner_coming_soon">DEMNÄCHST</string>
+    <string name="ai_banner_remind_me">Erinnere mich</string>
+    <string name="ai_templates_empty">Noch keine Vorlagen</string>
+    <string name="ai_see_all">Alle ansehen</string>
+    <!-- AI guide / credits / picker -->
+    <string name="ai_guide_title">Verwende die richtigen Fotos</string>
+    <string name="ai_guide_desc">Hochwertige Fotos helfen der KI, die besten Ergebnisse zu erzielen.</string>
+    <string name="ai_guide_good_front_facing">Nach vorne gerichtet</string>
+    <string name="ai_guide_good_one_person">Eine Person</string>
+    <string name="ai_guide_good_face_visible">Gesicht vollständig sichtbar</string>
+    <string name="ai_guide_bad_side_profile">Seitenprofil</string>
+    <string name="ai_guide_bad_blurry">Unscharfe Fotos</string>
+    <string name="ai_guide_bad_group">Gruppenfotos</string>
+    <string name="ai_guide_cta">Wähle dein Foto</string>
+    <string name="ai_credits_title">Kostenlose KI-Credits aufgebraucht</string>
+    <string name="ai_credits_desc">Deine kostenlosen KI-Credits sind heute aufgebraucht. Bitte komm später wieder, um weitere KI-Videos zu erstellen.</string>
+    <string name="ai_credits_try_again">Erneut versuchen</string>
+    <string name="ai_credits_try_later">Ich versuche es später</string>
+    <string name="picker_ai_min_selection">Füge mindestens 1 Foto hinzu, um ein Video zu erstellen</string>
+    <string name="home_tab_ai">KI</string>
+    <string name="settings_library">Bibliothek</string>
 </resources>

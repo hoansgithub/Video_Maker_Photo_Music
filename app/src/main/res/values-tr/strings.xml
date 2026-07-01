@@ -692,4 +692,31 @@
     <string name="survey_non_ai_lyric_title">Şarkı Sözü Müzik Videoları</string>
     <string name="survey_non_ai_music_video_title">Kendine özgü video stilini oluştur</string>
     <string name="survey_ai_promote_title">Artı Birçok Yapay Zeka Özelliği</string>
+    <!-- AI Tab / My Videos -->
+    <string name="settings_my_videos">Videolarım</string>
+    <string name="ai_section_video_generator">AI Video Oluşturucu</string>
+    <string name="ai_section_dance">AI Dans</string>
+    <string name="ai_remind_toast">Sana daha sonra hatırlatacağız</string>
+    <string name="ai_banner_title">Trend AI Videosu</string>
+    <string name="ai_banner_coming_soon">YAKINDA</string>
+    <string name="ai_banner_remind_me">Bana Hatırlat</string>
+    <string name="ai_templates_empty">Henüz şablon yok</string>
+    <string name="ai_see_all">Tümünü gör</string>
+    <!-- AI guide / credits / picker -->
+    <string name="ai_guide_title">Doğru Fotoğrafları Kullan</string>
+    <string name="ai_guide_desc">Yüksek kaliteli fotoğraflar, yapay zekanın en iyi sonuçları oluşturmasına yardımcı olur.</string>
+    <string name="ai_guide_good_front_facing">Öne bakan</string>
+    <string name="ai_guide_good_one_person">Bir kişi</string>
+    <string name="ai_guide_good_face_visible">Yüz tamamen görünür</string>
+    <string name="ai_guide_bad_side_profile">Yan profil</string>
+    <string name="ai_guide_bad_blurry">Bulanık fotoğraflar</string>
+    <string name="ai_guide_bad_group">Grup fotoğrafları</string>
+    <string name="ai_guide_cta">Fotoğrafını seç</string>
+    <string name="ai_credits_title">Ücretsiz AI kredileri tükendi</string>
+    <string name="ai_credits_desc">Ücretsiz AI kredilerin bugün tükendi. Daha fazla AI videosu oluşturmak için lütfen daha sonra tekrar gel.</string>
+    <string name="ai_credits_try_again">Tekrar dene</string>
+    <string name="ai_credits_try_later">Daha sonra denerim</string>
+    <string name="picker_ai_min_selection">Video oluşturmak için en az 1 fotoğraf ekle</string>
+    <string name="home_tab_ai">AI</string>
+    <string name="settings_library">Kitaplık</string>
 </resources>

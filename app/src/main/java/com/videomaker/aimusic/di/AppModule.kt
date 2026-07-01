@@ -607,7 +607,8 @@ class EditorViewModelFactory(
     fun create(
         projectId: String?,
         initialData: com.videomaker.aimusic.domain.model.EditorInitialData?,
-        initialThumbnailUri: String? = null
+        initialThumbnailUri: String? = null,
+        isAiFlow: Boolean = false
     ): EditorViewModel {
         return EditorViewModel(
             context = context,
@@ -625,7 +626,8 @@ class EditorViewModelFactory(
             projectRepository = projectRepository,
             adsLoaderService = adsLoaderService,
             audioPreprocessingService = audioPreprocessingService,
-            adPlacementConfigService = adPlacementConfigService
+            adPlacementConfigService = adPlacementConfigService,
+            isAiFlow = isAiFlow
         )
     }
 }

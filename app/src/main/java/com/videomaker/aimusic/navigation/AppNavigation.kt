@@ -725,7 +725,7 @@ fun AppNavigation(
                 val editorViewModel: EditorViewModel = viewModel(
                     key = "editor_${route.projectId ?: route.initialData.hashCode()}",
                     factory = createSafeViewModelFactory {
-                        factory.create(route.projectId, route.initialData, route.thumbnailUri)
+                        factory.create(route.projectId, route.initialData, route.thumbnailUri, route.isAiFlow)
                     }
                 )
                 EditorScreen(

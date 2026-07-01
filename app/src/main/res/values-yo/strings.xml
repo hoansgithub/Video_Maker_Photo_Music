@@ -697,4 +697,31 @@
     <string name="survey_non_ai_lyric_title">Awọn fidio orin pẹlu ọrọ</string>
     <string name="survey_non_ai_music_video_title">Ṣẹda ara fidio alailẹgbẹ rẹ</string>
     <string name="survey_ai_promote_title">Pẹlu ọpọlọpọ awọn ẹya AI</string>
+    <!-- AI Tab / My Videos -->
+    <string name="settings_my_videos">Àwọn Fídíò Mi</string>
+    <string name="ai_section_video_generator">Olùpilẹ̀ṣẹ̀ Fídíò AI</string>
+    <string name="ai_section_dance">Ijó AI</string>
+    <string name="ai_remind_toast">A óò rán ọ létí nígbà tó bá yá</string>
+    <string name="ai_banner_title">Fídíò AI tó gbajúmọ̀</string>
+    <string name="ai_banner_coming_soon">Ó Ń BỌ̀ LÁÌPẸ́</string>
+    <string name="ai_banner_remind_me">Rán mi létí</string>
+    <string name="ai_templates_empty">Kò sí àwọn àwòṣe síbẹ̀</string>
+    <string name="ai_see_all">Wo gbogbo rẹ̀</string>
+    <!-- AI guide / credits / picker -->
+    <string name="ai_guide_title">Lo Àwọn Fọ́tò Tó Tọ́</string>
+    <string name="ai_guide_desc">Àwọn fọ́tò tó dára ń ran AI lọ́wọ́ láti ṣẹ̀dá àwọn àbájáde tó dára jù.</string>
+    <string name="ai_guide_good_front_facing">Kojú síwájú</string>
+    <string name="ai_guide_good_one_person">Ẹnì kan</string>
+    <string name="ai_guide_good_face_visible">Ojú hàn ní kíkún</string>
+    <string name="ai_guide_bad_side_profile">Profaili ẹ̀gbẹ́</string>
+    <string name="ai_guide_bad_blurry">Àwọn fọ́tò tí kò ṣe kedere</string>
+    <string name="ai_guide_bad_group">Àwọn fọ́tò ẹgbẹ́</string>
+    <string name="ai_guide_cta">Yan fọ́tò rẹ</string>
+    <string name="ai_credits_title">Àwọn kírẹ́díìtì AI ọ̀fẹ́ ti parí</string>
+    <string name="ai_credits_desc">Àwọn kírẹ́díìtì AI ọ̀fẹ́ rẹ ti parí lónìí. Jọ̀wọ́ padà wá nígbà tó bá yá láti ṣẹ̀dá àwọn fídíò AI síi.</string>
+    <string name="ai_credits_try_again">Gbìyànjú lẹ́ẹ̀kansi</string>
+    <string name="ai_credits_try_later">Màá gbìyànjú nígbà tó bá yá</string>
+    <string name="picker_ai_min_selection">Fi ó kéré tán fọ́tò 1 kún láti ṣẹ̀dá fídíò</string>
+    <string name="home_tab_ai">AI</string>
+    <string name="settings_library">Àkójọ</string>
 </resources>

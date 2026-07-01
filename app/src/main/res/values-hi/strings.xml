@@ -695,4 +695,31 @@
     <string name="survey_non_ai_lyric_title">लिरिक्स म्यूज़िक वीडियो</string>
     <string name="survey_non_ai_music_video_title">अपनी अनूठी वीडियो शैली बनाएं</string>
     <string name="survey_ai_promote_title">साथ ही कई एआई फीचर्स</string>
+    <!-- AI Tab / My Videos -->
+    <string name="settings_my_videos">मेरे वीडियो</string>
+    <string name="ai_section_video_generator">AI वीडियो जनरेटर</string>
+    <string name="ai_section_dance">AI डांस</string>
+    <string name="ai_remind_toast">हम आपको बाद में याद दिलाएंगे</string>
+    <string name="ai_banner_title">ट्रेंडिंग AI वीडियो</string>
+    <string name="ai_banner_coming_soon">जल्द आ रहा है</string>
+    <string name="ai_banner_remind_me">मुझे याद दिलाएं</string>
+    <string name="ai_templates_empty">अभी तक कोई टेम्पलेट नहीं</string>
+    <string name="ai_see_all">सभी देखें</string>
+    <!-- AI guide / credits / picker -->
+    <string name="ai_guide_title">सही फ़ोटो का उपयोग करें</string>
+    <string name="ai_guide_desc">उच्च-गुणवत्ता वाली फ़ोटो AI को सर्वोत्तम परिणाम बनाने में मदद करती हैं।</string>
+    <string name="ai_guide_good_front_facing">सामने की ओर</string>
+    <string name="ai_guide_good_one_person">एक व्यक्ति</string>
+    <string name="ai_guide_good_face_visible">चेहरा पूरी तरह दिखाई देना</string>
+    <string name="ai_guide_bad_side_profile">साइड प्रोफ़ाइल</string>
+    <string name="ai_guide_bad_blurry">धुंधली फ़ोटो</string>
+    <string name="ai_guide_bad_group">समूह फ़ोटो</string>
+    <string name="ai_guide_cta">अपनी फ़ोटो चुनें</string>
+    <string name="ai_credits_title">मुफ़्त AI क्रेडिट समाप्त</string>
+    <string name="ai_credits_desc">आपके मुफ़्त AI क्रेडिट आज समाप्त हो गए हैं। कृपया अधिक AI वीडियो बनाने के लिए बाद में वापस आएं।</string>
+    <string name="ai_credits_try_again">फिर से प्रयास करें</string>
+    <string name="ai_credits_try_later">मैं बाद में प्रयास करूँगा</string>
+    <string name="picker_ai_min_selection">वीडियो बनाने के लिए कम से कम 1 फ़ोटो जोड़ें</string>
+    <string name="home_tab_ai">AI</string>
+    <string name="settings_library">लाइब्रेरी</string>
 </resources>

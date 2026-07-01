@@ -698,4 +698,31 @@
     <string name="survey_non_ai_lyric_title">লিরিক মিউজিক ভিডিও</string>
     <string name="survey_non_ai_music_video_title">আপনার নিজস্ব অনন্য ভিডিও শৈলী তৈরি করুন</string>
     <string name="survey_ai_promote_title">এছাড়াও অনেক এআই বৈশিষ্ট্য</string>
+    <!-- AI Tab / My Videos -->
+    <string name="settings_my_videos">আমার ভিডিও</string>
+    <string name="ai_section_video_generator">AI ভিডিও জেনারেটর</string>
+    <string name="ai_section_dance">AI ড্যান্স</string>
+    <string name="ai_remind_toast">আমরা আপনাকে পরে মনে করিয়ে দেব</string>
+    <string name="ai_banner_title">ট্রেন্ডিং AI ভিডিও</string>
+    <string name="ai_banner_coming_soon">শীঘ্রই আসছে</string>
+    <string name="ai_banner_remind_me">আমাকে মনে করিয়ে দিন</string>
+    <string name="ai_templates_empty">এখনও কোনো টেমপ্লেট নেই</string>
+    <string name="ai_see_all">সব দেখুন</string>
+    <!-- AI guide / credits / picker -->
+    <string name="ai_guide_title">সঠিক ছবি ব্যবহার করুন</string>
+    <string name="ai_guide_desc">উচ্চ-মানের ছবি AI-কে সেরা ফলাফল তৈরি করতে সাহায্য করে।</string>
+    <string name="ai_guide_good_front_facing">সামনের দিকে মুখ</string>
+    <string name="ai_guide_good_one_person">একজন ব্যক্তি</string>
+    <string name="ai_guide_good_face_visible">মুখ সম্পূর্ণ দৃশ্যমান</string>
+    <string name="ai_guide_bad_side_profile">পাশের প্রোফাইল</string>
+    <string name="ai_guide_bad_blurry">ঝাপসা ছবি</string>
+    <string name="ai_guide_bad_group">দলগত ছবি</string>
+    <string name="ai_guide_cta">আপনার ছবি নির্বাচন করুন</string>
+    <string name="ai_credits_title">বিনামূল্যের AI ক্রেডিট শেষ</string>
+    <string name="ai_credits_desc">আপনার বিনামূল্যের AI ক্রেডিট আজ শেষ হয়ে গেছে। আরও AI ভিডিও তৈরি করতে অনুগ্রহ করে পরে আবার আসুন।</string>
+    <string name="ai_credits_try_again">আবার চেষ্টা করুন</string>
+    <string name="ai_credits_try_later">আমি পরে চেষ্টা করব</string>
+    <string name="picker_ai_min_selection">ভিডিও তৈরি করতে অন্তত ১টি ছবি যোগ করুন</string>
+    <string name="home_tab_ai">AI</string>
+    <string name="settings_library">লাইব্রেরি</string>
 </resources>
